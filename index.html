@@ -1591,7 +1591,7 @@
             <sc-for list="{{ acctPlanRows }}" as="pl" hint-placeholder-count="0">
               <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:#e7ecda;border-radius:10px;padding:12px 16px;flex-wrap:wrap;">
                 <div style="display:flex;flex-direction:column;gap:3px;min-width:0;">
-                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="color:#4d7327;font-size:15px;">✓</span><span style="font-size:15px;font-weight:700;color:#1b2a1f;">{{ pl.name }}</span><span style="font-size:12px;color:#8a9579;font-family:'Spline Sans Mono',monospace;">added {{ pl.when }}</span></div>
+                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="color:#4d7327;font-size:15px;">✓</span><span style="font-size:15px;font-weight:700;color:#1b2a1f;">{{ pl.name }}</span><sc-if value="{{ pl.hasPrice }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;font-weight:700;color:#244232;">{{ pl.price }}</span></sc-if><span style="font-size:12px;color:#8a9579;font-family:'Spline Sans Mono',monospace;">added {{ pl.when }}</span></div>
                   <sc-if value="{{ pl.hasHolder }}" hint-placeholder-val="{{ false }}"><div style="padding-left:25px;font-size:13px;color:#46563f;">For <strong>{{ pl.holder }}</strong></div></sc-if>
                   <sc-if value="{{ pl.hasRef }}" hint-placeholder-val="{{ false }}"><div style="padding-left:25px;font-size:12px;color:#8a9579;font-family:'Spline Sans Mono',monospace;">Ref {{ pl.ref }}</div></sc-if>
                   <div style="display:flex;align-items:center;gap:7px;padding-left:25px;">
@@ -1748,6 +1748,7 @@
                   <div style="min-width:200px;">
                     <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">
                       <span style="font-size:16px;font-weight:800;color:#1b2a1f;">{{ pr.name }}</span>
+                      <sc-if value="{{ pr.hasPrice }}" hint-placeholder-val="{{ false }}"><span style="font-size:14px;font-weight:700;color:#244232;">{{ pr.price }}</span></sc-if>
                       <sc-if value="{{ pr.complete }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:#4d7327;background:#e6efd6;padding:3px 8px;border-radius:999px;">Scheduled</span></sc-if>
                     </div>
                     <sc-if value="{{ pr.hasHolder }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;font-weight:700;color:#244232;margin-top:2px;">{{ pr.holder }}</div></sc-if>
@@ -2810,7 +2811,7 @@ class Component extends DCLogic {
     const key = this.acctPlansKey(email);
     let arr = [];
     try { arr = JSON.parse(localStorage.getItem(key) || '[]') || []; } catch (e) { arr = []; }
-    const newPlan = { name: pick, ts: Date.now(), holder: name, phone: (this.state.planPhone || '').trim(), ref: this.bookingRef(this.todayStr()), updatedAt: Date.now() };
+    const newPlan = { name: pick, ts: Date.now(), holder: name, phone: (this.state.planPhone || '').trim(), price: this.passPrice(pick), ref: this.bookingRef(this.todayStr()), updatedAt: Date.now() };
     arr = arr.concat([newPlan]);
     try { localStorage.setItem(key, JSON.stringify(arr)); } catch (e) {}
     // Sync the pass + email the buyer a confirmation with the total.
@@ -2822,7 +2823,7 @@ class Component extends DCLogic {
   }
   addAcctPlan(name) {
     const email = (this.state.acctEmail || '').trim();
-    const newPlan = { name: name, ts: Date.now(), holder: this.state.acctName || '', ref: this.bookingRef(this.todayStr()), updatedAt: Date.now() };
+    const newPlan = { name: name, ts: Date.now(), holder: this.state.acctName || '', price: this.passPrice(name), ref: this.bookingRef(this.todayStr()), updatedAt: Date.now() };
     const plans = (this.loadAcctPlans(email) || []).concat([newPlan]);
     this.saveAcctPlans(email, plans);
     this.pushPlan(email, newPlan);
@@ -2880,7 +2881,7 @@ class Component extends DCLogic {
         try { arr = JSON.parse(localStorage.getItem(key) || '[]') || []; } catch (e) { arr = []; }
         if (!Array.isArray(arr)) continue;
         const email = key.slice('pgac_plans_'.length);
-        arr.forEach(p => { if (p && p.ts != null && p.name != null) out.push({ email: email, name: p.name, holder: p.holder || '', phone: p.phone || '', ref: p.ref || '', contacted: !!p.contacted, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [] }); });
+        arr.forEach(p => { if (p && p.ts != null && p.name != null) out.push({ email: email, name: p.name, holder: p.holder || '', phone: p.phone || '', ref: p.ref || '', price: p.price || '', contacted: !!p.contacted, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [] }); });
       }
     } catch (e) {}
     return out.sort((a, b) => (b.ts || 0) - (a.ts || 0));
@@ -3404,7 +3405,7 @@ class Component extends DCLogic {
     // Merge passes from this device's cache with every pass the backend returned (backend wins).
     const planMap = {};
     this.loadAllPlansLocal().forEach(p => { planMap[(p.email || '').toLowerCase() + '|' + p.ts] = p; });
-    (this.state.remotePlans || []).forEach(p => { planMap[(p.email || '').toLowerCase() + '|' + p.ts] = { email: (p.email || '').toLowerCase(), name: p.name, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [], holder: p.holder || '', phone: p.phone || '', ref: p.ref || '', contacted: !!p.contacted }; });
+    (this.state.remotePlans || []).forEach(p => { planMap[(p.email || '').toLowerCase() + '|' + p.ts] = { email: (p.email || '').toLowerCase(), name: p.name, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [], holder: p.holder || '', phone: p.phone || '', ref: p.ref || '', price: p.price || '', contacted: !!p.contacted }; });
     const allPlans = Object.keys(planMap).map(k => planMap[k]).sort((a, b) => (b.ts || 0) - (a.ts || 0));
     const adminPlanRows = allPlans.map(p => {
       const rowKey = p.email + '|' + p.ts;
@@ -3431,6 +3432,7 @@ class Component extends DCLogic {
         key: rowKey, email: p.email, name: p.name, holder: p.holder || '', hasHolder: !!(p.holder && String(p.holder).trim()), ts: p.ts, coach: p.coach || '',
         phone: phone, hasPhone: !!phone, callHref: 'tel:' + phone.replace(/[^0-9+]/g, ''),
         ref: p.ref || '', hasRef: !!p.ref,
+        price: p.price || this.passPrice(p.name), hasPrice: !!(p.price || this.passPrice(p.name)),
         contacted: !!p.contacted, statusLabel: p.contacted ? '✓ Contacted' : 'New',
         statusBg: p.contacted ? '#e6efd6' : '#fff1cf', statusFg: p.contacted ? '#4d7327' : '#8a6a1f',
         markContacted: () => this.markPlanContacted(p.email, p.ts),
@@ -3531,6 +3533,7 @@ class Component extends DCLogic {
         name: p.name, ts: p.ts,
         holder: p.holder || '', hasHolder: !!(p.holder && p.holder.trim()),
         ref: p.ref || '', hasRef: !!p.ref,
+        price: p.price || this.passPrice(p.name), hasPrice: !!(p.price || this.passPrice(p.name)),
         when: (() => { try { return new Date(p.ts).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { return ''; } })(),
         coachLabel: c ? ('Coach: ' + c.name) : 'Coach: to be assigned by our team',
         coachColor: c ? '#3c6b48' : '#a08a5a',
