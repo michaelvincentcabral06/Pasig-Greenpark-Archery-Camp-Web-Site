@@ -2810,7 +2810,7 @@ class Component extends DCLogic {
         try { arr = JSON.parse(localStorage.getItem(key) || '[]') || []; } catch (e) { arr = []; }
         if (!Array.isArray(arr)) continue;
         const email = key.slice('pgac_plans_'.length);
-        arr.forEach(p => { if (p && p.ts != null && p.name != null) out.push({ email: email, name: p.name, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [] }); });
+        arr.forEach(p => { if (p && p.ts != null && p.name != null) out.push({ email: email, name: p.name, holder: p.holder || '', ts: p.ts, coach: p.coach || '', sessions: p.sessions || [] }); });
       }
     } catch (e) {}
     return out.sort((a, b) => (b.ts || 0) - (a.ts || 0));
@@ -3319,7 +3319,7 @@ class Component extends DCLogic {
     // Merge passes from this device's cache with every pass the backend returned (backend wins).
     const planMap = {};
     this.loadAllPlansLocal().forEach(p => { planMap[(p.email || '').toLowerCase() + '|' + p.ts] = p; });
-    (this.state.remotePlans || []).forEach(p => { planMap[(p.email || '').toLowerCase() + '|' + p.ts] = { email: (p.email || '').toLowerCase(), name: p.name, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [], holder: p.holder }; });
+    (this.state.remotePlans || []).forEach(p => { planMap[(p.email || '').toLowerCase() + '|' + p.ts] = { email: (p.email || '').toLowerCase(), name: p.name, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [], holder: p.holder || '' }; });
     const allPlans = Object.keys(planMap).map(k => planMap[k]).sort((a, b) => (b.ts || 0) - (a.ts || 0));
     const adminPlanRows = allPlans.map(p => {
       const rowKey = p.email + '|' + p.ts;
