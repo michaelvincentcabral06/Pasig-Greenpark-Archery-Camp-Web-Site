@@ -8,7 +8,9 @@
       "Bash(echo \"gh: $\\(gh --version 2>&1)",
       "Bash(git config *)",
       "Bash(echo \"name: $\\(git config user.name 2>&1\\)\")",
-      "Bash(echo \"email: $\\(git config user.email 2>&1\\)\")"
+      "Bash(echo \"email: $\\(git config user.email 2>&1\\)\")",
+      "Bash(curl -s -L -m 20 -o /dev/null -w \"%{http_code}\" \"https://michaelvincentcabral06.github.io/greenpark-archery/\")",
+      "Bash(git ls-remote *)"
     ]
   }
 }

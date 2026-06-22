@@ -2573,7 +2573,7 @@ class Component extends DCLogic {
   acctPlansKey(email) { return 'pgac_plans_' + (email || '').trim().toLowerCase(); }
   // Tombstones: timestamps of passes the customer deleted on this device. Used so a
   // not-yet-propagated delete can't be resurrected by a stale backend copy on the next sync.
-  deletedPlansKey(email) { return 'pgac_plans_del_' + (email || '').trim().toLowerCase(); }
+  deletedPlansKey(email) { return 'pgac_plandel_' + (email || '').trim().toLowerCase(); }
   loadDeletedPlans(email) { try { return JSON.parse(localStorage.getItem(this.deletedPlansKey(email)) || '[]') || []; } catch (e) { return []; } }
   addDeletedPlan(email, ts) { try { const a = this.loadDeletedPlans(email); if (a.indexOf(ts) === -1) { a.push(ts); localStorage.setItem(this.deletedPlansKey(email), JSON.stringify(a)); } } catch (e) {} }
   loadAcctPlans(email) { try { return JSON.parse(localStorage.getItem(this.acctPlansKey(email)) || '[]'); } catch (e) { return []; } }
@@ -2778,6 +2778,13 @@ class Component extends DCLogic {
   }
   removeAcctPlan(ts) {
     const email = (this.state.acctEmail || '').trim();
+    if (typeof confirm !== 'undefined' && !confirm('Remove this pass? Any sessions already scheduled on it will also be cancelled and removed from the calendar.')) return;
+    // Cancel any calendar events that were created for this pass's scheduled sessions,
+    // so removing the pass doesn't leave orphaned events in Google Calendar.
+    const plan = this.findPlan(email, ts);
+    if (plan && Array.isArray(plan.sessions)) {
+      plan.sessions.forEach(s => { if (s && s.eventId) this.cancelBooking({ eventId: s.eventId, ref: s.ref || '', date: s.date || '', time: s.time || '', email: email }, false); });
+    }
     const plans = (this.loadAcctPlans(email) || []).filter(p => p.ts !== ts);
     this.saveAcctPlans(email, plans);
     this.addDeletedPlan(email, ts); // tombstone so a stale backend copy can't resurrect it
@@ -2788,13 +2795,19 @@ class Component extends DCLogic {
   loadAllPlansLocal() {
     const out = [];
     try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (!key || key.indexOf('pgac_plans_') !== 0) continue;
-        const email = key.slice('pgac_plans_'.length);
+      // Snapshot keys first so removing stale ones below doesn't shift the loop.
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k) keys.push(k); }
+      for (const key of keys) {
+        if (key.indexOf('pgac_plans_') !== 0) continue;
+        // Clean up stale deletion-tombstone keys from an earlier build whose prefix
+        // collided with the plans prefix — they showed as a phantom "del_..." customer.
+        if (key.indexOf('pgac_plans_del_') === 0) { try { localStorage.removeItem(key); } catch (e) {} continue; }
         let arr = [];
         try { arr = JSON.parse(localStorage.getItem(key) || '[]') || []; } catch (e) { arr = []; }
-        arr.forEach(p => out.push({ email: email, name: p.name, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [] }));
+        if (!Array.isArray(arr)) continue;
+        const email = key.slice('pgac_plans_'.length);
+        arr.forEach(p => { if (p && p.ts != null && p.name != null) out.push({ email: email, name: p.name, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [] }); });
       }
     } catch (e) {}
     return out.sort((a, b) => (b.ts || 0) - (a.ts || 0));
