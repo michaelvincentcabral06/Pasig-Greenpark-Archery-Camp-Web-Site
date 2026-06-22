@@ -1600,6 +1600,7 @@
               <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:#e7ecda;border-radius:10px;padding:12px 16px;flex-wrap:wrap;">
                 <div style="display:flex;flex-direction:column;gap:3px;min-width:0;">
                   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="color:#4d7327;font-size:15px;">✓</span><span style="font-size:15px;font-weight:700;color:#1b2a1f;">{{ pl.name }}</span><span style="font-size:12px;color:#8a9579;font-family:'Spline Sans Mono',monospace;">added {{ pl.when }}</span></div>
+                  <sc-if value="{{ pl.hasHolder }}" hint-placeholder-val="{{ false }}"><div style="padding-left:25px;font-size:13px;color:#46563f;">For <strong>{{ pl.holder }}</strong></div></sc-if>
                   <div style="display:flex;align-items:center;gap:7px;padding-left:25px;">
                     <span style="width:7px;height:7px;border-radius:50%;background:{{ pl.coachDot }};flex:none;"></span>
                     <span style="font-size:12.5px;color:{{ pl.coachColor }};font-family:'Spline Sans Mono',monospace;">{{ pl.coachLabel }}</span>
@@ -2583,9 +2584,9 @@ class Component extends DCLogic {
     const ep = this.endpoint(); if (!ep || !email || !plan) return;
     try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'savePlan', email: email, plan: plan }) }); } catch (e) {}
   }
-  pushRemovePlan(email, ts) {
+  pushRemovePlan(email, ts, by) {
     const ep = this.endpoint(); if (!ep || !email) return;
-    try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'removePlan', email: email, ts: ts }) }); } catch (e) {}
+    try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'removePlan', email: email, ts: ts, by: by || 'customer' }) }); } catch (e) {}
   }
   // Pull a customer's passes from the backend and merge with the local cache.
   // Merge rule: keep whichever copy was edited most recently (updatedAt, falling back
@@ -2633,7 +2634,7 @@ class Component extends DCLogic {
         this.setState({ acctLoading: false, acctError: 'No bookings or plans found for that email. Use the address from your confirmation.' });
         return;
       }
-      this.setState({ acctIn: true, acctLoading: false, acctError: '', acctBookings: list || [], acctName: name || (list && list[0] && list[0].name) || '', acctPlans: plans });
+      this.setState({ acctIn: true, acctLoading: false, acctError: '', acctBookings: list || [], acctName: name || (list && list[0] && list[0].name) || (plans && plans[0] && plans[0].holder) || '', acctPlans: plans });
       this.fetchPlansForEmail(email); // refresh passes from the backend (cross-device)
     };
     const ep = this.endpoint();
@@ -2790,7 +2791,7 @@ class Component extends DCLogic {
     const plans = (this.loadAcctPlans(email) || []).filter(p => p.ts !== ts);
     this.saveAcctPlans(email, plans);
     this.addDeletedPlan(email, ts); // tombstone so a stale backend copy can't resurrect it
-    this.pushRemovePlan(email, ts);
+    this.pushRemovePlan(email, ts, 'customer');
     this.setState(s => ({ remotePlans: (s.remotePlans || []).filter(p => !((p.email || '').toLowerCase() === email.toLowerCase() && p.ts === ts)) }));
   }
   // ---------- ADMIN: plans across this device (coach assignment) ----------
@@ -2866,7 +2867,7 @@ class Component extends DCLogic {
     const coach = plan.coach || '';
     const coachName = coach ? ((this.coachById(coach) || {}).name || '') : '';
     const known = (this.state.bookings || []).find(b => (b.email || '').toLowerCase() === (email || '').toLowerCase());
-    const name = (known && known.name) || email;
+    const name = (known && known.name) || plan.holder || email;
     fetch(ep, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
@@ -3434,6 +3435,7 @@ class Component extends DCLogic {
       const cap = planCapFor(p.name);
       return {
         name: p.name, ts: p.ts,
+        holder: p.holder || '', hasHolder: !!(p.holder && p.holder.trim()),
         when: (() => { try { return new Date(p.ts).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { return ''; } })(),
         coachLabel: c ? ('Coach: ' + c.name) : 'Coach: to be assigned by our team',
         coachColor: c ? '#3c6b48' : '#a08a5a',

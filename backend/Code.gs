@@ -433,6 +433,9 @@ function lookup_(email, ref) {
     if (field(d, 'Email').toLowerCase() !== email) return;
     var rf = field(d, 'Ref').toUpperCase();
     if (ref && rf !== ref) return;
+    // Admin-scheduled pass sessions are shown under the customer's pass, not as
+    // standalone session bookings — skip them here so they don't appear twice.
+    if (/\(plan\)\s*$/i.test(field(d, 'Program'))) return;
     var conc = field(d, 'Concession');
     var c = conc ? { pasig: /Pasig/i.test(conc), local: /Greenpark|RHS/i.test(conc), pac: /PAC/i.test(conc) } : null;
     var st = ev.getStartTime();
@@ -535,8 +538,14 @@ function savePlan_(body) {
 function removePlan_(body) {
   var email = (body.email || '').trim().toLowerCase();
   if (!email || body.ts == null) return json_({ ok: false, reason: 'missing email or ts' });
+  // Read the pass first so the cancellation log can name it.
+  var planName = '', holder = '';
+  var raw = PropertiesService.getScriptProperties().getProperty(planKey_(email, body.ts));
+  if (raw) { try { var pl = JSON.parse(raw); planName = pl.name || ''; holder = pl.holder || ''; } catch (e) {} }
   PropertiesService.getScriptProperties().deleteProperty(planKey_(email, body.ts));
   dbRemovePass_(email, body.ts); // remove from the Passes tab too
+  // Audit: record who removed the pass and when.
+  dbAppend_('cancels', [nowStr_(), '', '', '', ('Pass: ' + planName), holder, email, (body.by || 'customer'), '']);
   return json_({ ok: true });
 }
 // GET ?action=plans            → every pass across all customers (for the admin)
