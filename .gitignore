@@ -1,0 +1,12 @@
+# Dependencies / build tooling (only used locally for testing)
+node_modules/
+package.json
+package-lock.json
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temp test scripts
+_*.mjs

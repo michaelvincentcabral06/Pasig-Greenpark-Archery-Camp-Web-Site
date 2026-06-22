@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Spline+Sans:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:#e3e0d4;font-family:'Spline Sans',system-ui,sans-serif;color:#2b2b28;}
+  @keyframes wfpulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.35;transform:scale(.82);}}
+  @keyframes wfblink{0%,100%{opacity:1;}50%{opacity:.25;}}
+</style>
+</helmet>
+
+<div style="display:flex;min-height:100vh;width:100%;background:#e3e0d4;">
+
+  <!-- ===== LEFT NAV RAIL ===== -->
+  <aside style="width:230px;flex:none;background:#2b2b28;color:#e9e6da;padding:20px 16px;position:sticky;top:0;height:100vh;overflow:auto;">
+    <div style="font-family:'Caveat',cursive;font-size:27px;line-height:1.05;color:#fff;">Greenpark</div>
+    <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.18em;color:#9ec5a8;margin-top:2px;">TOURNAMENT MANAGER</div>
+    <div style="font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:0.18em;color:#7d7a70;margin-top:14px;padding-bottom:6px;border-bottom:1px solid #45433d;">WIREFRAMES · v0.1</div>
+
+    <sc-for list="{{ navOverview }}" as="item" hint-placeholder-count="1">
+      <button onClick="{{ item.onClick }}" style="{{ item.rowStyle }}">
+        <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;opacity:.6;">{{ item.tag }}</span>
+        <span>{{ item.label }}</span>
+      </button>
+    </sc-for>
+
+    <div style="font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:0.18em;color:#7d7a70;margin:16px 0 6px;">ADMIN PORTAL</div>
+    <sc-for list="{{ navAdmin }}" as="item" hint-placeholder-count="5">
+      <button onClick="{{ item.onClick }}" style="{{ item.rowStyle }}">
+        <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;opacity:.6;">{{ item.tag }}</span>
+        <span>{{ item.label }}</span>
+      </button>
+    </sc-for>
+
+    <div style="font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:0.18em;color:#7d7a70;margin:16px 0 6px;">PUBLIC</div>
+    <sc-for list="{{ navPublic }}" as="item" hint-placeholder-count="2">
+      <button onClick="{{ item.onClick }}" style="{{ item.rowStyle }}">
+        <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;opacity:.6;">{{ item.tag }}</span>
+        <span>{{ item.label }}</span>
+      </button>
+    </sc-for>
+
+    <div style="font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:0.18em;color:#7d7a70;margin:16px 0 6px;">PARTICIPANT</div>
+    <sc-for list="{{ navParticipant }}" as="item" hint-placeholder-count="1">
+      <button onClick="{{ item.onClick }}" style="{{ item.rowStyle }}">
+        <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;opacity:.6;">{{ item.tag }}</span>
+        <span>{{ item.label }}</span>
+      </button>
+    </sc-for>
+
+    <div style="margin-top:20px;padding-top:12px;border-top:1px solid #45433d;font-family:'Caveat',cursive;font-size:15px;color:#9ec5a8;line-height:1.25;">Low-fi wireframes — structure &amp; flow, not final visuals.</div>
+  </aside>
+
+  <!-- ===== MAIN CANVAS ===== -->
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column;">
+    <div style="display:flex;align-items:center;gap:14px;padding:14px 28px;background:#d9d6c8;border-bottom:2px solid #2b2b28;position:sticky;top:0;z-index:5;">
+      <div style="font-family:'Caveat',cursive;font-size:26px;line-height:1;">{{ screenTitle }}</div>
+      <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.14em;color:#6f6c63;padding:4px 9px;border:1.5px solid #b4b0a2;border-radius:20px;">{{ screenDevice }}</div>
+      <div style="flex:1;"></div>
+      <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.2em;color:#3c6b48;border:1.5px dashed #3c6b48;border-radius:5px;padding:5px 10px;">WIREFRAME</div>
+    </div>
+
+    <div style="flex:1;padding:34px clamp(20px,4vw,52px);overflow:auto;">
+      <!--SCREEN_SLOT-->
+
+      <!-- TOURNAMENT MANAGER (dashboard) -->
+      <sc-if value="{{ isManager }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Tournament Manager" style="max-width:1080px;margin:0 auto;">
+        <div style="display:flex;align-items:flex-end;gap:14px;margin-bottom:18px;flex-wrap:wrap;">
+          <div><div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#9b978c;">ADMIN HOME</div><div style="font-family:'Caveat',cursive;font-size:34px;line-height:1;">Your tournaments</div></div>
+          <div style="flex:1;"></div>
+          <button onClick="{{ goSetup }}" style="border:none;cursor:pointer;background:#3c6b48;color:#fff;font-size:14px;font-weight:600;border-radius:8px;padding:11px 18px;box-shadow:3px 3px 0 rgba(43,43,40,0.2);">+ New tournament</button>
+        </div>
+
+        <!-- summary stats -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;">
+          <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:14px 16px;"><div style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9b978c;">LIVE NOW</div><div style="font-size:26px;font-weight:700;color:#3c6b48;">1</div></div>
+          <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:14px 16px;"><div style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9b978c;">REG. OPEN</div><div style="font-size:26px;font-weight:700;">1</div></div>
+          <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:14px 16px;"><div style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9b978c;">DRAFT</div><div style="font-size:26px;font-weight:700;">1</div></div>
+          <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:14px 16px;"><div style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9b978c;">ARCHIVED</div><div style="font-size:26px;font-weight:700;color:#9b978c;">7</div></div>
+        </div>
+
+        <!-- table header -->
+        <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);overflow:hidden;">
+          <div style="display:grid;grid-template-columns:1.6fr 1.1fr 0.7fr 0.7fr 1fr 0.7fr;gap:8px;padding:10px 16px;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.06em;color:#9b978c;border-bottom:1.5px solid #eee;">
+            <div>TOURNAMENT</div><div>DATES</div><div style="text-align:center;">CATS</div><div style="text-align:center;">ENTRIES</div><div>STATUS</div><div></div>
+          </div>
+
+          <!-- live row -->
+          <div style="display:grid;grid-template-columns:1.6fr 1.1fr 0.7fr 0.7fr 1fr 0.7fr;gap:8px;padding:13px 16px;align-items:center;border-bottom:1px dashed #eee;font-size:13px;background:#f3f7f3;">
+            <div><b>Greenpark Open 2026</b><div style="font-size:11px;color:#9b978c;">Pasig Greenpark Range</div></div>
+            <div style="color:#55524a;">14–16 Jul</div>
+            <div style="text-align:center;">4</div>
+            <div style="text-align:center;">48</div>
+            <div><span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#3c6b48;background:#e7efe8;border:1.5px solid #3c6b48;border-radius:20px;padding:3px 9px;"><span style="width:7px;height:7px;border-radius:50%;background:#3c6b48;animation:wfpulse 1.4s infinite;"></span>LIVE</span></div>
+            <div style="text-align:right;"><button onClick="{{ goLive }}" style="cursor:pointer;border:2px solid #2b2b28;background:#fff;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;">Open ›</button></div>
+          </div>
+
+          <!-- reg open row -->
+          <div style="display:grid;grid-template-columns:1.6fr 1.1fr 0.7fr 0.7fr 1fr 0.7fr;gap:8px;padding:13px 16px;align-items:center;border-bottom:1px dashed #eee;font-size:13px;">
+            <div><b>Marikina Indoor 18m</b><div style="font-size:11px;color:#9b978c;">Marikina Sports Center</div></div>
+            <div style="color:#55524a;">02 Aug</div>
+            <div style="text-align:center;">3</div>
+            <div style="text-align:center;">21</div>
+            <div><span style="font-size:11px;font-weight:600;color:#8a5e10;background:#fbf3e2;border:1.5px solid #d8b65a;border-radius:20px;padding:3px 9px;">REGISTRATION OPEN</span></div>
+            <div style="text-align:right;"><button onClick="{{ goSetup }}" style="cursor:pointer;border:2px solid #2b2b28;background:#fff;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;">Manage ›</button></div>
+          </div>
+
+          <!-- draft row -->
+          <div style="display:grid;grid-template-columns:1.6fr 1.1fr 0.7fr 0.7fr 1fr 0.7fr;gap:8px;padding:13px 16px;align-items:center;border-bottom:1px dashed #eee;font-size:13px;">
+            <div><b>Greenpark Juniors Cup</b><div style="font-size:11px;color:#9b978c;">not yet published</div></div>
+            <div style="color:#9b978c;">TBD</div>
+            <div style="text-align:center;color:#9b978c;">2</div>
+            <div style="text-align:center;color:#9b978c;">—</div>
+            <div><span style="font-size:11px;font-weight:600;color:#6f6c63;background:#f1efe7;border:1.5px dashed #b4b0a2;border-radius:20px;padding:3px 9px;">DRAFT</span></div>
+            <div style="text-align:right;"><button onClick="{{ goSetup }}" style="cursor:pointer;border:2px solid #2b2b28;background:#fff;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;">Edit ›</button></div>
+          </div>
+
+          <!-- completed row -->
+          <div style="display:grid;grid-template-columns:1.6fr 1.1fr 0.7fr 0.7fr 1fr 0.7fr;gap:8px;padding:13px 16px;align-items:center;font-size:13px;color:#6f6c63;">
+            <div>Pasig Spring Classic 2026</div>
+            <div>03–04 May</div>
+            <div style="text-align:center;">5</div>
+            <div style="text-align:center;">62</div>
+            <div><span style="font-size:11px;font-weight:600;color:#6f6c63;background:#f1efe7;border:1.5px solid #d8d4c7;border-radius:20px;padding:3px 9px;">✓ COMPLETED</span></div>
+            <div style="text-align:right;"><button onClick="{{ goCerts }}" style="cursor:pointer;border:1.5px dashed #b4b0a2;background:#fff;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;color:#6f6c63;">Results ›</button></div>
+          </div>
+        </div>
+
+        <sc-if value="{{ showNotes }}" hint-placeholder-val="{{ true }}">
+        <div style="margin-top:14px;font-family:'Caveat',cursive;font-size:19px;color:#3c6b48;line-height:1.25;">This is the admin's home base — every tournament's lifecycle (draft → registration → live → completed) in one list. Open one to drop into setup, scoring, seeding or certificates.</div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <!-- REGISTRATION -->
+      <sc-if value="{{ isRegister }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Registration" style="max-width:980px;margin:0 auto;display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap;">
+        <!-- phone -->
+        <div style="width:340px;flex:none;border:3px solid #2b2b28;border-radius:34px;background:#fff;padding:12px;box-shadow:6px 6px 0 rgba(43,43,40,0.12);">
+          <div style="height:22px;display:flex;align-items:center;justify-content:center;"><div style="width:90px;height:6px;border-radius:6px;background:#2b2b28;opacity:.25;"></div></div>
+          <div style="border:1.5px solid #2b2b28;border-radius:22px;overflow:hidden;">
+            <div style="background:#3c6b48;color:#fff;padding:16px 16px 14px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:0.14em;color:#cdebd4;">REGISTER · CLOSES 12 JUL</div>
+              <div style="font-weight:600;font-size:17px;margin-top:3px;">Greenpark Open 2026</div>
+            </div>
+            <div style="padding:14px;display:flex;flex-direction:column;gap:11px;">
+              <div><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Full name</div><div style="border:1.5px dashed #9b978c;border-radius:6px;height:38px;display:flex;align-items:center;padding:0 11px;font-size:13px;color:#3c6b48;background:#faf9f4;">J. Dela Cruz</div></div>
+              <div style="display:flex;gap:9px;"><div style="flex:1;"><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Club</div><div style="border:1.5px dashed #9b978c;border-radius:6px;height:38px;display:flex;align-items:center;padding:0 11px;font-size:13px;color:#9b978c;background:#faf9f4;">Pasig AC</div></div><div style="width:96px;"><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Division</div><div style="border:1.5px dashed #9b978c;border-radius:6px;height:38px;display:flex;align-items:center;padding:0 11px;font-size:13px;color:#9b978c;background:#faf9f4;">Sr ▾</div></div></div>
+              <div><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Category</div><div style="border:1.5px solid #3c6b48;border-radius:6px;height:38px;display:flex;align-items:center;justify-content:space-between;padding:0 11px;font-size:13px;color:#3c6b48;background:#e7efe8;"><span>Recurve Men</span><span style="font-family:'Spline Sans Mono',monospace;font-size:10px;">9/16 left ▾</span></div></div>
+              <div style="border-top:1px dashed #e4e1d6;padding-top:10px;"><div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.14em;color:#9b978c;margin-bottom:8px;">BOW SPECS</div>
+                <div style="display:flex;gap:9px;"><div style="flex:1;"><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Bow type</div><div style="border:1.5px dashed #9b978c;border-radius:6px;height:34px;display:flex;align-items:center;padding:0 11px;font-size:12px;color:#9b978c;background:#faf9f4;">Recurve</div></div><div style="width:96px;"><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Draw wt</div><div style="border:1.5px dashed #9b978c;border-radius:6px;height:34px;display:flex;align-items:center;padding:0 11px;font-size:12px;color:#9b978c;background:#faf9f4;">38#</div></div></div>
+              </div>
+              <label style="display:flex;align-items:center;gap:9px;font-size:12px;color:#55524a;"><span style="width:18px;height:18px;border-radius:4px;border:2px solid #3c6b48;background:#3c6b48;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;">✓</span>I accept the waiver &amp; rules</label>
+              <button style="border:none;cursor:pointer;background:#3c6b48;color:#fff;font-size:14px;font-weight:600;border-radius:8px;padding:12px;">Submit registration</button>
+            </div>
+          </div>
+        </div>
+        <!-- notes -->
+        <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:14px;">
+          <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:16px;"><div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#9b978c;margin-bottom:8px;">SELF-SERVICE ENTRY</div><div style="font-size:13px;line-height:1.7;color:#55524a;">Public form, no login needed to register. Category capacity shown live; full categories are disabled. Submitting creates a participant record that flows straight into scoring &amp; seeding.</div></div>
+          <sc-if value="{{ showNotes }}" hint-placeholder-val="{{ true }}">
+          <div style="border:1.5px dashed #3c6b48;border-radius:8px;padding:14px;background:#eef3ef;font-family:'Caveat',cursive;font-size:19px;color:#3c6b48;line-height:1.25;">Club field auto-normalizes on submit, so team grouping later stays clean. Bow specs prefill the participant's profile.</div>
+          </sc-if>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- PROFILE -->
+      <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Profile" style="max-width:920px;margin:0 auto;">
+        <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);overflow:hidden;">
+          <div style="display:flex;align-items:center;gap:14px;padding:18px 20px;border-bottom:1.5px solid #eee;">
+            <div style="width:52px;height:52px;border-radius:50%;background:repeating-linear-gradient(45deg,#eceadf,#eceadf 6px,#f6f5ee 6px,#f6f5ee 12px);border:2px solid #2b2b28;display:flex;align-items:center;justify-content:center;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9b978c;">FOTO</div>
+            <div style="flex:1;"><div style="font-weight:600;font-size:17px;">J. Dela Cruz</div><div style="font-size:12px;color:#9b978c;">Pasig AC · member since 2023</div></div>
+            <span style="font-size:13px;font-weight:600;color:#fff;background:#3c6b48;border-radius:6px;padding:8px 16px;">Edit profile</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+            <!-- contact -->
+            <div style="padding:18px 20px;border-right:1.5px dashed #e4e1d6;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#9b978c;margin-bottom:12px;">CONTACT</div>
+              <div style="display:flex;flex-direction:column;gap:11px;">
+                <div><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Email</div><div style="border:1.5px dashed #9b978c;border-radius:5px;height:36px;display:flex;align-items:center;padding:0 11px;font-size:13px;color:#9b978c;background:#faf9f4;">j.delacruz@email.com</div></div>
+                <div><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Mobile</div><div style="border:1.5px dashed #9b978c;border-radius:5px;height:36px;display:flex;align-items:center;padding:0 11px;font-size:13px;color:#9b978c;background:#faf9f4;">0917 ••• ••••</div></div>
+                <div style="display:flex;gap:9px;"><div style="flex:1;"><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Club</div><div style="border:1.5px dashed #9b978c;border-radius:5px;height:36px;display:flex;align-items:center;padding:0 11px;font-size:13px;color:#3c6b48;background:#faf9f4;">Pasig AC</div></div><div style="width:96px;"><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Division</div><div style="border:1.5px dashed #9b978c;border-radius:5px;height:36px;display:flex;align-items:center;padding:0 11px;font-size:13px;color:#9b978c;background:#faf9f4;">Senior</div></div></div>
+              </div>
+            </div>
+            <!-- bow specs -->
+            <div style="padding:18px 20px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#3c6b48;margin-bottom:12px;">BOW SPECS</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;">
+                <div><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Bow type</div><div style="border:1.5px solid #3c6b48;border-radius:5px;height:36px;display:flex;align-items:center;padding:0 11px;font-size:13px;color:#3c6b48;background:#e7efe8;">Recurve</div></div>
+                <div><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Draw weight</div><div style="border:1.5px dashed #9b978c;border-radius:5px;height:36px;display:flex;align-items:center;padding:0 11px;font-size:13px;color:#9b978c;background:#faf9f4;">38 lb</div></div>
+                <div><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Draw length</div><div style="border:1.5px dashed #9b978c;border-radius:5px;height:36px;display:flex;align-items:center;padding:0 11px;font-size:13px;color:#9b978c;background:#faf9f4;">28.5 in</div></div>
+                <div><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Arrow spec</div><div style="border:1.5px dashed #9b978c;border-radius:5px;height:36px;display:flex;align-items:center;padding:0 11px;font-size:13px;color:#9b978c;background:#faf9f4;">X10 · 550</div></div>
+                <div><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Sight</div><div style="border:1.5px dashed #9b978c;border-radius:5px;height:36px;display:flex;align-items:center;padding:0 11px;font-size:13px;color:#9b978c;background:#faf9f4;">Shibuya</div></div>
+                <div><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Stabilizer</div><div style="border:1.5px dashed #9b978c;border-radius:5px;height:36px;display:flex;align-items:center;padding:0 11px;font-size:13px;color:#9b978c;background:#faf9f4;">30/12 in</div></div>
+              </div>
+            </div>
+          </div>
+          <sc-if value="{{ showNotes }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:0 20px 16px;font-family:'Caveat',cursive;font-size:18px;color:#3c6b48;line-height:1.2;">Bow specs carry into every event the archer enters — and feed equipment inspection lists for officials.</div>
+          </sc-if>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- LIVE STANDINGS -->
+      <sc-if value="{{ isLive }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Live Standings" style="max-width:1080px;margin:0 auto;">
+        <div style="display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap;">
+
+          <!-- public board -->
+          <div style="flex:1;min-width:420px;background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);overflow:hidden;">
+            <div style="background:#2b2b28;color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+              <div><div style="font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:0.16em;color:#9ec5a8;">GREENPARK OPEN 2026 · PUBLIC</div><div style="font-weight:600;font-size:16px;">Qualification — Recurve Men</div></div>
+              <div style="flex:1;"></div>
+              <div style="display:flex;align-items:center;gap:7px;border:1.5px solid #3c6b48;border-radius:20px;padding:5px 11px;background:rgba(60,107,72,0.18);"><span style="width:9px;height:9px;border-radius:50%;background:#5fd07f;animation:wfpulse 1.4s infinite;"></span><span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#cdebd4;">LIVE · &lt;2s</span></div>
+            </div>
+            <div style="padding:8px 18px;display:flex;gap:8px;border-bottom:1.5px solid #eee;font-size:12px;">
+              <span style="font-weight:600;border-bottom:2px solid #3c6b48;padding:4px 2px;">Recurve Men</span>
+              <span style="color:#9b978c;padding:4px 6px;">Recurve Women</span>
+              <span style="color:#9b978c;padding:4px 6px;">Compound</span>
+              <span style="flex:1;"></span>
+              <span style="color:#9b978c;font-family:'Spline Sans Mono',monospace;font-size:10px;align-self:center;">updated 3s ago</span>
+            </div>
+            <!-- header -->
+            <div style="display:grid;grid-template-columns:34px 1fr 60px 38px 38px 38px;gap:6px;padding:8px 18px;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9b978c;border-bottom:1px solid #eee;">
+              <div>RK</div><div>ARCHER</div><div style="text-align:right;">SCORE</div><div style="text-align:right;">X</div><div style="text-align:right;">10</div><div style="text-align:right;">9</div>
+            </div>
+            <!-- rows -->
+            <div style="display:grid;grid-template-columns:34px 1fr 60px 38px 38px 38px;gap:6px;padding:9px 18px;font-size:13px;border-bottom:1px dashed #eee;align-items:center;"><span style="font-family:'Spline Sans Mono',monospace;color:#3c6b48;font-weight:700;">1</span><span><b>J. Dela Cruz</b> <span style="color:#9b978c;font-size:11px;">Pasig AC</span></span><span style="text-align:right;font-weight:600;">331</span><span style="text-align:right;color:#6f6c63;">8</span><span style="text-align:right;color:#6f6c63;">11</span><span style="text-align:right;color:#6f6c63;">6</span></div>
+            <div style="display:grid;grid-template-columns:34px 1fr 60px 38px 38px 38px;gap:6px;padding:9px 18px;font-size:13px;border-bottom:1px dashed #eee;align-items:center;"><span style="font-family:'Spline Sans Mono',monospace;color:#3c6b48;font-weight:700;">2</span><span><b>R. Mendoza</b> <span style="color:#9b978c;font-size:11px;">QC Archers</span></span><span style="text-align:right;font-weight:600;">327</span><span style="text-align:right;color:#6f6c63;">6</span><span style="text-align:right;color:#6f6c63;">9</span><span style="text-align:right;color:#6f6c63;">8</span></div>
+
+            <!-- TIE / SHOOT-OFF rows -->
+            <div style="display:grid;grid-template-columns:34px 1fr 60px 38px 38px 38px;gap:6px;padding:9px 18px;font-size:13px;align-items:center;background:#fbf3e2;border-top:1.5px solid #b8862f;border-bottom:1px dashed #e3c98a;"><span style="font-family:'Spline Sans Mono',monospace;color:#8a5e10;font-weight:700;">3=</span><span><b>A. Reyes</b> <span style="color:#9b978c;font-size:11px;">Pasig AC</span></span><span style="text-align:right;font-weight:600;">318</span><span style="text-align:right;color:#8a5e10;font-weight:600;">5</span><span style="text-align:right;color:#6f6c63;">7</span><span style="text-align:right;color:#6f6c63;">9</span></div>
+            <div style="display:grid;grid-template-columns:34px 1fr 60px 38px 38px 38px;gap:6px;padding:9px 18px;font-size:13px;align-items:center;background:#fbf3e2;"><span style="font-family:'Spline Sans Mono',monospace;color:#8a5e10;font-weight:700;">3=</span><span><b>M. Tan</b> <span style="color:#9b978c;font-size:11px;">QC Archers</span></span><span style="text-align:right;font-weight:600;">318</span><span style="text-align:right;color:#8a5e10;font-weight:600;">5</span><span style="text-align:right;color:#6f6c63;">7</span><span style="text-align:right;color:#6f6c63;">9</span></div>
+            <div style="background:#fbf3e2;border-bottom:1.5px solid #b8862f;padding:6px 18px 12px;display:flex;align-items:center;gap:8px;font-size:12px;color:#8a5e10;"><span>⚑</span><span><b>Equal on score &amp; X/10/9 counts</b> — WA tie-break exhausted. Shoot-off required for the #3 ranking position.</span></div>
+
+            <div style="display:grid;grid-template-columns:34px 1fr 60px 38px 38px 38px;gap:6px;padding:9px 18px;font-size:13px;border-bottom:1px dashed #eee;align-items:center;color:#55524a;"><span style="font-family:'Spline Sans Mono',monospace;color:#9b978c;">5</span><span>A. Velasco <span style="color:#9b978c;font-size:11px;">Marikina</span></span><span style="text-align:right;">311</span><span style="text-align:right;color:#9b978c;">4</span><span style="text-align:right;color:#9b978c;">8</span><span style="text-align:right;color:#9b978c;">7</span></div>
+          </div>
+
+          <!-- right: shoot-off + notes -->
+          <div style="width:300px;flex:none;display:flex;flex-direction:column;gap:14px;">
+            <div style="background:#fff;border:2px solid #b8862f;border-radius:8px;box-shadow:3px 3px 0 rgba(184,134,47,0.2);padding:16px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#8a5e10;margin-bottom:6px;">⚑ SHOOT-OFF PENDING</div>
+              <div style="font-size:13px;color:#55524a;line-height:1.6;">Reyes vs Tan · single arrow, closest to centre. Admin records the result here; ranking resolves and the board updates live.</div>
+              <div style="display:flex;gap:8px;margin-top:12px;">
+                <div style="flex:1;border:1.5px dashed #b8862f;border-radius:6px;padding:9px;text-align:center;font-size:12px;"><div style="color:#9b978c;font-size:10px;">REYES</div><div style="font-family:'Spline Sans Mono',monospace;font-size:18px;margin-top:2px;color:#b8862f;">?</div></div>
+                <div style="flex:1;border:1.5px dashed #b8862f;border-radius:6px;padding:9px;text-align:center;font-size:12px;"><div style="color:#9b978c;font-size:10px;">TAN</div><div style="font-family:'Spline Sans Mono',monospace;font-size:18px;margin-top:2px;color:#b8862f;">?</div></div>
+              </div>
+              <button style="width:100%;margin-top:10px;border:none;cursor:pointer;background:#b8862f;color:#fff;font-size:13px;font-weight:600;border-radius:6px;padding:9px;">Enter shoot-off result</button>
+            </div>
+            <sc-if value="{{ showNotes }}" hint-placeholder-val="{{ true }}">
+            <div style="border:1.5px dashed #3c6b48;border-radius:8px;padding:13px;background:#eef3ef;font-family:'Caveat',cursive;font-size:19px;color:#3c6b48;line-height:1.25;">Public board is read-only &amp; pushed over WebSocket — every committed end/shoot-off lands here in under 2s. The LIVE pill pulses while connected.</div>
+            </sc-if>
+            <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:14px;font-size:12px;color:#55524a;line-height:1.6;"><b>Same board, two views:</b> on mobile the table collapses to ranked cards; the LIVE pill and shoot-off banner stay pinned.</div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- CERTIFICATES -->
+      <sc-if value="{{ isCerts }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Certificate Designer" style="max-width:1180px;margin:0 auto;display:grid;grid-template-columns:170px 1fr 250px;gap:18px;align-items:start;">
+
+        <!-- element palette -->
+        <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:14px;">
+          <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#9b978c;margin-bottom:10px;">ELEMENTS</div>
+          <div style="display:flex;flex-direction:column;gap:7px;font-size:13px;">
+            <div style="border:1.5px solid #2b2b28;border-radius:6px;padding:8px 10px;">T  Text</div>
+            <div style="border:1.5px solid #3c6b48;color:#3c6b48;border-radius:6px;padding:8px 10px;background:#e7efe8;">{ }  Placeholder</div>
+            <div style="border:1.5px dashed #9b978c;border-radius:6px;padding:8px 10px;color:#6f6c63;">▣  Image / logo</div>
+            <div style="border:1.5px dashed #9b978c;border-radius:6px;padding:8px 10px;color:#6f6c63;">▭  Shape / line</div>
+          </div>
+          <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#9b978c;margin:16px 0 8px;">PLACEHOLDERS</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;font-family:'Spline Sans Mono',monospace;font-size:10px;">
+            <span style="background:#e7efe8;color:#3c6b48;border-radius:4px;padding:3px 6px;">{name}</span>
+            <span style="background:#e7efe8;color:#3c6b48;border-radius:4px;padding:3px 6px;">{category}</span>
+            <span style="background:#e7efe8;color:#3c6b48;border-radius:4px;padding:3px 6px;">{rank}</span>
+            <span style="background:#e7efe8;color:#3c6b48;border-radius:4px;padding:3px 6px;">{club}</span>
+            <span style="background:#e7efe8;color:#3c6b48;border-radius:4px;padding:3px 6px;">{score}</span>
+            <span style="background:#e7efe8;color:#3c6b48;border-radius:4px;padding:3px 6px;">{date}</span>
+          </div>
+        </div>
+
+        <!-- canvas -->
+        <div>
+          <div style="position:relative;background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:4px 4px 0 rgba(43,43,40,0.14);aspect-ratio:1.414/1;padding:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;">
+            <div style="position:absolute;inset:14px;border:2px solid #3c6b48;border-radius:4px;pointer-events:none;"></div>
+            <div style="width:64px;height:64px;border-radius:50%;border:2px dashed #9b978c;display:flex;align-items:center;justify-content:center;font-family:'Spline Sans Mono',monospace;font-size:9px;color:#9b978c;background:repeating-linear-gradient(45deg,#f1efe7,#f1efe7 6px,#faf9f4 6px,#faf9f4 12px);">LOGO</div>
+            <div style="font-family:'Caveat',cursive;font-size:34px;margin-top:14px;">Certificate of Achievement</div>
+            <div style="font-size:12px;color:#6f6c63;margin-top:6px;letter-spacing:0.08em;">GREENPARK OPEN 2026</div>
+            <div style="margin-top:18px;font-size:13px;color:#55524a;">This certifies that</div>
+            <div style="margin-top:6px;font-size:22px;font-weight:600;color:#3c6b48;border-bottom:2px solid #2b2b28;outline:1.5px dashed #3c6b48;outline-offset:4px;padding:0 14px 2px;font-family:'Spline Sans Mono',monospace;">{name}</div>
+            <div style="margin-top:14px;font-size:13px;color:#55524a;line-height:1.6;">placed <b style="color:#3c6b48;font-family:'Spline Sans Mono',monospace;">{rank}</b> in <b style="color:#3c6b48;font-family:'Spline Sans Mono',monospace;">{category}</b><br>with a score of <b style="color:#3c6b48;font-family:'Spline Sans Mono',monospace;">{score}</b> · <span style="font-family:'Spline Sans Mono',monospace;color:#3c6b48;">{date}</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:10px;font-size:11px;color:#6f6c63;font-family:'Spline Sans Mono',monospace;"><span>A4 LANDSCAPE</span><span>·</span><span>RENDERED VIA HEADLESS PDF</span><span style="flex:1;"></span><span style="border:1.5px solid #2b2b28;border-radius:5px;padding:5px 9px;background:#fff;">⤓ Preview sample</span></div>
+        </div>
+
+        <!-- properties + batch -->
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:14px;">
+            <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#9b978c;margin-bottom:10px;">SELECTED — {name}</div>
+            <div style="display:flex;flex-direction:column;gap:9px;font-size:12px;">
+              <div><div style="color:#6f6c63;margin-bottom:3px;">Bind to</div><div style="border:1.5px solid #3c6b48;color:#3c6b48;border-radius:5px;height:32px;display:flex;align-items:center;padding:0 9px;background:#e7efe8;font-family:'Spline Sans Mono',monospace;font-size:11px;">{name} ▾</div></div>
+              <div style="display:flex;gap:8px;"><div style="flex:1;"><div style="color:#6f6c63;margin-bottom:3px;">Font</div><div style="border:1.5px dashed #9b978c;border-radius:5px;height:32px;display:flex;align-items:center;padding:0 9px;color:#6f6c63;">Serif ▾</div></div><div style="width:64px;"><div style="color:#6f6c63;margin-bottom:3px;">Size</div><div style="border:1.5px dashed #9b978c;border-radius:5px;height:32px;display:flex;align-items:center;padding:0 9px;color:#6f6c63;">22</div></div></div>
+            </div>
+          </div>
+
+          <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:14px;">
+            <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#9b978c;margin-bottom:8px;">BATCH DELIVERY</div>
+            <div style="font-size:12px;color:#55524a;margin-bottom:10px;">Generate for <b>Recurve Men</b> — <b>12 recipients</b></div>
+            <button style="width:100%;border:none;cursor:pointer;background:#3c6b48;color:#fff;font-size:13px;font-weight:600;border-radius:6px;padding:10px;margin-bottom:6px;">Generate PDFs</button>
+            <button style="width:100%;border:2px solid #2b2b28;cursor:pointer;background:#fff;color:#2b2b28;font-size:13px;font-weight:600;border-radius:6px;padding:9px;">✉ Email all</button>
+
+            <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.14em;color:#9b978c;margin:14px 0 8px;">JOB QUEUE</div>
+            <div style="display:flex;flex-direction:column;gap:6px;font-size:11px;">
+              <div style="display:flex;align-items:center;gap:7px;"><span style="width:8px;height:8px;border-radius:50%;background:#3c6b48;"></span><span style="flex:1;">8 sent</span><span style="color:#9b978c;">done</span></div>
+              <div style="display:flex;align-items:center;gap:7px;"><span style="width:8px;height:8px;border-radius:50%;background:#b8862f;animation:wfblink 1s infinite;"></span><span style="flex:1;">2 generating…</span><span style="color:#9b978c;">PDF</span></div>
+              <div style="display:flex;align-items:center;gap:7px;"><span style="width:8px;height:8px;border-radius:50%;background:#c0392b;"></span><span style="flex:1;">1 failed email</span><span style="color:#c0392b;">retry 2/3</span></div>
+              <div style="display:flex;align-items:center;gap:7px;"><span style="width:8px;height:8px;border-radius:50%;background:#c9c5b8;"></span><span style="flex:1;">1 queued</span><span style="color:#9b978c;">wait</span></div>
+            </div>
+            <sc-if value="{{ showNotes }}" hint-placeholder-val="{{ true }}">
+            <div style="margin-top:10px;font-family:'Caveat',cursive;font-size:17px;color:#3c6b48;line-height:1.2;">Failed sends retry automatically with backoff — admin can force-retry too.</div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- BRACKET -->
+      <sc-if value="{{ isBracket }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Bracket Generator" style="max-width:1120px;margin:0 auto;">
+        <div style="display:grid;grid-template-columns:330px 1fr;gap:22px;align-items:start;">
+
+          <!-- config panel -->
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:18px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#9b978c;">GENERATOR CONFIG</div>
+              <div style="font-family:'Caveat',cursive;font-size:25px;margin:2px 0 14px;">Recurve Men — Olympic round</div>
+
+              <div style="font-size:11px;color:#6f6c63;margin-bottom:5px;">Bracket size</div>
+              <div style="display:flex;gap:6px;margin-bottom:14px;">
+                <span style="flex:1;text-align:center;font-size:13px;border:1.5px dashed #b4b0a2;border-radius:5px;padding:7px 0;color:#9b978c;">R32</span>
+                <span style="flex:1;text-align:center;font-size:13px;font-weight:600;border:2px solid #3c6b48;background:#e7efe8;color:#3c6b48;border-radius:5px;padding:7px 0;">R16</span>
+                <span style="flex:1;text-align:center;font-size:13px;border:1.5px dashed #b4b0a2;border-radius:5px;padding:7px 0;color:#9b978c;">R8</span>
+              </div>
+
+              <div style="font-size:11px;color:#6f6c63;margin-bottom:5px;">Seeding source</div>
+              <div style="border:1.5px dashed #9b978c;border-radius:5px;height:36px;display:flex;align-items:center;padding:0 11px;font-size:13px;color:#3c6b48;margin-bottom:14px;">Qualification ranking ▾</div>
+
+              <div style="display:flex;align-items:center;justify-content:space-between;background:#f1efe7;border-radius:6px;padding:9px 11px;font-size:13px;margin-bottom:8px;"><span>Participants</span><b>13</b></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;background:#e7efe8;border:1.5px solid #3c6b48;border-radius:6px;padding:9px 11px;font-size:13px;color:#3c6b48;"><span>BYEs (16 − 13)</span><b>3 → top 3 seeds</b></div>
+
+              <label style="display:flex;align-items:center;gap:9px;margin-top:14px;font-size:12px;color:#55524a;cursor:pointer;"><span style="width:18px;height:18px;border-radius:4px;border:2px solid #3c6b48;background:#3c6b48;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;">✓</span>Snapshot participant data at seeding (freeze names/clubs/scores)</label>
+              <label style="display:flex;align-items:center;gap:9px;margin-top:9px;font-size:12px;color:#55524a;cursor:pointer;"><span style="width:18px;height:18px;border-radius:4px;border:2px solid #3c6b48;background:#3c6b48;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;">✓</span>Force shoot-off entry for unresolved seeding ties</label>
+            </div>
+
+            <sc-if value="{{ showNotes }}" hint-placeholder-val="{{ true }}">
+            <div style="border:1.5px dashed #3c6b48;border-radius:8px;padding:13px;background:#eef3ef;font-family:'Caveat',cursive;font-size:19px;color:#3c6b48;line-height:1.25;">WA seeding: 1v16, 8v9, 5v12, 4v13, 3v14, 6v11, 7v10, 2v15. BYEs fill the bottom seeds so the top 3 advance to round 2 automatically.</div>
+            </sc-if>
+
+            <button style="border:none;cursor:pointer;background:#3c6b48;color:#fff;font-size:14px;font-weight:600;border-radius:8px;padding:13px;box-shadow:3px 3px 0 rgba(43,43,40,0.2);">⚙ Generate bracket</button>
+          </div>
+
+          <!-- preview -->
+          <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:18px;">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+              <div style="font-family:'Caveat',cursive;font-size:23px;">Generated seeding</div>
+              <div style="flex:1;"></div>
+              <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#6f6c63;">PREVIEW</span>
+              <div style="display:flex;">
+                <button onClick="{{ setBracketList }}" style="{{ segBList }}">A · Pairings</button>
+                <button onClick="{{ setBracketTree }}" style="{{ segBTree }}">B · Tree</button>
+              </div>
+            </div>
+
+            <!-- pairings list -->
+            <sc-if value="{{ bracketList }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+              <div style="display:flex;align-items:center;gap:8px;border:1.5px solid #2b2b28;border-radius:6px;padding:8px 10px;font-size:12px;"><span style="font-family:'Spline Sans Mono',monospace;color:#3c6b48;width:22px;">1</span><span style="flex:1;">J. Dela Cruz</span><span style="font-size:11px;font-weight:600;color:#8a5e10;background:#fbf3e2;border-radius:4px;padding:2px 7px;">BYE</span></div>
+              <div style="display:flex;align-items:center;gap:8px;border:1.5px solid #2b2b28;border-radius:6px;padding:8px 10px;font-size:12px;"><span style="font-family:'Spline Sans Mono',monospace;color:#3c6b48;width:22px;">8</span><span style="flex:1;">Velasco</span><span style="color:#9b978c;">v</span><span style="flex:1;text-align:right;">Lim <span style="color:#3c6b48;">#9</span></span></div>
+              <div style="display:flex;align-items:center;gap:8px;border:1.5px solid #2b2b28;border-radius:6px;padding:8px 10px;font-size:12px;"><span style="font-family:'Spline Sans Mono',monospace;color:#3c6b48;width:22px;">5</span><span style="flex:1;">Tan</span><span style="color:#9b978c;">v</span><span style="flex:1;text-align:right;">Cruz <span style="color:#3c6b48;">#12</span></span></div>
+              <div style="display:flex;align-items:center;gap:8px;border:1.5px solid #2b2b28;border-radius:6px;padding:8px 10px;font-size:12px;"><span style="font-family:'Spline Sans Mono',monospace;color:#3c6b48;width:22px;">4</span><span style="flex:1;">Reyes</span><span style="color:#9b978c;">v</span><span style="flex:1;text-align:right;">Ong <span style="color:#3c6b48;">#13</span></span></div>
+              <div style="display:flex;align-items:center;gap:8px;border:1.5px solid #2b2b28;border-radius:6px;padding:8px 10px;font-size:12px;"><span style="font-family:'Spline Sans Mono',monospace;color:#3c6b48;width:22px;">3</span><span style="flex:1;">Santos</span><span style="font-size:11px;font-weight:600;color:#8a5e10;background:#fbf3e2;border-radius:4px;padding:2px 7px;">BYE</span></div>
+              <div style="display:flex;align-items:center;gap:8px;border:1.5px solid #2b2b28;border-radius:6px;padding:8px 10px;font-size:12px;"><span style="font-family:'Spline Sans Mono',monospace;color:#3c6b48;width:22px;">6</span><span style="flex:1;">Garcia</span><span style="color:#9b978c;">v</span><span style="flex:1;text-align:right;">Yu <span style="color:#3c6b48;">#11</span></span></div>
+              <div style="display:flex;align-items:center;gap:8px;border:1.5px solid #2b2b28;border-radius:6px;padding:8px 10px;font-size:12px;"><span style="font-family:'Spline Sans Mono',monospace;color:#3c6b48;width:22px;">7</span><span style="flex:1;">Diaz</span><span style="color:#9b978c;">v</span><span style="flex:1;text-align:right;">Co <span style="color:#3c6b48;">#10</span></span></div>
+              <div style="display:flex;align-items:center;gap:8px;border:1.5px solid #2b2b28;border-radius:6px;padding:8px 10px;font-size:12px;"><span style="font-family:'Spline Sans Mono',monospace;color:#3c6b48;width:22px;">2</span><span style="flex:1;">Mendoza</span><span style="font-size:11px;font-weight:600;color:#8a5e10;background:#fbf3e2;border-radius:4px;padding:2px 7px;">BYE</span></div>
+            </div>
+            </sc-if>
+
+            <!-- tree -->
+            <sc-if value="{{ bracketTree }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:18px;font-size:11px;font-family:'Spline Sans Mono',monospace;color:#55524a;overflow:auto;">
+              <div style="display:flex;flex-direction:column;gap:9px;justify-content:space-around;">
+                <div style="border:1.5px solid #2b2b28;border-radius:4px;padding:6px 9px;background:#fbf3e2;">1 — BYE</div>
+                <div style="border:1.5px solid #2b2b28;border-radius:4px;padding:6px 9px;">8 v 9</div>
+                <div style="border:1.5px solid #2b2b28;border-radius:4px;padding:6px 9px;">5 v 12</div>
+                <div style="border:1.5px solid #2b2b28;border-radius:4px;padding:6px 9px;background:#fbf3e2;">4 v 13</div>
+                <div style="border:1.5px solid #2b2b28;border-radius:4px;padding:6px 9px;background:#fbf3e2;">3 — BYE</div>
+                <div style="border:1.5px solid #2b2b28;border-radius:4px;padding:6px 9px;">6 v 11</div>
+                <div style="border:1.5px solid #2b2b28;border-radius:4px;padding:6px 9px;">7 v 10</div>
+                <div style="border:1.5px solid #2b2b28;border-radius:4px;padding:6px 9px;background:#fbf3e2;">2 — BYE</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:32px;justify-content:space-around;color:#9b978c;">
+                <div style="border:1.5px dashed #b4b0a2;border-radius:4px;padding:6px 9px;">1/8 →</div>
+                <div style="border:1.5px dashed #b4b0a2;border-radius:4px;padding:6px 9px;">1/8 →</div>
+                <div style="border:1.5px dashed #b4b0a2;border-radius:4px;padding:6px 9px;">1/8 →</div>
+                <div style="border:1.5px dashed #b4b0a2;border-radius:4px;padding:6px 9px;">1/8 →</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:80px;justify-content:space-around;color:#c9c5b8;">
+                <div style="border:1.5px dashed #c9c5b8;border-radius:4px;padding:6px 9px;">QF</div>
+                <div style="border:1.5px dashed #c9c5b8;border-radius:4px;padding:6px 9px;">QF</div>
+              </div>
+              <div style="display:flex;flex-direction:column;justify-content:center;color:#c9c5b8;"><div style="border:1.5px dashed #c9c5b8;border-radius:4px;padding:6px 9px;">SF → ⌖</div></div>
+            </div>
+            </sc-if>
+
+            <!-- target assignment matrix -->
+            <div style="margin-top:18px;border-top:1.5px dashed #d8d4c7;padding-top:14px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#9b978c;margin-bottom:9px;">PER-ROUND TARGET ASSIGNMENT — tap a cell to reassign</div>
+              <div style="display:grid;grid-template-columns:90px repeat(4,1fr);gap:5px;font-family:'Spline Sans Mono',monospace;font-size:11px;">
+                <div></div><div style="text-align:center;color:#9b978c;">M1</div><div style="text-align:center;color:#9b978c;">M2</div><div style="text-align:center;color:#9b978c;">M3</div><div style="text-align:center;color:#9b978c;">M4</div>
+                <div style="color:#6f6c63;align-self:center;">1/8</div><div style="text-align:center;background:#e7efe8;border-radius:4px;padding:6px 0;color:#3c6b48;">T1</div><div style="text-align:center;background:#e7efe8;border-radius:4px;padding:6px 0;color:#3c6b48;">T2</div><div style="text-align:center;background:#e7efe8;border-radius:4px;padding:6px 0;color:#3c6b48;">T3</div><div style="text-align:center;background:#e7efe8;border-radius:4px;padding:6px 0;color:#3c6b48;">T4</div>
+                <div style="color:#6f6c63;align-self:center;">1/4</div><div style="text-align:center;background:#f1efe7;border-radius:4px;padding:6px 0;">T1</div><div style="text-align:center;background:#f1efe7;border-radius:4px;padding:6px 0;">T2</div><div style="text-align:center;border:1.5px dashed #c9c5b8;border-radius:4px;padding:6px 0;color:#c9c5b8;">—</div><div style="text-align:center;border:1.5px dashed #c9c5b8;border-radius:4px;padding:6px 0;color:#c9c5b8;">—</div>
+                <div style="color:#6f6c63;align-self:center;">1/2</div><div style="text-align:center;background:#f1efe7;border-radius:4px;padding:6px 0;">T1</div><div style="text-align:center;border:1.5px dashed #c9c5b8;border-radius:4px;padding:6px 0;color:#c9c5b8;">—</div><div style="text-align:center;border:1.5px dashed #c9c5b8;border-radius:4px;padding:6px 0;color:#c9c5b8;">—</div><div style="text-align:center;border:1.5px dashed #c9c5b8;border-radius:4px;padding:6px 0;color:#c9c5b8;">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- TEAMS -->
+      <sc-if value="{{ isTeams }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Team Assembly" style="max-width:1080px;margin:0 auto;">
+
+        <!-- odd-count exclusion banner -->
+        <div style="display:flex;align-items:center;gap:14px;border:2px solid #b8862f;background:#fbf3e2;border-radius:8px;padding:13px 16px;margin-bottom:18px;">
+          <span style="font-size:20px;">⚑</span>
+          <div style="flex:1;"><b>9 archers → 1 cannot be placed.</b> Teams of 3 leave one over. Lowest-ranked archer <b>#9 R. Santos (Pasig AC)</b> will be excluded.</div>
+          <span style="font-size:12px;font-weight:600;border:1.5px solid #2b2b28;border-radius:6px;padding:7px 11px;background:#fff;">Preview exclusion</span>
+          <span style="font-size:12px;font-weight:600;border:2px solid #b8862f;color:#8a5e10;border-radius:6px;padding:7px 11px;background:#fff;">Exclude &amp; continue</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:300px 1fr;gap:22px;align-items:start;">
+          <!-- left: config -->
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:18px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#9b978c;margin-bottom:8px;">ASSEMBLY METHOD</div>
+              <div style="display:flex;border-radius:6px;overflow:hidden;">
+                <sc-for list="{{ methodBtns }}" as="m" hint-placeholder-count="3">
+                  <button onClick="{{ m.onClick }}" style="{{ m.style }}">{{ m.label }}</button>
+                </sc-for>
+              </div>
+              <div style="margin-top:12px;font-size:12px;line-height:1.6;color:#55524a;">
+                <sc-if value="{{ teamByClub }}" hint-placeholder-val="{{ true }}"><div><b>By Club:</b> archers grouped by normalized club; top 3 of each club form that club's team.</div></sc-if>
+                <sc-if value="{{ teamByRank }}" hint-placeholder-val="{{ false }}"><div><b>By Rank:</b> snake the overall ranking into balanced teams.</div></sc-if>
+                <sc-if value="{{ teamMix }}" hint-placeholder-val="{{ false }}"><div><b>Mix:</b> 1 man + 1 woman per team by rank for the mixed-team event.</div></sc-if>
+              </div>
+            </div>
+
+            <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:18px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#9b978c;margin-bottom:8px;">PAIRING LOGIC</div>
+              <div style="font-size:13px;line-height:1.7;color:#55524a;">High + low balancing: pair the <b>strongest</b> with the <b>weakest</b> remaining seed so combined team seeds stay even.</div>
+              <div style="margin-top:10px;display:flex;flex-direction:column;gap:5px;font-family:'Spline Sans Mono',monospace;font-size:11px;">
+                <div style="display:flex;justify-content:space-between;background:#f1efe7;border-radius:4px;padding:6px 9px;"><span>Team A</span><span>#1 + #6 + #7</span></div>
+                <div style="display:flex;justify-content:space-between;background:#f1efe7;border-radius:4px;padding:6px 9px;"><span>Team B</span><span>#2 + #5 + #8</span></div>
+                <div style="display:flex;justify-content:space-between;background:#f1efe7;border-radius:4px;padding:6px 9px;"><span>Team C</span><span>#3 + #4 + (#9 ✕)</span></div>
+              </div>
+            </div>
+
+            <sc-if value="{{ showNotes }}" hint-placeholder-val="{{ true }}">
+            <div style="border:1.5px dashed #3c6b48;border-radius:8px;padding:13px;background:#eef3ef;font-family:'Caveat',cursive;font-size:19px;color:#3c6b48;line-height:1.25;">Club names normalized first — "Pasig A.C.", "pasig ac", "Pasig Archery Club" all collapse to one club before grouping.</div>
+            </sc-if>
+          </div>
+
+          <!-- right: preview table -->
+          <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:18px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <div style="font-family:'Caveat',cursive;font-size:24px;">Team preview — Recurve Men</div>
+              <span style="font-size:12px;font-weight:600;color:#fff;background:#3c6b48;border-radius:6px;padding:8px 14px;">Confirm teams</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="border:1.5px solid #2b2b28;border-radius:7px;overflow:hidden;">
+                <div style="display:flex;align-items:center;justify-content:space-between;background:#2b2b28;color:#fff;padding:8px 12px;font-size:13px;"><span style="font-weight:600;">Team A — Pasig AC</span><span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#9ec5a8;">SEED SUM 14</span></div>
+                <div style="display:flex;flex-direction:column;">
+                  <div style="display:flex;gap:10px;padding:8px 12px;font-size:13px;border-bottom:1px dashed #e4e1d6;"><span style="font-family:'Spline Sans Mono',monospace;color:#3c6b48;width:28px;">#1</span><span style="flex:1;">J. Dela Cruz</span><span style="color:#9b978c;">331</span></div>
+                  <div style="display:flex;gap:10px;padding:8px 12px;font-size:13px;border-bottom:1px dashed #e4e1d6;"><span style="font-family:'Spline Sans Mono',monospace;color:#3c6b48;width:28px;">#6</span><span style="flex:1;">A. Reyes</span><span style="color:#9b978c;">312</span></div>
+                  <div style="display:flex;gap:10px;padding:8px 12px;font-size:13px;"><span style="font-family:'Spline Sans Mono',monospace;color:#3c6b48;width:28px;">#7</span><span style="flex:1;">M. Tan</span><span style="color:#9b978c;">309</span></div>
+                </div>
+              </div>
+              <div style="border:1.5px solid #b4b0a2;border-radius:7px;overflow:hidden;opacity:.92;">
+                <div style="display:flex;align-items:center;justify-content:space-between;background:#6f6c63;color:#fff;padding:8px 12px;font-size:13px;"><span style="font-weight:600;">Team B — QC Archers</span><span style="font-family:'Spline Sans Mono',monospace;font-size:11px;">SEED SUM 15</span></div>
+                <div style="display:flex;gap:10px;padding:8px 12px;font-size:13px;color:#55524a;"><span style="font-family:'Spline Sans Mono',monospace;width:28px;">#2 #5 #8</span><span style="flex:1;">Velasco · Lim · Cruz</span></div>
+              </div>
+              <div style="border:1.5px dashed #b8862f;border-radius:7px;padding:10px 12px;background:#fbf3e2;display:flex;align-items:center;gap:10px;font-size:13px;color:#8a5e10;"><span>✕</span><span><b>#9 R. Santos</b> excluded — odd count. Re-include by removing a team or adding a 12th archer.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- SCORING -->
+      <sc-if value="{{ isScoring }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Score Entry" style="max-width:980px;margin:0 auto;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap;">
+          <div style="font-family:'Caveat',cursive;font-size:26px;">At the line — 36-arrow entry</div>
+          <div style="flex:1;"></div>
+          <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#6f6c63;">LAYOUT OPTION</span>
+          <div style="display:flex;">
+            <button onClick="{{ setScoreGrid }}" style="{{ segGrid }}">A · End grid</button>
+            <button onClick="{{ setScoreKeypad }}" style="{{ segKeypad }}">B · Big keypad</button>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap;">
+          <!-- phone -->
+          <div style="width:330px;flex:none;border:3px solid #2b2b28;border-radius:34px;background:#fff;padding:12px;box-shadow:6px 6px 0 rgba(43,43,40,0.12);">
+            <div style="height:22px;display:flex;align-items:center;justify-content:center;"><div style="width:90px;height:6px;border-radius:6px;background:#2b2b28;opacity:.25;"></div></div>
+            <div style="border:1.5px solid #2b2b28;border-radius:22px;overflow:hidden;">
+              <!-- header -->
+              <div style="background:#2b2b28;color:#fff;padding:12px 14px;">
+                <div style="font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:0.14em;color:#9ec5a8;">RECURVE MEN · TARGET 4A</div>
+                <div style="font-weight:600;font-size:15px;margin-top:2px;">J. Dela Cruz <span style="opacity:.6;font-weight:400;font-size:12px;">· Pasig AC</span></div>
+                <div style="display:flex;gap:14px;margin-top:8px;font-size:11px;">
+                  <span>End <b>4</b>/6</span><span>Total <b>247</b></span><span style="color:#9ec5a8;">X·8</span><span style="color:#9ec5a8;">10·11</span>
+                </div>
+              </div>
+
+              <!-- GRID VARIANT -->
+              <sc-if value="{{ scoreGrid }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:12px 12px 4px;">
+                <div style="display:grid;grid-template-columns:24px repeat(3,1fr) 1.2fr;gap:5px;font-family:'Spline Sans Mono',monospace;font-size:11px;align-items:center;">
+                  <div style="color:#9b978c;">#</div><div style="color:#9b978c;text-align:center;">a1</div><div style="color:#9b978c;text-align:center;">a2</div><div style="color:#9b978c;text-align:center;">a3</div><div style="color:#9b978c;text-align:right;">end</div>
+                  <div style="color:#9b978c;">1</div><div style="text-align:center;background:#f1efe7;border-radius:4px;padding:6px 0;">X</div><div style="text-align:center;background:#f1efe7;border-radius:4px;padding:6px 0;">10</div><div style="text-align:center;background:#f1efe7;border-radius:4px;padding:6px 0;">9</div><div style="text-align:right;font-weight:600;">29</div>
+                  <div style="color:#9b978c;">2</div><div style="text-align:center;background:#f1efe7;border-radius:4px;padding:6px 0;">10</div><div style="text-align:center;background:#f1efe7;border-radius:4px;padding:6px 0;">9</div><div style="text-align:center;background:#f1efe7;border-radius:4px;padding:6px 0;">9</div><div style="text-align:right;font-weight:600;">28</div>
+                  <div style="color:#9b978c;">3</div><div style="text-align:center;background:#f1efe7;border-radius:4px;padding:6px 0;">9</div><div style="text-align:center;background:#f1efe7;border-radius:4px;padding:6px 0;">8</div><div style="text-align:center;background:#f1efe7;border-radius:4px;padding:6px 0;">8</div><div style="text-align:right;font-weight:600;">25</div>
+                  <div style="color:#3c6b48;font-weight:700;">4</div><div style="text-align:center;background:#e7efe8;border:1.5px solid #3c6b48;border-radius:4px;padding:6px 0;font-weight:600;">10</div><div style="text-align:center;background:#e7efe8;border:1.5px dashed #3c6b48;border-radius:4px;padding:6px 0;color:#3c6b48;">_</div><div style="text-align:center;border:1.5px dashed #c9c5b8;border-radius:4px;padding:6px 0;color:#c9c5b8;">_</div><div style="text-align:right;font-weight:600;color:#3c6b48;">10</div>
+                </div>
+              </div>
+              <div style="padding:8px 12px 12px;">
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-family:'Spline Sans Mono',monospace;font-size:14px;">
+                  <div style="text-align:center;background:#3c6b48;color:#fff;border-radius:6px;padding:11px 0;">X</div><div style="text-align:center;background:#f1efe7;border-radius:6px;padding:11px 0;">10</div><div style="text-align:center;background:#f1efe7;border-radius:6px;padding:11px 0;">9</div><div style="text-align:center;background:#f1efe7;border-radius:6px;padding:11px 0;">8</div>
+                  <div style="text-align:center;background:#f1efe7;border-radius:6px;padding:11px 0;">7</div><div style="text-align:center;background:#f1efe7;border-radius:6px;padding:11px 0;">6</div><div style="text-align:center;background:#f1efe7;border-radius:6px;padding:11px 0;">5</div><div style="text-align:center;background:#f1efe7;border-radius:6px;padding:11px 0;">M</div>
+                </div>
+              </div>
+              </sc-if>
+
+              <!-- KEYPAD VARIANT -->
+              <sc-if value="{{ scoreKeypad }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:14px;">
+                <div style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:11px;color:#9b978c;">END 4 · ARROW 2 OF 3</div>
+                <div style="display:flex;justify-content:center;gap:7px;margin:10px 0 4px;">
+                  <span style="width:40px;height:46px;border-radius:7px;background:#3c6b48;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;">10</span>
+                  <span style="width:40px;height:46px;border-radius:7px;border:1.5px dashed #3c6b48;color:#3c6b48;display:flex;align-items:center;justify-content:center;font-size:18px;">?</span>
+                  <span style="width:40px;height:46px;border-radius:7px;border:1.5px dashed #c9c5b8;color:#c9c5b8;display:flex;align-items:center;justify-content:center;font-size:18px;">–</span>
+                </div>
+              </div>
+              <div style="padding:0 12px 14px;">
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-family:'Spline Sans Mono',monospace;font-size:20px;">
+                  <div style="text-align:center;background:#3c6b48;color:#fff;border-radius:8px;padding:16px 0;">X</div><div style="text-align:center;background:#f1efe7;border-radius:8px;padding:16px 0;">10</div><div style="text-align:center;background:#f1efe7;border-radius:8px;padding:16px 0;">9</div>
+                  <div style="text-align:center;background:#f1efe7;border-radius:8px;padding:16px 0;">8</div><div style="text-align:center;background:#f1efe7;border-radius:8px;padding:16px 0;">7</div><div style="text-align:center;background:#f1efe7;border-radius:8px;padding:16px 0;">6</div>
+                  <div style="text-align:center;background:#f1efe7;border-radius:8px;padding:16px 0;">5</div><div style="text-align:center;background:#f1efe7;border-radius:8px;padding:16px 0;">…</div><div style="text-align:center;background:#f1efe7;border-radius:8px;padding:16px 0;">M</div>
+                </div>
+              </div>
+              </sc-if>
+
+              <!-- save bar -->
+              <div style="display:flex;align-items:center;gap:7px;padding:10px 14px;border-top:1.5px solid #eee;background:#faf9f4;">
+                <span style="width:8px;height:8px;border-radius:50%;background:#3c6b48;animation:wfpulse 1.6s infinite;"></span>
+                <span style="font-size:11px;color:#6f6c63;">Saved · syncing to live</span>
+                <span style="flex:1;"></span>
+                <span style="font-size:12px;font-weight:600;color:#fff;background:#2b2b28;border-radius:6px;padding:7px 14px;">Next end →</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- notes column -->
+          <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:14px;">
+            <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:16px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#9b978c;margin-bottom:8px;">CAPTURED PER ARROW</div>
+              <div style="font-size:13px;line-height:1.7;color:#55524a;">Value · whether it's an <b>X</b> (inner 10) · running end &amp; total. The <b>X / 10 / 9 counts</b> drive WA tie-breaks automatically — no separate entry.</div>
+            </div>
+            <sc-if value="{{ showNotes }}" hint-placeholder-val="{{ true }}">
+            <div style="border:1.5px dashed #3c6b48;border-radius:8px;padding:14px;background:#eef3ef;">
+              <div style="font-family:'Caveat',cursive;font-size:21px;color:#3c6b48;line-height:1.25;">Each end commits as one transaction → the public live view reflects it in under 2s. Conflicting double-entry is rejected, not merged.</div>
+            </div>
+            </sc-if>
+            <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:16px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#9b978c;margin-bottom:6px;">TIE WATCH</div>
+              <div style="font-size:13px;color:#55524a;line-height:1.6;">If two archers finish equal on score &amp; X/10 counts, the system flags them and routes to the <b>shoot-off</b> flow (see Live Standings).</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- SETUP -->
+      <sc-if value="{{ isSetup }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Tournament Setup" style="max-width:1080px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start;">
+
+        <!-- left: tournament details -->
+        <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:20px;">
+          <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#9b978c;">STEP 1 — EVENT DETAILS</div>
+          <div style="font-family:'Caveat',cursive;font-size:28px;margin:2px 0 16px;">New tournament</div>
+          <div style="display:flex;flex-direction:column;gap:13px;">
+            <div><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Tournament name</div><div style="border:1.5px dashed #9b978c;border-radius:5px;height:38px;background:#faf9f4;display:flex;align-items:center;padding:0 12px;font-size:13px;color:#3c6b48;">Greenpark Open 2026</div></div>
+            <div style="display:flex;gap:10px;">
+              <div style="flex:1;"><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Start date</div><div style="border:1.5px dashed #9b978c;border-radius:5px;height:38px;background:#faf9f4;display:flex;align-items:center;padding:0 12px;font-size:13px;color:#9b978c;">dd / mm / yyyy</div></div>
+              <div style="flex:1;"><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">End date</div><div style="border:1.5px dashed #9b978c;border-radius:5px;height:38px;background:#faf9f4;display:flex;align-items:center;padding:0 12px;font-size:13px;color:#9b978c;">dd / mm / yyyy</div></div>
+            </div>
+            <div><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Venue</div><div style="border:1.5px dashed #9b978c;border-radius:5px;height:38px;background:#faf9f4;display:flex;align-items:center;padding:0 12px;font-size:13px;color:#9b978c;">Pasig Greenpark Range</div></div>
+            <div style="display:flex;gap:10px;">
+              <div style="flex:1;"><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Qualification</div><div style="border:1.5px dashed #9b978c;border-radius:5px;height:38px;background:#faf9f4;display:flex;align-items:center;padding:0 12px;font-size:13px;color:#9b978c;">36 arrows · 6 ends</div></div>
+              <div style="flex:1;"><div style="font-size:11px;color:#6f6c63;margin-bottom:4px;">Distance</div><div style="border:1.5px dashed #9b978c;border-radius:5px;height:38px;background:#faf9f4;display:flex;align-items:center;padding:0 12px;font-size:13px;color:#9b978c;">70m / 50m</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- right: categories -->
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:20px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div><div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#9b978c;">STEP 2 — CATEGORIES</div><div style="font-family:'Caveat',cursive;font-size:24px;">Recurve Men <span style="font-size:14px;color:#9b978c;font-family:'Spline Sans',sans-serif;">· selected</span></div></div>
+              <div style="border:2px solid #2b2b28;border-radius:6px;padding:6px 11px;font-size:13px;font-weight:600;background:#f4f2ea;">+ Add category</div>
+            </div>
+
+            <div style="margin-top:14px;font-size:11px;color:#6f6c63;margin-bottom:8px;">Per-category sub-events — toggle what this category runs:</div>
+            <div style="display:flex;flex-wrap:wrap;gap:9px;">
+              <sc-for list="{{ catChips }}" as="chip" hint-placeholder-count="5">
+                <button onClick="{{ chip.onClick }}" style="{{ chip.style }}">{{ chip.label }}</button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ showNotes }}" hint-placeholder-val="{{ true }}">
+              <div style="margin-top:12px;font-family:'Caveat',cursive;font-size:18px;color:#3c6b48;line-height:1.2;">↑ these flags decide which screens &amp; rounds get generated for this category. Try toggling them.</div>
+            </sc-if>
+          </div>
+
+          <div style="background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:16px 20px;">
+            <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#9b978c;margin-bottom:10px;">ALL CATEGORIES (4)</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 11px;border:1.5px solid #2b2b28;border-radius:6px;background:#f4f2ea;font-size:13px;"><span style="font-weight:600;flex:1;">Recurve Men</span><span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#3c6b48;">RANK · OR · TEAM</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 11px;border:1.5px dashed #b4b0a2;border-radius:6px;font-size:13px;color:#6f6c63;"><span style="flex:1;">Recurve Women</span><span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9b978c;">RANK · OR</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 11px;border:1.5px dashed #b4b0a2;border-radius:6px;font-size:13px;color:#6f6c63;"><span style="flex:1;">Compound Men</span><span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9b978c;">RANK · OR · MIX</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 11px;border:1.5px dashed #b4b0a2;border-radius:6px;font-size:13px;color:#6f6c63;"><span style="flex:1;">Barebow Open</span><span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9b978c;">RANK</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- OVERVIEW -->
+      <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:1040px;margin:0 auto;">
+        <div style="font-family:'Caveat',cursive;font-size:40px;line-height:1;">Tournament management, end to end</div>
+        <p style="max-width:680px;font-size:14px;line-height:1.6;color:#55524a;margin:10px 0 26px;">Admin drives everything from setup to certificates; the public gets live read-only views and a registration form; participants self-serve their profile. Below is the flow these wireframes map. Click any node — or use the rail — to open that screen.</p>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;">
+          <sc-for list="{{ mapCards }}" as="c" hint-placeholder-count="9">
+            <button onClick="{{ c.onClick }}" style="text-align:left;cursor:pointer;background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:16px;display:flex;flex-direction:column;gap:7px;min-height:118px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#fff;background:#3c6b48;border-radius:4px;padding:2px 6px;">{{ c.tag }}</span>
+                <span style="font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:0.14em;color:#9b978c;">{{ c.kind }}</span>
+              </div>
+              <div style="font-weight:600;font-size:15px;">{{ c.label }}</div>
+              <div style="font-size:12px;line-height:1.5;color:#6f6c63;">{{ c.desc }}</div>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="margin-top:26px;background:#fff;border:2px solid #2b2b28;border-radius:8px;box-shadow:3px 3px 0 rgba(43,43,40,0.12);padding:18px 20px;">
+          <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#9b978c;margin-bottom:10px;">CRITICAL FLOWS THESE WIREFRAMES SURFACE</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;">
+            <span style="font-size:12px;border:1.5px dashed #3c6b48;color:#3c6b48;border-radius:20px;padding:5px 12px;">⚑ Forced shoot-off / WA tie-break</span>
+            <span style="font-size:12px;border:1.5px dashed #3c6b48;color:#3c6b48;border-radius:20px;padding:5px 12px;">⚑ Odd-count team exclusion preview</span>
+            <span style="font-size:12px;border:1.5px dashed #3c6b48;color:#3c6b48;border-radius:20px;padding:5px 12px;">⚑ BYE handling in R16 seeding</span>
+            <span style="font-size:12px;border:1.5px dashed #3c6b48;color:#3c6b48;border-radius:20px;padding:5px 12px;">⚑ Live update &lt; 2s indicator</span>
+            <span style="font-size:12px;border:1.5px dashed #3c6b48;color:#3c6b48;border-radius:20px;padding:5px 12px;">⚑ Snapshot at seeding</span>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:820},&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;manager&quot;,&quot;options&quot;:[&quot;overview&quot;,&quot;manager&quot;,&quot;setup&quot;,&quot;scoring&quot;,&quot;teams&quot;,&quot;bracket&quot;,&quot;certs&quot;,&quot;live&quot;,&quot;register&quot;,&quot;profile&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;showNotes&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.state = {
+      page: (props && props.startScreen) || 'overview',
+      scoreVariant: 'grid',
+      bracketVariant: 'list',
+      teamMethod: 'club',
+      cats: { ranking:true, olympic:true, team:true, dbl:false, mix:false },
+    };
+  }
+  nav(k){ this.setState({ page:k }); window.scrollTo(0,0); }
+  tog(k){ this.setState(s => ({ cats: { ...s.cats, [k]: !s.cats[k] } })); }
+
+  renderVals(){
+    const p = this.state.page;
+    const showNotes = (this.props && this.props.showNotes) ?? true;
+
+    const def = [
+      ['overview','Overview','00','map'],
+      ['manager','Tournament Manager','01','admin'],
+      ['setup','Tournament Setup','02','admin'],
+      ['scoring','Score Entry','03','admin'],
+      ['teams','Team Assembly','04','admin'],
+      ['bracket','Bracket Generator','05','admin'],
+      ['certs','Certificate Designer','06','admin'],
+      ['live','Live Standings','06','public'],
+      ['register','Registration','07','public'],
+      ['profile','Profile & Bow','08','participant'],
+    ];
+    const titles = {
+      overview:['System Overview','SITEMAP'],
+      manager:['Tournament Manager','DESKTOP'],
+      setup:['Tournament & Category Setup','DESKTOP'],
+      scoring:['Qualification Score Entry','MOBILE'],
+      teams:['Team Assembly','DESKTOP'],
+      bracket:['Olympic Bracket Generator','DESKTOP'],
+      certs:['Certificate Designer','DESKTOP'],
+      live:['Public Live Standings','RESPONSIVE'],
+      register:['Public Registration','MOBILE'],
+      profile:['Participant Profile & Bow Specs','RESPONSIVE'],
+    };
+
+    const mk = (key,label,tag) => {
+      const active = p===key;
+      const rowStyle = [
+        'display:flex','align-items:center','gap:9px','width:100%','text-align:left',
+        'border:none','cursor:pointer','margin-top:4px','padding:8px 10px','border-radius:6px',
+        "font-family:'Spline Sans',sans-serif","font-size:13px","font-weight:"+(active?'600':'400'),
+        'background:'+(active?'#3c6b48':'transparent'),
+        'color:'+(active?'#fff':'#cdcabd'),
+      ].join(';');
+      return { key,label,tag,active,rowStyle, onClick:()=>this.nav(key) };
+    };
+
+    const navOverview = def.filter(d=>d[3]==='map').map(d=>mk(d[0],d[1],d[2]));
+    const navAdmin = def.filter(d=>d[3]==='admin').map(d=>mk(d[0],d[1],d[2]));
+    const navPublic = def.filter(d=>d[3]==='public').map(d=>mk(d[0],d[1],d[2]));
+    const navParticipant = def.filter(d=>d[3]==='participant').map(d=>mk(d[0],d[1],d[2]));
+
+    const mapDefs = [
+      ['setup','01','ADMIN','Tournament Setup','Create event, add categories, flip per-category toggles for Ranking / Olympic / Team / Double / Mix.'],
+      ['register','07','PUBLIC','Registration','Self-service entry: archer picks category & division, enters bow specs, accepts waiver.'],
+      ['scoring','02','ADMIN','Score Entry','36 arrows per archer. X / 10 / 9 counts captured for WA tie-breaks, saved transactionally.'],
+      ['teams','03','ADMIN','Team Assembly','byRank · byClub · mix. High+low pairing, normalized clubs, odd-count exclusion preview.'],
+      ['bracket','04','ADMIN','Bracket Generator','WA seeding, BYE placement, per-round target assignment, snapshot at seeding.'],
+      ['live','06','PUBLIC','Live Standings','Read-only rankings & brackets, updating in under 2s over WebSocket with a live badge.'],
+      ['certs','05','ADMIN','Certificate Designer','WYSIWYG placeholders, then batch PDF + email via a retrying job queue.'],
+      ['profile','08','PARTICIPANT','Profile & Bow','Archer edits contact info and bow specs — bow type, draw weight, length, arrows.'],
+      ['overview','00','MAP','This overview','How the pieces connect, plus the critical edge-case flows.'],
+    ];
+    const mapCards = mapDefs.map(m=>({ tag:m[1], kind:m[2], label:m[3], desc:m[4], onClick:()=>this.nav(m[0]) }));
+
+    const cats = this.state.cats;
+    const catChip = (k,label) => {
+      const on = !!cats[k];
+      const style = [
+        'cursor:pointer','border-radius:20px','padding:5px 12px','font-size:12px','font-weight:500',
+        'font-family:\'Spline Sans\',sans-serif',
+        'border:1.5px '+(on?'solid':'dashed')+' '+(on?'#3c6b48':'#b4b0a2'),
+        'background:'+(on?'#3c6b48':'transparent'),
+        'color:'+(on?'#fff':'#6f6c63'),
+      ].join(';');
+      return { key:k, label:(on?'✓ ':'')+label, style, onClick:()=>this.tog(k) };
+    };
+    const catChips = [
+      catChip('ranking','Ranking'), catChip('olympic','Olympic Round'),
+      catChip('team','Team'), catChip('dbl','Double'), catChip('mix','Mix Team'),
+    ];
+
+    const tm = this.state.teamMethod;
+    const methodBtn = (k,label) => ({
+      key:k, label,
+      onClick:()=>this.setState({teamMethod:k}),
+      style:[
+        'cursor:pointer','flex:1','text-align:center','padding:9px','font-size:13px','font-weight:500',
+        'border:2px solid #2b2b28','border-radius:0',
+        'background:'+(tm===k?'#2b2b28':'#fff'),
+        'color:'+(tm===k?'#fff':'#2b2b28'),
+      ].join(';'),
+    });
+    const methodBtns = [ methodBtn('rank','By Rank'), methodBtn('club','By Club'), methodBtn('mix','Mix') ];
+
+    return {
+      navOverview, navAdmin, navPublic, navParticipant,
+      mapCards, showNotes,
+      goSetup:()=>this.nav('setup'), goLive:()=>this.nav('live'), goCerts:()=>this.nav('certs'),
+      screenTitle: (titles[p]||['',''])[0],
+      screenDevice: (titles[p]||['',''])[1],
+      isOverview:p==='overview', isManager:p==='manager', isSetup:p==='setup', isScoring:p==='scoring',
+      isTeams:p==='teams', isBracket:p==='bracket', isCerts:p==='certs',
+      isLive:p==='live', isRegister:p==='register', isProfile:p==='profile',
+      catChips,
+      methodBtns, teamByClub: tm==='club', teamByRank: tm==='rank', teamMix: tm==='mix',
+      scoreGrid:this.state.scoreVariant==='grid', scoreKeypad:this.state.scoreVariant==='keypad',
+      setScoreGrid:()=>this.setState({scoreVariant:'grid'}), setScoreKeypad:()=>this.setState({scoreVariant:'keypad'}),
+      scoreTabStyle:(v)=>({}),
+      bracketList:this.state.bracketVariant==='list', bracketTree:this.state.bracketVariant==='tree',
+      setBracketList:()=>this.setState({bracketVariant:'list'}), setBracketTree:()=>this.setState({bracketVariant:'tree'}),
+      segGrid: this.segStyle(this.state.scoreVariant==='grid'),
+      segKeypad: this.segStyle(this.state.scoreVariant==='keypad'),
+      segBList: this.segStyle(this.state.bracketVariant==='list'),
+      segBTree: this.segStyle(this.state.bracketVariant==='tree'),
+    };
+  }
+  segStyle(active){
+    return [
+      'cursor:pointer','padding:6px 14px','font-size:12px','font-weight:500',
+      "font-family:'Spline Sans',sans-serif",'border:1.5px solid #2b2b28',
+      'background:'+(active?'#3c6b48':'#fff'),
+      'color:'+(active?'#fff':'#2b2b28'),
+    ].join(';');
+  }
+}
+</script>
+</body>
+</html>

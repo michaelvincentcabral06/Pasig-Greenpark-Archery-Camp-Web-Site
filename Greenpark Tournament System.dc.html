@@ -1,0 +1,2289 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&amp;family=Public+Sans:wght@400;500;600;700&amp;family=Spline+Sans+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<script src="./archery-engine.js"></script>
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:#efece1;font-family:'Public Sans',system-ui,sans-serif;color:#18211c;-webkit-font-smoothing:antialiased;}
+  button{font-family:inherit;}
+  @keyframes gpfade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  @keyframes gppulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.35;transform:scale(.7);}}
+  @keyframes gpspin{to{transform:rotate(360deg);}}
+  ::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:#cfc9b8;border-radius:8px;}
+  @media print{
+    @page{ margin:14mm; }
+    body{ background:#fff !important; }
+    body *{ visibility:hidden !important; }
+    #gp-print-root, #gp-print-root *{ visibility:visible !important; }
+    #gp-print-root{ position:absolute !important; left:0; top:0; width:100%; box-shadow:none !important; border:none !important; }
+    .gp-noprint{ display:none !important; }
+  }
+</style>
+</helmet>
+
+<div style="display:flex;min-height:100vh;width:100%;background:#efece1;">
+
+  <!-- ===== RAIL ===== -->
+  <aside style="width:236px;flex:none;background:#103d2a;color:#cfe3d5;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;">
+    <div style="padding:22px 20px 16px;border-bottom:1px solid rgba(255,255,255,0.09);">
+      <div style="display:flex;align-items:center;gap:11px;">
+        <span style="width:30px;height:30px;border-radius:50%;flex:none;background:radial-gradient(circle,#f6c84b 0 20%,#e0452f 20% 42%,#2f6fb0 42% 64%,#15321f 64% 82%,#fffdf8 82% 100%);box-shadow:0 0 0 1.5px rgba(255,255,255,0.25);"></span>
+        <div>
+          <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:16px;letter-spacing:-0.01em;color:#fff;line-height:1;">GREENPARK</div>
+          <div style="font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:0.22em;color:#7fb893;margin-top:3px;">TOURNAMENT SYSTEM</div>
+        </div>
+      </div>
+    </div>
+    <nav style="padding:14px 12px;flex:1;overflow:auto;">
+      <div style="font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:0.2em;color:#5f8f6f;padding:0 8px 8px;">WORKSPACE</div>
+      <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="6">
+        <button onClick="{{ item.onClick }}" style="{{ item.rowStyle }}">
+          <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;opacity:.55;width:16px;">{{ item.tag }}</span>
+          <span style="flex:1;text-align:left;">{{ item.label }}</span>
+          <sc-if value="{{ item.badge }}" hint-placeholder-val="{{ false }}"><span style="{{ item.badgeStyle }}">{{ item.badge }}</span></sc-if>
+        </button>
+      </sc-for>
+    </nav>
+    <div style="padding:14px 20px;border-top:1px solid rgba(255,255,255,0.09);font-size:11px;color:#6f9f80;line-height:1.5;">
+      <div style="display:flex;align-items:center;gap:7px;"><span style="width:8px;height:8px;border-radius:50%;background:#5fd07f;animation:gppulse 1.5s infinite;"></span>Live demo · saved in this browser</div>
+      <button onClick="{{ resetDemo }}" style="margin-top:9px;background:none;border:1px solid rgba(255,255,255,0.18);color:#9fc4ac;cursor:pointer;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.06em;padding:6px 10px;border-radius:6px;width:100%;">Reset sample data</button>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column;">
+    <header style="display:flex;align-items:center;gap:16px;padding:16px 30px;background:#fffdf8;border-bottom:1px solid #e4dECF;position:sticky;top:0;z-index:6;">
+      <div>
+        <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#9a9788;">{{ crumb }}</div>
+        <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:23px;letter-spacing:-0.02em;line-height:1.05;">{{ screenTitle }}</div>
+      </div>
+      <div style="flex:1;"></div>
+      <sc-if value="{{ flash }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:12px;font-weight:600;color:#1f7a4f;background:#e6f0e8;border:1px solid #bcd9c5;border-radius:6px;padding:7px 12px;animation:gpfade .2s;">✓ {{ flash }}</div>
+      </sc-if>
+      <label style="display:flex;flex-direction:column;gap:2px;">
+        <span style="font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#9a9788;">TOURNAMENT</span>
+        <select value="{{ activeTourId }}" onChange="{{ onSwitchTour }}" style="border:1px solid #e6e0d0;border-radius:7px;height:34px;padding:0 10px;font-family:'Public Sans',sans-serif;font-size:13px;font-weight:700;color:#1f7a4f;background:#fff;max-width:230px;">
+          <sc-for list="{{ tourSwitchOptions }}" as="o" hint-placeholder-count="2">
+            <option value="{{ o.id }}">{{ o.name }}</option>
+          </sc-for>
+        </select>
+      </label>
+      <div style="text-align:right;line-height:1.15;">
+        <div style="font-size:13px;font-weight:700;">{{ tName }}</div>
+        <div style="font-size:11px;color:#9a9788;">{{ tSub }}</div>
+      </div>
+    </header>
+
+    <div style="flex:1;padding:28px 30px 60px;overflow:auto;">
+      <sc-if value="{{ ready }}" hint-placeholder-val="{{ false }}">
+      <div>
+
+        <!--SCREENS-->
+
+        <!-- ============ SETUP / CREATE ============ -->
+        <sc-if value="{{ isSetup }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Create Tournament" style="display:grid;grid-template-columns:340px minmax(0,1fr);gap:22px;align-items:start;">
+
+          <!-- details -->
+          <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;padding:20px;">
+            <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a9788;">STEP 1 · DETAILS</div>
+            <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:20px;margin:2px 0 16px;">Tournament details</div>
+            <div style="display:flex;flex-direction:column;gap:13px;">
+              <label style="display:block;"><span style="font-size:11px;color:#76796f;display:block;margin-bottom:4px;">Tournament name</span>
+                <input value="{{ tour.name }}" onInput="{{ onName }}" style="width:100%;border:1px solid #e6e0d0;border-radius:7px;height:40px;padding:0 12px;font-family:'Public Sans',sans-serif;font-size:14px;font-weight:600;color:#1f7a4f;background:#fff;"></label>
+              <div style="display:flex;gap:10px;">
+                <label style="flex:1;"><span style="font-size:11px;color:#76796f;display:block;margin-bottom:4px;">Start date</span>
+                  <input type="date" value="{{ tour.start }}" onInput="{{ onStart }}" style="width:100%;border:1px solid #e6e0d0;border-radius:7px;height:40px;padding:0 12px;font-family:'Spline Sans Mono',monospace;font-size:13px;color:#18211c;background:#fff;"></label>
+                <label style="flex:1;"><span style="font-size:11px;color:#76796f;display:block;margin-bottom:4px;">End date</span>
+                  <input type="date" value="{{ tour.end }}" onInput="{{ onEnd }}" style="width:100%;border:1px solid #e6e0d0;border-radius:7px;height:40px;padding:0 12px;font-family:'Spline Sans Mono',monospace;font-size:13px;color:#18211c;background:#fff;"></label>
+              </div>
+              <label style="display:block;"><span style="font-size:11px;color:#76796f;display:block;margin-bottom:4px;">Venue</span>
+                <input value="{{ tour.venue }}" onInput="{{ onVenue }}" style="width:100%;border:1px solid #e6e0d0;border-radius:7px;height:40px;padding:0 12px;font-family:'Public Sans',sans-serif;font-size:14px;color:#18211c;background:#fff;"></label>
+              <div style="display:flex;gap:10px;">
+                
+              </div>
+              <div style="font-size:11px;color:#9a9788;line-height:1.4;">Qualification format &amp; equipment are set per category →</div>
+            </div>
+            <button onClick="{{ createTournament }}" style="width:100%;margin-top:20px;cursor:pointer;border:none;background:#1f7a4f;color:#fff;font-weight:700;font-size:14px;border-radius:8px;padding:13px;">Save tournament →</button>
+            <div style="font-size:11px;color:#9a9788;margin-top:10px;line-height:1.5;text-align:center;">Saving updates the header &amp; dashboard live. In production this writes the event and opens registration.</div>
+          </div>
+
+          <!-- categories -->
+          <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;padding:20px;">
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+              <div>
+                <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a9788;">STEP 2 · CATEGORIES</div>
+                <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:20px;">Categories &amp; sub-events</div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <div style="display:flex;gap:6px;">
+                  <sc-for list="{{ newCatEquipBtns }}" as="b" hint-placeholder-count="3">
+                    <button onClick="{{ b.onClick }}" style="{{ b.style }}">{{ b.label }}</button>
+                  </sc-for>
+                </div>
+                <input value="{{ newCat }}" onInput="{{ onNewCat }}" placeholder="e.g. Cadet Recurve" style="border:1px solid #e6e0d0;border-radius:7px;height:38px;padding:0 12px;font-size:13px;width:150px;background:#fff;">
+                <button onClick="{{ addCat }}" style="cursor:pointer;border:1px solid #1f7a4f;background:#fff;color:#1f7a4f;font-weight:600;font-size:13px;border-radius:7px;padding:0 14px;height:38px;">＋ Add</button>
+              </div>
+            </div>
+            <div style="font-size:12px;color:#76796f;margin-bottom:12px;">Categories are gender-neutral — Men &amp; Women divisions are generated automatically from each archer's account at ranking time. Set equipment, age limit, qualification format, a public description, and which events run.</div>
+
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <sc-for list="{{ setupCats }}" as="c" hint-placeholder-count="4">
+                <div style="border:1px solid #eee5d4;border-radius:9px;padding:13px 15px;">
+                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px;">
+                    <input value="{{ c.name }}" onInput="{{ c.onName }}" style="font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;flex:1;min-width:0;border:1px solid transparent;border-radius:6px;height:32px;padding:0 8px;background:#faf7ef;color:#18211c;">
+                    <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#1f7a4f;background:#eaf3ec;border-radius:5px;padding:2px 8px;white-space:nowrap;">{{ c.equip }}</span>
+                    <button onClick="{{ c.onRemove }}" style="cursor:pointer;border:none;background:transparent;color:#b23b2c;font-size:12px;font-weight:600;">Remove</button>
+                  </div>
+                  <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+                    <div style="display:flex;gap:6px;">
+                      <sc-for list="{{ c.equipBtns }}" as="b" hint-placeholder-count="3">
+                        <button onClick="{{ b.onClick }}" style="{{ b.style }}">{{ b.label }}</button>
+                      </sc-for>
+                    </div>
+                    <label style="display:flex;align-items:center;gap:7px;"><span style="font-size:11px;color:#76796f;white-space:nowrap;">Distance</span>
+                      <input value="{{ c.distance }}" onInput="{{ c.onDist }}" placeholder="70m" style="width:74px;border:1px solid #e6e0d0;border-radius:6px;height:32px;padding:0 10px;font-family:'Spline Sans Mono',monospace;font-size:12px;background:#fff;"></label>
+                    <label style="display:flex;align-items:center;gap:7px;"><span style="font-size:11px;color:#76796f;white-space:nowrap;">Arrows</span>
+                      <input value="{{ c.arrows }}" onInput="{{ c.onArrows }}" placeholder="36 arrows" style="width:96px;border:1px solid #e6e0d0;border-radius:6px;height:32px;padding:0 10px;font-family:'Spline Sans Mono',monospace;font-size:12px;background:#fff;"></label>
+                  </div>
+                  <div style="display:flex;gap:10px;align-items:center;margin-bottom:11px;flex-wrap:wrap;">
+                    <span style="font-size:11px;color:#76796f;white-space:nowrap;">Age limit</span>
+                    <label style="display:flex;align-items:center;gap:6px;"><span style="font-size:11px;color:#9a9788;">Min</span>
+                      <input value="{{ c.ageMin }}" onInput="{{ c.onAgeMin }}" placeholder="10" style="width:60px;border:1px solid #e6e0d0;border-radius:6px;height:32px;padding:0 10px;font-family:'Spline Sans Mono',monospace;font-size:12px;background:#fff;"></label>
+                    <span style="color:#c9c3b2;">–</span>
+                    <label style="display:flex;align-items:center;gap:6px;"><span style="font-size:11px;color:#9a9788;">Max</span>
+                      <input value="{{ c.ageMax }}" onInput="{{ c.onAgeMax }}" placeholder="15" style="width:60px;border:1px solid #e6e0d0;border-radius:6px;height:32px;padding:0 10px;font-family:'Spline Sans Mono',monospace;font-size:12px;background:#fff;"></label>
+                    <span style="font-size:11px;color:#9a9788;">leave blank for open</span>
+                  </div>
+                  <label style="display:block;margin-bottom:11px;"><span style="font-size:11px;color:#76796f;display:block;margin-bottom:4px;">Description <span style="color:#9a9788;">— shown to archers on the registration page</span></span>
+                    <textarea value="{{ c.desc }}" onInput="{{ c.onDesc }}" rows="2" placeholder="e.g. Olympic recurve, 70m qualification. Open to all ages 18+." style="width:100%;border:1px solid #e6e0d0;border-radius:6px;padding:8px 10px;font-family:'Public Sans',sans-serif;font-size:12px;line-height:1.45;background:#fff;resize:vertical;"></textarea></label>
+                  <div style="font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#9a9788;margin-bottom:7px;">EVENTS</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                    <sc-for list="{{ c.events }}" as="f" hint-placeholder-count="4">
+                      <button onClick="{{ f.onClick }}" style="{{ f.style }}"><span style="{{ f.dot }}"></span>{{ f.label }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ============ REGISTRATION ============ -->
+        <sc-if value="{{ isReg }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Registration" style="display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:22px;align-items:start;">
+
+          <!-- public form -->
+          <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;overflow:hidden;">
+            <div style="background:#103d2a;color:#eaf3ec;padding:18px 22px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.18em;color:#7fb893;">ARCHER PORTAL · GREENPARK OPEN 2026</div>
+              <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:22px;margin-top:4px;">Enter the tournament</div>
+              <div style="font-size:12px;color:#a8c7b2;margin-top:3px;">You’re signed in — just pick a category and the events you want. Identity &amp; division come from your account.</div>
+            </div><div style="padding:22px;display:flex;flex-direction:column;gap:16px;">
+
+              <!-- logged-in account -->
+              <div style="display:flex;align-items:center;gap:13px;background:#f5f1e6;border:1px solid #e6e0d0;border-radius:9px;padding:13px 15px;">
+                <span style="width:42px;height:42px;border-radius:50%;flex:none;background:#1f7a4f;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-weight:800;font-size:16px;">{{ acctInitials }}</span>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-weight:700;font-size:15px;">{{ account.name }}</div>
+                  <div style="font-size:12px;color:#9a9788;">{{ account.club }} · {{ account.email }}</div>
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-family:'Spline Sans Mono',monospace;font-size:9px;color:#9a9788;letter-spacing:0.1em;">DIVISION</div>
+                  <div style="font-size:13px;font-weight:600;color:#1f7a4f;">{{ acctDivision }}</div>
+                </div>
+              </div>
+
+              <label style="display:block;"><span style="font-size:11px;color:#76796f;display:block;margin-bottom:5px;">Category</span>
+                <select value="{{ reg.cat }}" onChange="{{ onRegCat }}" style="width:100%;border:1px solid #e6e0d0;border-radius:7px;height:42px;padding:0 13px;font-family:'Public Sans',sans-serif;font-size:14px;font-weight:600;color:#1f7a4f;background:#fff;">
+                  <sc-for list="{{ regCatOptions }}" as="o" hint-placeholder-count="4">
+                    <option value="{{ o }}">{{ o }}</option>
+                  </sc-for>
+                </select></label>
+
+              <div style="background:#f5f1e6;border:1px solid #e6e0d0;border-radius:9px;padding:13px 15px;margin-top:-4px;">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+                  <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#1f7a4f;background:#eaf3ec;border:1px solid #cde0d3;border-radius:5px;padding:2px 8px;">{{ regCatInfo.equip }}</span>
+                  <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#76796f;background:#fff;border:1px solid #e6e0d0;border-radius:5px;padding:2px 8px;">AGE · {{ regCatInfo.age }}</span>
+                  <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#76796f;background:#fff;border:1px solid #e6e0d0;border-radius:5px;padding:2px 8px;">{{ regCatInfo.qual }}</span>
+                </div>
+                <sc-if value="{{ regCatInfo.hasDesc }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:12px;color:#56594f;line-height:1.5;">{{ regCatInfo.desc }}</div>
+                </sc-if>
+              </div>
+
+              <div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+                  <sc-for list="{{ regEventChoices }}" as="e" hint-placeholder-count="4">
+                    
+                  </sc-for>
+                </div>
+              </div>
+
+              <div style="display:flex;align-items:center;gap:12px;background:#f5f1e6;border:1px solid #e6e0d0;border-radius:8px;padding:12px 14px;">
+                <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#76796f;flex:1;">Entry fee · ₱800 — secure checkout</span>
+                <button onClick="{{ submitReg }}" style="cursor:pointer;border:none;background:#1f7a4f;color:#fff;font-weight:700;font-size:14px;border-radius:8px;padding:12px 20px;">Pay &amp; reserve slot →</button>
+              </div>
+              <div style="font-size:11px;color:#9a9788;line-height:1.5;">On payment the system reserves a TBD placeholder in every enabled event of the chosen category. The new archer appears live in Score Entry and all Team Assembly dropdowns — no reload.</div>
+            </div>
+            
+          </div>
+
+          <!-- TBD pool / send log -->
+          <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;overflow:hidden;">
+            <div style="display:flex;align-items:center;gap:8px;padding:13px 16px;border-bottom:1px solid #eee5d4;">
+              <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a9788;flex:1;">BRACKET POOL · NEW ENTRIES</span>
+              <span style="font-family:'Spline Sans Mono',monospace;font-size:12px;font-weight:600;color:#1f7a4f;">{{ regCount }}</span>
+            </div>
+            <sc-if value="{{ regHasLog }}" hint-placeholder-val="{{ false }}">
+            <sc-for list="{{ regLog }}" as="r" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #f1ebdc;animation:gpfade .25s;">
+                <span style="width:9px;height:9px;border-radius:50%;background:#c8a23a;flex:none;"></span>
+                <span style="flex:1;min-width:0;"><span style="font-weight:600;font-size:13px;">{{ r.name }}</span><br><span style="font-size:11px;color:#9a9788;">{{ r.club }} · {{ r.cat }} · {{ r.evtext }}</span></span>
+                <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;font-weight:600;color:#9a6a16;background:#fbf3df;border:1px solid #e3c98a;border-radius:10px;padding:2px 8px;white-space:nowrap;">TBD</span>
+              </div>
+            </sc-for>
+            </sc-if>
+            <sc-if value="{{ regHasLog }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:34px 18px;text-align:center;color:#9a9788;font-size:12px;line-height:1.5;">No new entries yet.<br>Submit the form to reserve a slot — it lands here as a TBD placeholder.</div>
+            </sc-if>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ isCerts }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Certificates">
+
+          <!-- certificate type -->
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+            <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a9788;width:74px;">TYPE</span>
+            <div style="display:flex;gap:10px;flex:1;flex-wrap:wrap;">
+              <sc-for list="{{ certTypeBtns }}" as="t" hint-placeholder-count="3">
+                <button onClick="{{ t.onClick }}" style="{{ t.style }}">
+                  <div style="{{ t.labelStyle }}">{{ t.label }}</div>
+                  <div style="{{ t.subStyle }}">{{ t.sub }}</div>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+          <!-- category -->
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px;">
+            <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a9788;width:74px;">CATEGORY</span>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;">
+              <sc-for list="{{ catTabs }}" as="ct" hint-placeholder-count="3">
+                <button onClick="{{ ct.onClick }}" style="{{ ct.style }}">{{ ct.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 360px;gap:22px;align-items:start;">
+          <!-- LEFT: live preview + content editor -->
+          <div style="display:flex;flex-direction:column;gap:16px;min-width:0;">
+            <div style="{{ certCardStyle }}">
+              <div style="{{ certBorderStyle }}"></div>
+              <div style="position:absolute;inset:21px;border:1px solid #c8a23a;border-radius:3px;pointer-events:none;"></div>
+              <span style="position:absolute;left:-50px;bottom:-50px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,#f6c84b 0 20%,#e0452f 20% 42%,#2f6fb0 42% 64%,#15321f 64% 82%,transparent 82% 100%);opacity:.1;"></span>
+              {{ certLogoEl }}
+              <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(20px,2.4vw,28px);letter-spacing:-0.01em;margin-top:10px;color:{{ certInk }};">{{ certPreview.title }}</div>
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:clamp(8px,1.5vw,10px);letter-spacing:0.2em;color:{{ certSubInk }};margin-top:5px;text-transform:uppercase;">{{ certPreview.event }}</div>
+              <div style="font-size:clamp(10px,1.7vw,12px);color:{{ certSubInk }};margin-top:clamp(6px,1.8%,14px);">{{ certPreview.intro }}</div>
+              <div style="{{ certNameStyle }}">{{ certPreview.name }}</div>
+              <div style="font-size:clamp(10px,1.8vw,12.5px);color:{{ certBodyInk }};margin-top:clamp(5px,1.4%,10px);line-height:1.6;white-space:pre-line;max-width:82%;">{{ certPreview.body }}</div>
+              <div style="display:flex;gap:clamp(18px,5%,40px);margin-top:clamp(10px,2.4%,20px);align-items:flex-end;">
+                <div style="text-align:center;"><div style="font-family:'Archivo',sans-serif;font-size:clamp(10px,1.7vw,13px);font-weight:700;border-top:1px solid {{ certSigLine }};padding-top:5px;min-width:clamp(90px,22vw,130px);color:{{ certInk }};">{{ certPreview.sign1 }}</div><div style="font-size:clamp(8px,1.3vw,10px);color:{{ certSubInk }};margin-top:2px;">{{ certPreview.role1 }}</div></div>
+                <sc-if value="{{ certPreview.hasSign2 }}" hint-placeholder-val="{{ false }}">
+                <div style="text-align:center;"><div style="font-family:'Archivo',sans-serif;font-size:clamp(10px,1.7vw,13px);font-weight:700;border-top:1px solid {{ certSigLine }};padding-top:5px;min-width:clamp(90px,22vw,130px);color:{{ certInk }};">{{ certPreview.sign2 }}</div><div style="font-size:clamp(8px,1.3vw,10px);color:{{ certSubInk }};margin-top:2px;">{{ certPreview.role2 }}</div></div>
+                </sc-if>
+                <div style="text-align:center;"><div style="font-family:'Spline Sans Mono',monospace;font-size:clamp(10px,1.7vw,13px);border-top:1px solid {{ certSigLine }};padding-top:5px;min-width:clamp(80px,18vw,110px);color:{{ certInk }};">{{ certPreview.date }}</div><div style="font-size:clamp(8px,1.3vw,10px);color:{{ certSubInk }};margin-top:2px;">Date awarded</div></div>
+              </div>
+            </div>
+            <div style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#9a9788;">Live preview · bound to the selected recipient on the right</div>
+
+            <!-- content editor -->
+            <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;padding:16px 18px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.14em;color:#9a9788;margin-bottom:14px;">CERTIFICATE TEXT</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;">
+                <label style="grid-column:1 / -1;display:flex;flex-direction:column;gap:5px;font-size:11px;color:#76796f;">Title<input value="{{ certTitleVal }}" onInput="{{ setCertTitle }}" style="border:1px solid #e6e0d0;border-radius:7px;padding:9px 11px;font-size:14px;font-family:'Archivo',sans-serif;font-weight:700;color:#18211c;background:#fff;" /></label>
+                <label style="display:flex;flex-direction:column;gap:5px;font-size:11px;color:#76796f;">Event / subtitle<input value="{{ certEventVal }}" onInput="{{ setCertEvent }}" style="border:1px solid #e6e0d0;border-radius:7px;padding:9px 11px;font-size:13px;color:#18211c;background:#fff;" /></label>
+                <label style="display:flex;flex-direction:column;gap:5px;font-size:11px;color:#76796f;">Intro line<input value="{{ certIntroVal }}" onInput="{{ setCertIntro }}" style="border:1px solid #e6e0d0;border-radius:7px;padding:9px 11px;font-size:13px;color:#18211c;background:#fff;" /></label>
+                <label style="grid-column:1 / -1;display:flex;flex-direction:column;gap:5px;font-size:11px;color:#76796f;">Body — use placeholders below<textarea onInput="{{ setCertBody }}" rows="3" style="border:1px solid #e6e0d0;border-radius:7px;padding:9px 11px;font-size:13px;color:#18211c;background:#fff;resize:vertical;line-height:1.6;font-family:'Public Sans',sans-serif;">{{ certBodyVal }}</textarea></label>
+                <label style="display:flex;flex-direction:column;gap:5px;font-size:11px;color:#76796f;">Signatory 1<input value="{{ certSignVal }}" onInput="{{ setCertSign }}" style="border:1px solid #e6e0d0;border-radius:7px;padding:9px 11px;font-size:13px;color:#18211c;background:#fff;" /></label>
+                <label style="display:flex;flex-direction:column;gap:5px;font-size:11px;color:#76796f;">Role 1<input value="{{ certRoleVal }}" onInput="{{ setCertRole }}" style="border:1px solid #e6e0d0;border-radius:7px;padding:9px 11px;font-size:13px;color:#18211c;background:#fff;" /></label>
+                <label style="display:flex;flex-direction:column;gap:5px;font-size:11px;color:#76796f;">Signatory 2 <span style="color:#b6b1a2;">(optional)</span><input value="{{ certSign2Val }}" onInput="{{ setCertSign2 }}" style="border:1px solid #e6e0d0;border-radius:7px;padding:9px 11px;font-size:13px;color:#18211c;background:#fff;" /></label>
+                <label style="display:flex;flex-direction:column;gap:5px;font-size:11px;color:#76796f;">Role 2<input value="{{ certRole2Val }}" onInput="{{ setCertRole2 }}" style="border:1px solid #e6e0d0;border-radius:7px;padding:9px 11px;font-size:13px;color:#18211c;background:#fff;" /></label>
+                <label style="display:flex;flex-direction:column;gap:5px;font-size:11px;color:#76796f;">Date awarded<input value="{{ certDateVal }}" onInput="{{ setCertDate }}" style="border:1px solid #e6e0d0;border-radius:7px;padding:9px 11px;font-size:13px;color:#18211c;background:#fff;" /></label>
+              </div>
+              <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:14px;">
+                <span style="font-size:11px;color:#9a9788;margin-right:2px;">Placeholders:</span>
+                <sc-for list="{{ certPlaceholders }}" as="p" hint-placeholder-count="7">
+                  <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;background:#e6f0e8;color:#1f7a4f;border-radius:5px;padding:3px 7px;">{{ p }}</span>
+                </sc-for>
+              </div>
+              <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid #f1ebdc;">
+                <div style="display:flex;align-items:center;gap:11px;">
+                  <span style="font-size:11px;color:#76796f;">Accent</span>
+                  <div style="display:flex;gap:9px;">
+                    <sc-for list="{{ accentSwatches }}" as="s" hint-placeholder-count="4">
+                      <button onClick="{{ s.onClick }}" style="{{ s.style }}"></button>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:11px;">
+                  <span style="font-size:11px;color:#76796f;">Background</span>
+                  <div style="display:flex;gap:9px;">
+                    <sc-for list="{{ bgSwatches }}" as="s" hint-placeholder-count="4">
+                      <button onClick="{{ s.onClick }}" style="{{ s.style }}"></button>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:9px;">
+                  <span style="font-size:11px;color:#76796f;">Logo</span>
+                  <label style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid #e6e0d0;border-radius:7px;padding:7px 11px;font-size:12px;font-weight:600;color:#1f7a4f;background:#fff;">⤓ Upload<input type="file" accept="image/*" onChange="{{ onCertLogoFile }}" style="display:none;" /></label>
+                  <sc-if value="{{ certHasLogo }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ clearCertLogo }}" style="cursor:pointer;border:1px solid #e6e0d0;background:#fff;border-radius:7px;padding:7px 10px;font-size:12px;color:#76796f;">Reset</button>
+                  </sc-if>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: recipients + email -->
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;overflow:hidden;">
+              <div style="display:flex;align-items:center;gap:8px;padding:13px 14px;border-bottom:1px solid #eee5d4;">
+                <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a9788;">RECIPIENTS · {{ certCatLabel }}</span>
+                <div style="flex:1;"></div>
+                <span style="font-family:'Spline Sans Mono',monospace;font-size:12px;font-weight:600;color:#1f7a4f;">{{ certIncludedCount }}/{{ certCount }}</span>
+              </div>
+              <div style="max-height:340px;overflow:auto;">
+                <sc-for list="{{ certRecips }}" as="r" hint-placeholder-count="6">
+                  <div style="{{ r.rowStyle }}" onClick="{{ r.onPick }}">
+                    <div style="display:flex;align-items:center;gap:9px;">
+                      <button onClick="{{ r.onToggleInc }}" title="Include in send" style="background:transparent;border:none;padding:0;cursor:pointer;flex:none;"><span style="{{ r.incBoxStyle }}">{{ r.incCheck }}</span></button>
+                      <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#9a9788;width:26px;">{{ r.rankLabel }}</span>
+                      <span style="flex:1;min-width:0;"><span style="font-weight:600;font-size:13px;">{{ r.name }}</span> <span style="font-size:11px;color:#9a9788;">{{ r.club }}</span></span>
+                      <span style="{{ r.statusStyle }}">{{ r.statusLabel }}</span>
+                    </div>
+                    <input value="{{ r.email }}" onInput="{{ r.onEmail }}" onClick="{{ stop }}" placeholder="add email…" style="{{ r.emailStyle }}" />
+                    <sc-if value="{{ r.failed }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ r.onRetry }}" style="margin-top:6px;cursor:pointer;border:1px solid #b23b2c;background:#fff;color:#b23b2c;font-size:11px;font-weight:600;border-radius:6px;padding:5px 10px;">↻ Retry delivery</button>
+                    </sc-if>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ certNoRecips }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:22px 14px;text-align:center;color:#9a9788;font-size:12px;">No recipients in this category yet.</div>
+                </sc-if>
+              </div>
+              <div style="padding:13px 14px;border-top:1px solid #eee5d4;">
+                <button onClick="{{ sendCerts }}" style="width:100%;cursor:pointer;border:none;background:#1f7a4f;color:#fff;font-weight:700;font-size:13px;border-radius:7px;padding:11px;">✉ {{ sendBtnLabel }}</button>
+                <div style="font-size:11px;color:#9a9788;margin-top:8px;line-height:1.5;">Untick anyone you don't want a certificate sent to. Each PDF is emailed individually.</div>
+                <sc-if value="{{ certHasJobs }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:14px;margin-top:9px;font-family:'Spline Sans Mono',monospace;font-size:11px;">
+                  <span style="color:#1f7a4f;">✓ {{ certSent }} sent</span>
+                  <span style="color:#9a6a16;">◷ {{ certPending }} pending</span>
+                  <span style="color:#b23b2c;">✕ {{ certFailed }} failed</span>
+                </div>
+                </sc-if>
+              </div>
+            </div>
+
+            <!-- email composer -->
+            <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;padding:16px 16px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.14em;color:#9a9788;margin-bottom:12px;">EMAIL MESSAGE</div>
+              <label style="display:flex;flex-direction:column;gap:5px;font-size:11px;color:#76796f;margin-bottom:11px;">Subject<input value="{{ emailSubjectVal }}" onInput="{{ setEmailSubject }}" style="border:1px solid #e6e0d0;border-radius:7px;padding:9px 11px;font-size:13px;color:#18211c;background:#fff;" /></label>
+              <label style="display:flex;flex-direction:column;gap:5px;font-size:11px;color:#76796f;">Body<textarea onInput="{{ setEmailBody }}" rows="7" style="border:1px solid #e6e0d0;border-radius:7px;padding:9px 11px;font-size:13px;color:#18211c;background:#fff;resize:vertical;line-height:1.6;font-family:'Public Sans',sans-serif;">{{ emailBodyVal }}</textarea></label>
+            </div>
+
+            <!-- email preview -->
+            <div style="background:#fff;border:1px solid #e6e0d0;border-radius:9px;overflow:hidden;">
+              <div style="background:#f5f1e6;padding:11px 16px;border-bottom:1px solid #eee5d4;display:flex;align-items:center;gap:8px;">
+                <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a9788;">EMAIL PREVIEW</span>
+                <div style="flex:1;"></div>
+                <span style="font-size:11px;color:#9a9788;">to {{ emailPreviewName }}</span>
+              </div>
+              <div style="padding:14px 16px;">
+                <div style="font-size:11px;color:#9a9788;margin-bottom:3px;">To: <span style="font-family:'Spline Sans Mono',monospace;color:#18211c;">{{ emailPreviewTo }}</span></div>
+                <div style="font-size:14px;font-weight:700;font-family:'Archivo',sans-serif;color:#18211c;margin-bottom:12px;">{{ emailPreviewSubject }}</div>
+                <div style="font-size:13px;color:#55584f;line-height:1.65;white-space:pre-line;">{{ emailPreviewBody }}</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:14px;padding:9px 12px;border:1px solid #e6e0d0;border-radius:7px;background:#faf7ef;">
+                  <span style="font-size:16px;">📄</span>
+                  <span style="font-size:12px;color:#76796f;">{{ emailPreviewName }} — certificate.pdf</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ============ PARTICIPANTS ============ -->
+        <sc-if value="{{ isParticipants }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Participants">
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;padding:13px 16px;margin-bottom:18px;">
+            <div style="display:flex;flex-direction:column;">
+              <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#9a9788;">TOTAL PARTICIPANTS</span>
+              <span style="font-family:'Spline Sans Mono',monospace;font-size:24px;font-weight:600;color:#1f7a4f;line-height:1.1;">{{ partTotal }}</span>
+            </div>
+            <div style="width:1px;height:34px;background:#eee5d4;"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;flex:1;">
+              <sc-for list="{{ partChips }}" as="c" hint-placeholder-count="4">
+                <span style="display:inline-flex;align-items:center;gap:7px;font-size:12px;border:1px solid #e6e0d0;background:#f5f1e6;border-radius:20px;padding:5px 12px;"><b style="font-family:'Spline Sans Mono',monospace;color:#1f7a4f;">{{ c.count }}</b>{{ c.name }}</span>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px;align-items:start;">
+            <sc-for list="{{ participantGroups }}" as="g" hint-placeholder-count="4">
+              <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;overflow:hidden;">
+                <div style="background:#103d2a;color:#eaf3ec;padding:13px 16px;">
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ g.name }}</span>
+                    <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#7fb893;background:rgba(255,255,255,0.08);border-radius:5px;padding:2px 8px;white-space:nowrap;">{{ g.equip }}</span>
+                    <span style="font-family:'Spline Sans Mono',monospace;font-size:13px;font-weight:600;">{{ g.count }}</span>
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:7px;flex-wrap:wrap;">
+                    <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#a8c7b2;background:rgba(255,255,255,0.07);border-radius:5px;padding:2px 8px;">AGE · {{ g.age }}</span>
+                    <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#a8c7b2;background:rgba(255,255,255,0.07);border-radius:5px;padding:2px 8px;">{{ g.qual }}</span>
+                  </div>
+                  <div style="font-size:11px;color:#a8c7b2;margin-top:8px;line-height:1.45;">{{ g.desc }}</div>
+                </div>
+                <div style="display:grid;grid-template-columns:34px 1fr 78px;gap:8px;padding:8px 16px;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.05em;color:#9a9788;border-bottom:1px solid #eee5d4;">
+                  <div>#</div><div>ARCHER</div><div style="text-align:right;">DIVISION</div>
+                </div>
+                <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="5">
+                  <div style="display:grid;grid-template-columns:34px 1fr 78px;gap:8px;align-items:center;padding:10px 16px;border-bottom:1px solid #f1ebdc;">
+                    <span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#9a9788;">{{ r.seq }}</span>
+                    <span style="min-width:0;"><span style="font-weight:600;font-size:13px;">{{ r.name }}</span> <span style="font-size:12px;color:#1f7a4f;">{{ r.tag }}</span><br><span style="font-size:11px;color:#9a9788;">{{ r.club }}</span></span>
+                    <span style="font-size:12px;color:#76796f;text-align:right;">{{ r.division }}</span>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ g.empty }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:22px 16px;text-align:center;color:#9a9788;font-size:12px;">No participants in this category yet.</div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ============ BRACKET ============ -->
+        <sc-if value="{{ isBracket }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Bracket Generator">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+            <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a9788;">CATEGORY</span>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;">
+              <sc-for list="{{ catTabs }}" as="ct" hint-placeholder-count="3">
+                <button onClick="{{ ct.onClick }}" style="{{ ct.style }}">{{ ct.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+
+          <sc-if value="{{ bracketBlocked }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:12px;background:#fbf3df;border:1px solid #e3c98a;border-radius:9px;padding:13px 16px;margin-bottom:18px;">
+            <span style="font-size:16px;">🔒</span>
+            <div style="flex:1;font-size:13px;color:#9a6a16;">Final ranks not locked — bracket generation is provisional. <b>Lock Final Ranks</b> on Standings to freeze the draw.</div>
+            <button onClick="{{ goStand }}" style="cursor:pointer;border:1px solid #9a6a16;background:#fff;color:#9a6a16;font-weight:600;font-size:12px;border-radius:6px;padding:7px 12px;">Go to Standings</button>
+          </div>
+          </sc-if>
+
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+            <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#9a9788;">EVENT BRACKET</span>
+            <div style="display:flex;gap:0;border-radius:7px;overflow:hidden;">
+              <sc-for list="{{ eventBtns }}" as="e" hint-placeholder-count="4">
+                <button onClick="{{ e.onClick }}" style="{{ e.style }}">{{ e.label }}</button>
+              </sc-for>
+            </div>
+            <span style="font-size:12px;color:#76796f;">{{ bracketEntrantCount }} {{ entrantNoun }} · each event is an independent draw &amp; BYEs</span>
+          </div>
+
+          <div style="display:grid;grid-template-columns:300px 1fr;gap:22px;align-items:start;">
+          <!-- config -->
+          <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;padding:18px;">
+            <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a9788;margin-bottom:8px;">BRACKET SIZE</div>
+            <div style="display:flex;gap:7px;margin-bottom:18px;">
+              <sc-for list="{{ sizeBtns }}" as="s" hint-placeholder-count="3">
+                <button onClick="{{ s.onClick }}" style="{{ s.style }}">{{ s.label }}</button>
+              </sc-for>
+            </div>
+
+            <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a9788;margin-bottom:8px;">{{ entrantNoun }} IN DRAW</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+              <button onClick="{{ fieldDec }}" style="cursor:pointer;width:44px;height:44px;border:1px solid #e6e0d0;border-radius:7px;background:#fff;font-size:18px;font-weight:600;">−</button>
+              <div style="flex:1;text-align:center;font-family:'Spline Sans Mono',monospace;font-size:24px;font-weight:600;">{{ bracketField }}</div>
+              <button onClick="{{ fieldInc }}" style="cursor:pointer;width:44px;height:44px;border:1px solid #e6e0d0;border-radius:7px;background:#fff;font-size:18px;font-weight:600;">+</button>
+            </div>
+
+            <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a9788;margin-bottom:8px;">BYE POLICY</div>
+            <div style="display:flex;border-radius:7px;overflow:hidden;margin-bottom:9px;">
+              <sc-for list="{{ byePolicyBtns }}" as="b" hint-placeholder-count="2">
+                <button onClick="{{ b.onClick }}" style="{{ b.style }}">{{ b.label }}</button>
+              </sc-for>
+            </div>
+            <div style="font-size:11px;color:#9a9788;line-height:1.5;margin-bottom:16px;">{{ byePolicyNote }}</div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;background:#fbf3df;border:1px solid #e3c98a;border-radius:8px;padding:11px 13px;">
+              <span style="font-size:13px;color:#9a6a16;">BYEs generated</span>
+              <span style="font-family:'Spline Sans Mono',monospace;font-size:20px;font-weight:600;color:#9a6a16;">{{ bracketByes }}</span>
+            </div>
+            <div style="font-size:11px;color:#9a9788;line-height:1.5;margin-top:12px;">WA seeding 1v16, 8v9, 5v12… Snapshot is taken at generation so later score edits don’t reshuffle the draw.</div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:22px;min-width:0;">
+            <!-- target assignment -->
+            <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;padding:18px;">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+                <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;">Target assignment</div>
+                <div style="flex:1;"></div>
+                <div style="display:flex;align-items:center;gap:7px;">
+                  <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9a9788;">BUTTS</span>
+                  <input value="{{ tFrom }}" onInput="{{ onTFrom }}" style="width:46px;border:1px solid #e6e0d0;border-radius:6px;height:32px;text-align:center;font-family:'Spline Sans Mono',monospace;font-size:13px;background:#fff;">
+                  <span style="color:#9a9788;">–</span>
+                  <input value="{{ tTo }}" onInput="{{ onTTo }}" style="width:46px;border:1px solid #e6e0d0;border-radius:6px;height:32px;text-align:center;font-family:'Spline Sans Mono',monospace;font-size:13px;background:#fff;">
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:13px;">
+                <sc-for list="{{ roundTabs }}" as="t" hint-placeholder-count="5">
+                  <button onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</button>
+                </sc-for>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:8px;background:{{ targetRuleBg }};border:1px solid {{ targetRuleBorder }};border-radius:7px;padding:9px 12px;margin-bottom:14px;">
+                <span style="font-size:13px;">{{ targetRuleIcon }}</span>
+                <div style="font-size:12px;color:{{ targetRuleInk }};line-height:1.45;"><b>{{ targetRoundLabel }}</b> — {{ targetRuleNote }}</div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:9px;">
+                <sc-for list="{{ targetRows }}" as="m" hint-placeholder-count="8">
+                  <div style="display:flex;align-items:center;gap:8px;border:1px solid #eee5d4;border-radius:7px;padding:8px 10px;">
+                    <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9a9788;width:26px;">{{ m.no }}</span>
+                    <span style="{{ m.chipA }}">{{ m.aLabel }}</span>
+                    <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#c9c3b2;">/</span>
+                    <span style="{{ m.chipB }}">{{ m.bLabel }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <!-- first round matches -->
+            <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;padding:18px;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;">First round — {{ bracketSize }} draw</div>
+                <div style="flex:1;"></div>
+                <span style="display:inline-flex;align-items:center;gap:5px;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9a6a16;">🟡 BYE auto-advances · tap a match to score</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+                <sc-for list="{{ bracketMatches }}" as="m" hint-placeholder-count="8">
+                  <div onClick="{{ m.onClick }}" style="{{ m.rowStyle }}" title="{{ m.reasonA }}{{ m.reasonB }}">
+                    <div style="display:grid;grid-template-columns:38px 1fr 18px 1fr;gap:7px;align-items:center;">
+                      <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#1f7a4f;">{{ m.seedA }}</span>
+                      <span style="{{ m.nameAStyle }}">{{ m.nameA }}</span>
+                      <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#c9c3b2;text-align:center;">v</span>
+                      <span style="{{ m.nameBStyle }}">{{ m.nameB }} <span style="font-family:'Spline Sans Mono',monospace;color:#1f7a4f;">{{ m.seedB }}</span></span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+                      <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9a9788;">{{ m.no }}</span>
+                      <div style="flex:1;"></div>
+                      <span style="{{ m.statusStyle }}">{{ m.statusLabel }}</span>
+                      <sc-if value="{{ m.showScoreBtn }}" hint-placeholder-val="{{ false }}">
+                      <button onClick="{{ m.onScore }}" style="{{ m.scoreBtnStyle }}">{{ m.scoreBtnLabel }}</button>
+                      </sc-if>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          </div>
+
+          <sc-if value="{{ openCardVisible }}" hint-placeholder-val="{{ false }}">
+          <div style="position:fixed;inset:0;z-index:30;background:rgba(16,33,28,0.55);display:flex;align-items:flex-start;justify-content:center;padding:36px 20px;overflow:auto;">
+            <div style="width:100%;max-width:940px;background:#fffdf8;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,0.35);overflow:hidden;">
+              <!-- card header -->
+              <div style="display:flex;align-items:center;gap:14px;background:#103d2a;color:#eaf3ec;padding:16px 22px;">
+                <div style="flex:1;min-width:0;">
+                  <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.18em;color:#7fb893;">OLYMPIC CARD · SET SYSTEM</div>
+                  <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:19px;">{{ card.round }}</div>
+                </div>
+                <button onClick="{{ clearCardScores }}" style="cursor:pointer;border:1px solid rgba(255,255,255,0.3);background:transparent;color:#eaf3ec;font-weight:600;font-size:12px;border-radius:7px;padding:8px 12px;">Clear scores</button>
+                <button onClick="{{ closeCard }}" style="cursor:pointer;border:none;background:#5fd07f;color:#0c2e1f;font-weight:700;font-size:13px;border-radius:7px;padding:9px 16px;">Done ✓</button>
+              </div>
+
+              <!-- archers + tally -->
+              <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;padding:16px 22px;border-bottom:1px solid #eee5d4;">
+                <div style="display:flex;flex-direction:column;align-items:flex-start;">
+                  <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9a9788;">{{ card.aSeed }}</span>
+                  <span style="font-family:'Archivo',sans-serif;font-weight:700;font-size:18px;color:{{ card.aWin ? '#1f7a4f' : '#18211c' }};">{{ card.aName }}</span>
+                  <button onClick="{{ toggleDqA }}" style="margin-top:8px;display:inline-flex;align-items:center;gap:7px;cursor:pointer;border:none;background:transparent;padding:0;font-size:11px;font-weight:600;color:#b23b2c;"><span style="{{ card.dqABoxStyle }}">{{ card.dqACheck }}</span> Default / DQ</button>
+                </div>
+                <div style="text-align:center;">
+                  <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a9788;">SET POINTS</div>
+                  <div style="font-family:'Spline Sans Mono',monospace;font-size:30px;font-weight:700;line-height:1;"><span style="color:{{ card.aWin ? '#1f7a4f' : '#18211c' }};">{{ card.spA }}</span><span style="color:#c9c3b2;"> – </span><span style="color:{{ card.bWin ? '#1f7a4f' : '#18211c' }};">{{ card.spB }}</span></div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;">
+                  <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9a9788;">{{ card.bSeed }}</span>
+                  <span style="font-family:'Archivo',sans-serif;font-weight:700;font-size:18px;color:{{ card.bWin ? '#1f7a4f' : '#18211c' }};">{{ card.bName }}</span>
+                  <button onClick="{{ toggleDqB }}" style="margin-top:8px;display:inline-flex;align-items:center;gap:7px;cursor:pointer;border:none;background:transparent;padding:0;font-size:11px;font-weight:600;color:#b23b2c;"><span style="{{ card.dqBBoxStyle }}">{{ card.dqBCheck }}</span> Default / DQ</button>
+                </div>
+              </div>
+
+              <!-- set table -->
+              <div style="padding:14px 22px 6px;">
+                <div style="display:grid;grid-template-columns:50px repeat(6,1fr) 46px 58px 46px repeat(6,1fr);gap:5px;align-items:center;font-family:'Spline Sans Mono',monospace;font-size:9px;color:#9a9788;margin-bottom:6px;text-align:center;">
+                  <div></div>
+                  <div>A1</div><div>A2</div><div>A3</div><div>A4</div><div>A5</div><div>A6</div>
+                  <div>TOT</div><div>PT</div><div>TOT</div>
+                  <div>A1</div><div>A2</div><div>A3</div><div>A4</div><div>A5</div><div>A6</div>
+                </div>
+                <sc-for list="{{ cardSets }}" as="s" hint-placeholder-count="5">
+                  <div style="display:grid;grid-template-columns:50px repeat(6,1fr) 46px 58px 46px repeat(6,1fr);gap:5px;align-items:center;margin-bottom:5px;">
+                    <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#76796f;">{{ s.setNo }}</span>
+                    <sc-for list="{{ s.aCells }}" as="c" hint-placeholder-count="6">
+                      <input value="{{ c.val }}" onInput="{{ c.onInput }}" maxlength="2" style="{{ c.style }}">
+                    </sc-for>
+                    <span style="font-family:'Spline Sans Mono',monospace;font-size:14px;font-weight:600;text-align:center;">{{ s.aTot }}</span>
+                    <span style="{{ s.ptStyle }}">{{ s.ptText }}</span>
+                    <span style="font-family:'Spline Sans Mono',monospace;font-size:14px;font-weight:600;text-align:center;">{{ s.bTot }}</span>
+                    <sc-for list="{{ s.bCells }}" as="c" hint-placeholder-count="6">
+                      <input value="{{ c.val }}" onInput="{{ c.onInput }}" maxlength="2" style="{{ c.style }}">
+                    </sc-for>
+                  </div>
+                </sc-for>
+
+                <sc-if value="{{ cardShowShoot }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:10px;padding:11px;background:#fbf3df;border:1px solid #e3c98a;border-radius:8px;">
+                  <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#9a6a16;">SHOOT-OFF — closest to centre wins</span>
+                  <input value="{{ cardShootA.val }}" onInput="{{ cardShootA.onInput }}" maxlength="2" style="{{ cardShootA.style }}">
+                  <span style="color:#9a6a16;font-weight:700;">vs</span>
+                  <input value="{{ cardShootB.val }}" onInput="{{ cardShootB.onInput }}" maxlength="2" style="{{ cardShootB.style }}">
+                </div>
+                </sc-if>
+              </div>
+
+              <!-- status -->
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 22px 20px;">
+                <span style="font-size:13px;font-weight:600;color:{{ card.statusInk }};">{{ card.status }}</span>
+                <div style="flex:1;"></div>
+                <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#9a9788;">cumulative · {{ card.totA }} – {{ card.totB }}</span>
+              </div>
+              <div style="padding:0 22px 18px;font-size:11px;color:#9a9788;line-height:1.5;">Enter <b>0–10</b>, <b>X</b> (=10, breaks ties) or <b>M</b> (miss) per arrow. Win a set = +2 set points, draw = +1. First to 6 set points advances; 5–5 triggers a one-arrow shoot-off.</div>
+            </div>
+          </div>
+          </sc-if>
+        </div>
+        </sc-if>
+
+        <!-- ============ TEAMS ============ -->
+        <sc-if value="{{ isTeams }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Team Assembly">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+            <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a9788;">CATEGORY</span>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;">
+              <sc-for list="{{ catTabs }}" as="ct" hint-placeholder-count="3">
+                <button onClick="{{ ct.onClick }}" style="{{ ct.style }}">{{ ct.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap;">
+            <div style="display:flex;gap:0;border-radius:7px;overflow:hidden;">
+              <sc-for list="{{ formatBtns }}" as="m" hint-placeholder-count="4">
+                <button onClick="{{ m.onClick }}" style="{{ m.style }}">{{ m.label }}</button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ teamShowMode }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:0;border-radius:7px;overflow:hidden;">
+              <sc-for list="{{ modeBtnsT }}" as="m" hint-placeholder-count="2">
+                <button onClick="{{ m.onClick }}" style="{{ m.style }}">{{ m.label }}</button>
+              </sc-for>
+            </div>
+            </sc-if>
+            <div style="flex:1;min-width:120px;font-size:12px;color:#76796f;">{{ teamSub }}</div>
+            <button style="cursor:pointer;border:none;background:#1f7a4f;color:#fff;font-weight:700;font-size:13px;border-radius:7px;padding:9px 15px;white-space:nowrap;">Confirm &amp; Lock teams →</button>
+          </div>
+
+          <sc-if value="{{ teamsBlocked }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:12px;background:#fbf3df;border:1px solid #e3c98a;border-radius:8px;padding:11px 16px;margin-bottom:18px;">
+            <span style="font-size:16px;">🔒</span>
+            <div style="flex:1;font-size:13px;color:#9a6a16;">Preview only — <b>Lock Final Ranks</b> on Standings before you Confirm &amp; Lock teams.</div>
+            <button onClick="{{ goStand }}" style="cursor:pointer;border:1px solid #9a6a16;background:#fff;color:#9a6a16;font-weight:600;font-size:12px;border-radius:6px;padding:7px 12px;">Go to Standings</button>
+          </div>
+          </sc-if>
+
+          <sc-if value="{{ teamHasExcluded }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:12px;background:#fbf3df;border:1px solid #e3c98a;border-radius:8px;padding:11px 16px;margin-bottom:18px;">
+            <span style="font-size:16px;">⚑</span>
+            <div style="flex:1;font-size:13px;color:#9a6a16;">{{ teamExclMsg }}</div>
+          </div>
+          </sc-if>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;">
+            <sc-for list="{{ teamCards }}" as="t" hint-placeholder-count="4">
+              <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;overflow:hidden;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#103d2a;color:#eaf3ec;padding:10px 14px;">
+                  <span style="font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">{{ t.name }}</span>
+                  <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#7fb893;white-space:nowrap;flex:none;">{{ t.seed }}</span>
+                </div>
+                <sc-for list="{{ t.members }}" as="mb" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #f1ebdc;">
+                    <span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#1f7a4f;width:32px;">{{ mb.rank }}</span>
+                    <span style="flex:1;"><span style="font-weight:600;font-size:13px;">{{ mb.name }}</span> <span style="font-size:12px;color:#1f7a4f;">{{ mb.tag }}</span><br><span style="font-size:11px;color:#9a9788;">{{ mb.club }}</span></span>
+                    <span style="font-family:'Spline Sans Mono',monospace;font-size:13px;font-weight:600;">{{ mb.score }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ teamHasExcluded }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:18px;background:#fffdf8;border:1px dashed #d8d2c2;border-radius:9px;padding:14px 16px;">
+            <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a6a16;margin-bottom:8px;">EXCLUDED FROM TEAMS</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+              <sc-for list="{{ teamExcluded }}" as="e" hint-placeholder-count="1">
+                <span style="display:inline-flex;align-items:center;gap:7px;font-size:12px;border:1px solid #e3c98a;background:#fbf3df;border-radius:20px;padding:4px 11px;color:#9a6a16;"><b style="font-family:'Spline Sans Mono',monospace;">{{ e.rank }}</b> {{ e.name }} · {{ e.club }}</span>
+              </sc-for>
+            </div>
+          </div>
+          </sc-if>
+        </div>
+        </sc-if>
+
+        <!-- ============ STANDINGS ============ -->
+        <sc-if value="{{ isStandings }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Live Standings">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+          <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a9788;">CATEGORY</span>
+          <div style="display:flex;gap:7px;flex-wrap:wrap;">
+            <sc-for list="{{ catTabs }}" as="ct" hint-placeholder-count="3">
+              <button onClick="{{ ct.onClick }}" style="{{ ct.style }}">{{ ct.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 320px;gap:22px;align-items:start;">
+          <div style="display:flex;flex-direction:column;gap:14px;min-width:0;">
+
+          <sc-if value="{{ rankUnset }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:12px;background:#fbf3df;border:1px solid #e3c98a;border-radius:9px;padding:12px 16px;">
+            <span style="font-size:16px;">⚠</span>
+            <div style="flex:1;font-size:13px;color:#9a6a16;line-height:1.4;"><b>Ranking Mode not set</b> — choose Combined or Separate after registrations close. Required before team assembly or bracket generation.</div>
+          </div>
+          </sc-if>
+
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;padding:11px 14px;">
+            <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#9a9788;">RANKING MODE</span>
+            <div style="display:flex;gap:7px;">
+              <sc-for list="{{ modeBtns }}" as="mb" hint-placeholder-count="2">
+                <button onClick="{{ mb.onClick }}" style="{{ mb.style }}">{{ mb.label }}</button>
+              </sc-for>
+            </div>
+            <button onClick="{{ toggleArrows }}" style="{{ arrowsBtnStyle }}">{{ arrowsBtnLabel }}</button>
+            <div style="flex:1;"></div>
+            <sc-if value="{{ canLock }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ lockRanks }}" style="cursor:pointer;border:none;background:#1f7a4f;color:#fff;font-weight:700;font-size:13px;border-radius:7px;padding:9px 16px;">🔒 Lock Final Ranks</button>
+            </sc-if>
+            <sc-if value="{{ ranksLocked }}" hint-placeholder-val="{{ false }}">
+            <div style="display:inline-flex;align-items:center;gap:8px;">
+              <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#1f7a4f;background:#e6f0e8;border:1px solid #bcd9c5;border-radius:7px;padding:7px 11px;">✓ Final ranks locked</span>
+              <button onClick="{{ unlockRanks }}" style="cursor:pointer;border:1px solid #d8d2c2;background:#fff;color:#76796f;font-weight:600;font-size:12px;border-radius:7px;padding:7px 11px;">Unlock</button>
+            </div>
+            </sc-if>
+          </div>
+
+          <sc-for list="{{ standGroups }}" as="grp" hint-placeholder-count="1">
+          <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;overflow:hidden;">
+            <div style="display:flex;align-items:center;gap:10px;padding:13px 18px;border-bottom:1px solid #eee5d4;">
+              <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;">{{ grp.title }}</div>
+              <div style="flex:1;"></div>
+              <div style="display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:600;color:#1f7a4f;background:#e6f0e8;border:1px solid #bcd9c5;border-radius:20px;padding:4px 10px;"><span style="width:7px;height:7px;border-radius:50%;background:#5fd07f;animation:gppulse 1.4s infinite;"></span>LIVE · &lt;2s</div>
+            </div>
+            <div style="display:grid;grid-template-columns:54px 1fr 78px 46px 46px 46px;gap:8px;padding:9px 18px;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.06em;color:#9a9788;border-bottom:1px solid #eee5d4;">
+              <div>RANK</div><div>ARCHER</div><div style="text-align:right;">SCORE</div><div style="text-align:right;">X</div><div style="text-align:right;">10</div><div style="text-align:right;">9</div>
+            </div>
+            <sc-for list="{{ grp.rows }}" as="r" hint-placeholder-count="8">
+              <div style="{{ r.rowStyle }}">
+                <span style="{{ r.rankStyle }}">{{ r.rank }}</span>
+                <span><span style="font-weight:600;font-size:14px;">{{ r.name }}</span> <span style="font-size:11px;color:#9a9788;">{{ r.club }}</span></span>
+                <span style="font-family:'Spline Sans Mono',monospace;font-weight:600;font-size:15px;text-align:right;">{{ r.score }}</span>
+                <span style="font-family:'Spline Sans Mono',monospace;font-size:13px;text-align:right;color:#b23b2c;">{{ r.x }}</span>
+                <span style="font-family:'Spline Sans Mono',monospace;font-size:13px;text-align:right;color:#76796f;">{{ r.ten }}</span>
+                <span style="font-family:'Spline Sans Mono',monospace;font-size:13px;text-align:right;color:#76796f;">{{ r.nine }}</span>
+              </div>
+              <sc-if value="{{ showArrows }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:8px 18px 12px 72px;background:#faf7ef;border-bottom:1px solid #f1ebdc;">
+                <sc-for list="{{ r.ends }}" as="e" hint-placeholder-count="6">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+                    <span style="font-family:'Spline Sans Mono',monospace;font-size:9px;color:#9a9788;width:22px;">{{ e.no }}</span>
+                    <sc-for list="{{ e.cells }}" as="c" hint-placeholder-count="6">
+                      <span style="{{ c.style }}">{{ c.label }}</span>
+                    </sc-for>
+                  </div>
+                </sc-for>
+              </div>
+              </sc-if>
+            </sc-for>
+            <sc-if value="{{ grp.empty }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:24px 18px;text-align:center;color:#9a9788;font-size:12px;">No archers in this division yet.</div>
+            </sc-if>
+          </div>
+          </sc-for>
+          </div>
+
+          <!-- shoot-off panel -->
+          <div style="position:sticky;top:90px;">
+            <sc-if value="{{ hasTies }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#fffdf8;border:1px solid #e3c98a;border-radius:9px;overflow:hidden;">
+              <div style="background:#fbf3df;padding:13px 16px;border-bottom:1px solid #eddcb6;">
+                <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a6a16;">⚑ SHOOT-OFF REQUIRED</div>
+                <div style="font-size:12px;color:#9a6a16;margin-top:3px;">WA tie-break exhausted — equal score, X, 10 &amp; 9. Record each archer's shoot-off arrow.</div>
+              </div>
+              <div style="padding:14px 16px;">
+                <sc-for list="{{ tieGroupsView }}" as="g" hint-placeholder-count="1">
+                  <div style="margin-bottom:14px;">
+                    <div style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#76796f;margin-bottom:8px;">Tie for rank {{ g.rank }}</div>
+                    <sc-for list="{{ g.members }}" as="m" hint-placeholder-count="2">
+                      <div style="margin-bottom:10px;">
+                        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;"><span style="font-weight:600;font-size:13px;">{{ m.name }}</span><span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#1f7a4f;">arrow: {{ m.cur }}</span></div>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                          <sc-for list="{{ m.btns }}" as="b" hint-placeholder-count="6">
+                            <button onClick="{{ b.onClick }}" style="{{ b.style }}">{{ b.label }}</button>
+                          </sc-for>
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-for>
+                <div style="font-size:11px;color:#9a9788;line-height:1.5;">Higher arrow wins the position; the table re-ranks instantly once both are recorded.</div>
+              </div>
+            </div>
+            </sc-if>
+            <sc-if value="{{ noTies }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;padding:20px;text-align:center;">
+              <div style="font-size:13px;color:#1f7a4f;font-weight:600;">✓ No unresolved ties</div>
+              <div style="font-size:12px;color:#9a9788;margin-top:4px;">Ranking is fully resolved per WA tie-break.</div>
+            </div>
+            </sc-if>
+          </div>
+        </div>
+        </div>
+        </sc-if>
+
+        <!-- ============ DASHBOARD ============ -->
+        <sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+        <div data-screen-label="Dashboard">
+          <!-- hero -->
+          <div style="position:relative;overflow:hidden;background:#103d2a;color:#eaf3ec;border-radius:10px;padding:30px 32px;margin-bottom:22px;">
+            <span style="position:absolute;right:-70px;top:-70px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,#f6c84b 0 20%,#e0452f 20% 42%,#2f6fb0 42% 64%,#15321f 64% 82%,rgba(255,253,248,0.12) 82% 100%);opacity:.16;"></span>
+            <div style="position:relative;">
+              <div style="display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:0.08em;background:rgba(95,208,127,0.16);border:1px solid rgba(95,208,127,0.5);border-radius:20px;padding:4px 11px;"><span style="width:7px;height:7px;border-radius:50%;background:#5fd07f;animation:gppulse 1.4s infinite;"></span>QUALIFICATION LIVE</div>
+              <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:34px;letter-spacing:-0.02em;margin:12px 0 4px;">{{ tName }}</div>
+              <div style="font-size:13px;color:#a8c7b2;">{{ tHeroDates }}</div>
+              <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;">
+                <button onClick="{{ newTournament }}" style="cursor:pointer;border:none;background:#5fd07f;color:#0c2e1f;font-weight:700;font-size:13px;border-radius:7px;padding:10px 16px;">＋ New tournament</button>
+                <button onClick="{{ goTournaments }}" style="cursor:pointer;border:1px solid rgba(255,255,255,0.3);background:transparent;color:#eaf3ec;font-weight:600;font-size:13px;border-radius:7px;padding:10px 16px;">All tournaments</button>
+                <button onClick="{{ goScore }}" style="cursor:pointer;border:1px solid rgba(255,255,255,0.3);background:transparent;color:#eaf3ec;font-weight:600;font-size:13px;border-radius:7px;padding:10px 16px;">Enter scores</button>
+                <button onClick="{{ goSummary }}" style="cursor:pointer;border:1px solid rgba(255,255,255,0.3);background:transparent;color:#eaf3ec;font-weight:600;font-size:13px;border-radius:7px;padding:10px 16px;">Results &amp; print</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- stat tiles -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;">
+            <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;padding:16px 18px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#9a9788;">ENTRIES</div>
+              <div style="font-family:'Spline Sans Mono',monospace;font-weight:600;font-size:30px;margin-top:2px;">{{ stat.entries }}</div>
+            </div>
+            <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;padding:16px 18px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#9a9788;">LEADER</div>
+              <div style="font-weight:700;font-size:16px;margin-top:6px;">{{ stat.leader }}</div>
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#1f7a4f;">{{ stat.leaderScore }}</div>
+            </div>
+            <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;padding:16px 18px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#9a9788;">AVG SCORE</div>
+              <div style="font-family:'Spline Sans Mono',monospace;font-weight:600;font-size:30px;margin-top:2px;">{{ stat.avg }}</div>
+            </div>
+            <div onClick="{{ goStand }}" style="cursor:pointer;background:{{ stat.tieBg }};border:1px solid {{ stat.tieBorder }};border-radius:9px;padding:16px 18px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.1em;color:{{ stat.tieInk }};">SHOOT-OFFS</div>
+              <div style="font-family:'Spline Sans Mono',monospace;font-weight:600;font-size:30px;margin-top:2px;color:{{ stat.tieInk }};">{{ stat.ties }}</div>
+              <div style="font-size:11px;color:{{ stat.tieInk }};">{{ stat.tieMsg }}</div>
+            </div>
+          </div>
+
+          <!-- workflow steps -->
+          <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.14em;color:#9a9788;margin-bottom:10px;">RUN OF PLAY</div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;">
+            <sc-for list="{{ flowCards }}" as="f" hint-placeholder-count="5">
+              <button onClick="{{ f.onClick }}" style="text-align:left;cursor:pointer;background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;padding:15px;display:flex;flex-direction:column;gap:8px;min-height:128px;">
+                <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;font-weight:600;color:#fff;background:#1f7a4f;border-radius:5px;padding:2px 7px;align-self:flex-start;">{{ f.no }}</span>
+                <span style="font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;">{{ f.label }}</span>
+                <span style="font-size:12px;line-height:1.45;color:#76796f;">{{ f.desc }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ============ SCORE ENTRY ============ -->
+        <sc-if value="{{ isScore }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Score Entry">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+            <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a9788;">CATEGORY</span>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;">
+              <sc-for list="{{ catTabs }}" as="ct" hint-placeholder-count="3">
+                <button onClick="{{ ct.onClick }}" style="{{ ct.style }}">{{ ct.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:280px 1fr;gap:22px;align-items:start;">
+          <!-- archer list -->
+          <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;overflow:hidden;">
+            <div style="padding:13px 16px;border-bottom:1px solid #eee5d4;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a9788;">ARCHERS · TAP TO SCORE</div>
+            <div style="max-height:560px;overflow:auto;">
+              <sc-for list="{{ archerList }}" as="a" hint-placeholder-count="8">
+                <button onClick="{{ a.onClick }}" style="{{ a.rowStyle }}">
+                  <span style="font-family:'Spline Sans Mono',monospace;font-size:12px;width:26px;color:#9a9788;">{{ a.rank }}</span>
+                  <span style="flex:1;text-align:left;"><span style="font-weight:600;font-size:13px;">{{ a.name }}</span><br><span style="font-size:11px;color:#9a9788;">{{ a.club }}</span></span>
+                  <span style="{{ a.scoreStyle }}">{{ a.score }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+
+          <!-- scorecard -->
+          <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;padding:20px 22px;">
+            <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:16px;">
+              <div>
+                <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a9788;">SCORECARD · 36 ARROWS</div>
+                <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:22px;">{{ sel.name }} <span style="font-weight:500;font-size:14px;color:#9a9788;">{{ sel.club }}</span></div>
+              </div>
+              <div style="flex:1;"></div>
+              <button onClick="{{ toggleSelDq }}" style="{{ dqBtnStyle }}">{{ dqBtnLabel }}</button>
+              <button onClick="{{ clearCard }}" style="cursor:pointer;border:1px solid #d8d2c2;background:#fff;border-radius:6px;padding:8px 12px;font-size:12px;font-weight:600;color:#76796f;">Clear card</button>
+              <button onClick="{{ saveScore }}" style="cursor:pointer;border:none;background:#1f7a4f;color:#fff;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:700;">Save &amp; rank</button>
+            </div>
+
+            <sc-if value="{{ selDq }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:10px;background:#fbf1ef;border:1px solid #e3bdb5;border-radius:8px;padding:11px 14px;margin-bottom:16px;">
+              <span style="font-size:15px;">⊘</span>
+              <div style="flex:1;font-size:13px;color:#b23b2c;line-height:1.4;"><b>Defaulted / Disqualified</b> — this archer's score is voided and excluded from the ranking, seeding and brackets. Reinstate to restore.</div>
+            </div>
+            </sc-if>
+
+            <div style="display:grid;grid-template-columns:1fr 230px;gap:22px;align-items:start;">
+              <!-- ends grid -->
+              <div style="display:flex;flex-direction:column;gap:7px;">
+                <div style="display:grid;grid-template-columns:30px repeat(6,1fr) 52px;gap:6px;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9a9788;padding:0 2px;">
+                  <div>END</div><div style="text-align:center;">1</div><div style="text-align:center;">2</div><div style="text-align:center;">3</div><div style="text-align:center;">4</div><div style="text-align:center;">5</div><div style="text-align:center;">6</div><div style="text-align:right;">TOT</div>
+                </div>
+                <sc-for list="{{ endRows }}" as="row" hint-placeholder-count="6">
+                  <div style="display:grid;grid-template-columns:30px repeat(6,1fr) 52px;gap:6px;align-items:center;">
+                    <div style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#9a9788;">{{ row.endNo }}</div>
+                    <sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="6">
+                      <button onClick="{{ c.onClick }}" style="{{ c.style }}">{{ c.label }}</button>
+                    </sc-for>
+                    <div style="font-family:'Spline Sans Mono',monospace;font-size:14px;font-weight:600;text-align:right;">{{ row.total }}</div>
+                  </div>
+                </sc-for>
+              </div>
+
+              <!-- keypad + tally -->
+              <div>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px;">
+                  <sc-for list="{{ keypad }}" as="k" hint-placeholder-count="12">
+                    <button onClick="{{ k.onClick }}" style="{{ k.style }}">{{ k.label }}</button>
+                  </sc-for>
+                </div>
+                <div style="background:#f5f1e6;border:1px solid #e6e0d0;border-radius:8px;padding:14px;">
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;"><span style="font-size:12px;color:#76796f;">Running total</span><span style="font-family:'Spline Sans Mono',monospace;font-size:26px;font-weight:600;color:#1f7a4f;">{{ live.score }}</span></div>
+                  <div style="display:flex;gap:8px;font-family:'Spline Sans Mono',monospace;font-size:12px;">
+                    <span style="flex:1;text-align:center;background:#fff;border:1px solid #e6e0d0;border-radius:6px;padding:7px 0;"><b style="color:#b23b2c;">X</b><br>{{ live.x }}</span>
+                    <span style="flex:1;text-align:center;background:#fff;border:1px solid #e6e0d0;border-radius:6px;padding:7px 0;"><b>10</b><br>{{ live.ten }}</span>
+                    <span style="flex:1;text-align:center;background:#fff;border:1px solid #e6e0d0;border-radius:6px;padding:7px 0;"><b>9</b><br>{{ live.nine }}</span>
+                    <span style="flex:1;text-align:center;background:#fff;border:1px solid #e6e0d0;border-radius:6px;padding:7px 0;">done<br>{{ live.done }}/36</span>
+                  </div>
+                </div>
+                <div style="font-size:11px;color:#9a9788;margin-top:10px;line-height:1.5;">Tap a cell, then a value. X counts as 10 and feeds the WA tie-break automatically. Saving recomputes the ranking.</div>
+              </div>
+            </div>
+          </div>
+          </sc-if>
+
+          <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ true }}">
+          <div></div>
+          </sc-if>
+          <sc-if value="{{ noSel }}" hint-placeholder-val="{{ true }}">
+          <div style="background:#fffdf8;border:1px dashed #d8d2c2;border-radius:9px;padding:60px;text-align:center;color:#9a9788;">
+            <div style="width:54px;height:54px;border-radius:50%;margin:0 auto 14px;background:radial-gradient(circle,#f6c84b 0 20%,#e0452f 20% 42%,#2f6fb0 42% 64%,#15321f 64% 82%,#efece1 82% 100%);opacity:.5;"></div>
+            <div style="font-size:14px;">Select an archer from the list to enter their scorecard.</div>
+          </div>
+          </sc-if>
+        </div>
+        </div>
+        </sc-if>
+
+        <!-- ============ LIVE SCOREBOARD ============ -->
+        <sc-if value="{{ isBoard }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Live Scoreboard">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px;">
+            <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a9788;">EVENT</span>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;">
+              <sc-for list="{{ boardEventTabs }}" as="t" hint-placeholder-count="5">
+                <button onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</button>
+              </sc-for>
+            </div>
+            <div style="flex:1;"></div>
+            <div style="display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:600;color:#1f7a4f;background:#e6f0e8;border:1px solid #bcd9c5;border-radius:20px;padding:5px 12px;"><span style="width:7px;height:7px;border-radius:50%;background:#5fd07f;animation:gppulse 1.4s infinite;"></span>LIVE · all archers</div>
+          </div>
+
+          <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;overflow:hidden;">
+            <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid #eee5d4;">
+              <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:16px;">{{ boardEventLabel }} — live scores</div>
+              <div style="flex:1;"></div>
+              <span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#1f7a4f;font-weight:600;">{{ boardCount }} submitted</span>
+            </div>
+            <div style="display:grid;grid-template-columns:54px 1fr 92px 70px 46px 46px 60px;gap:8px;padding:9px 18px;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.06em;color:#9a9788;border-bottom:1px solid #eee5d4;">
+              <div>RANK</div><div>ARCHER</div><div style="text-align:right;">SCORE</div><div style="text-align:right;">X</div><div style="text-align:right;">10</div><div style="text-align:right;">9</div><div style="text-align:right;">DONE</div>
+            </div>
+            <sc-for list="{{ boardRows }}" as="r" hint-placeholder-count="6">
+              <div style="{{ r.rowStyle }}">
+                <span style="{{ r.rankStyle }}">{{ r.rank }}</span>
+                <span><span style="font-weight:600;font-size:14px;">{{ r.name }}</span> <span style="font-size:11px;color:#9a9788;">{{ r.club }} · {{ r.cat }}</span></span>
+                <span style="font-family:'Spline Sans Mono',monospace;font-weight:600;font-size:15px;text-align:right;">{{ r.score }}</span>
+                <span style="font-family:'Spline Sans Mono',monospace;font-size:13px;text-align:right;color:#b23b2c;">{{ r.x }}</span>
+                <span style="font-family:'Spline Sans Mono',monospace;font-size:13px;text-align:right;color:#76796f;">{{ r.ten }}</span>
+                <span style="font-family:'Spline Sans Mono',monospace;font-size:13px;text-align:right;color:#76796f;">{{ r.nine }}</span>
+                <span style="font-family:'Spline Sans Mono',monospace;font-size:12px;text-align:right;color:#9a9788;">{{ r.done }}</span>
+              </div>
+            </sc-for>
+            <sc-if value="{{ boardEmpty }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:48px 18px;text-align:center;color:#9a9788;">
+              <div style="font-size:14px;margin-bottom:6px;">No scores submitted for {{ boardEventLabel }} yet.</div>
+              <div style="font-size:12px;">Archers submit from the <b>Archer Portal</b>, or admins via <b>Score Entry</b>.</div>
+              <button onClick="{{ goPortal }}" style="margin-top:14px;cursor:pointer;border:none;background:#1f7a4f;color:#fff;font-weight:700;font-size:13px;border-radius:7px;padding:9px 16px;">Open Archer Portal →</button>
+            </div>
+            </sc-if>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ============ ARCHER PORTAL ============ -->
+        <sc-if value="{{ isPortal }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Archer Portal">
+
+          <sc-if value="{{ portalLoggedOut }}" hint-placeholder-val="{{ true }}">
+          <div style="max-width:520px;margin:30px auto;background:#fffdf8;border:1px solid #e6e0d0;border-radius:11px;padding:28px 26px;">
+            <div style="display:flex;align-items:center;gap:11px;margin-bottom:6px;">
+              <span style="width:34px;height:34px;border-radius:50%;flex:none;background:radial-gradient(circle,#f6c84b 0 20%,#e0452f 20% 42%,#2f6fb0 42% 64%,#15321f 64% 82%,#fffdf8 82% 100%);"></span>
+              <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:20px;">Archer sign in</div>
+            </div>
+            <div style="font-size:13px;color:#76796f;line-height:1.5;margin-bottom:18px;">Sign in with the email you registered with to edit your details and submit your scores.</div>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:#76796f;margin-bottom:12px;">Registered email<input value="{{ portalLoginEmailVal }}" onInput="{{ setPortalLoginEmail }}" placeholder="you@club.ph" style="border:1px solid #e6e0d0;border-radius:8px;padding:11px 13px;font-size:14px;background:#fff;" /></label>
+            <button onClick="{{ portalLoginByEmail }}" style="width:100%;cursor:pointer;border:none;background:#1f7a4f;color:#fff;font-weight:700;font-size:14px;border-radius:8px;padding:12px;">Sign in →</button>
+            <div style="display:flex;align-items:center;gap:10px;margin:20px 0 12px;"><div style="flex:1;height:1px;background:#eee5d4;"></div><span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9a9788;">OR PICK A DEMO ARCHER</span><div style="flex:1;height:1px;background:#eee5d4;"></div></div>
+            <div style="display:flex;flex-direction:column;gap:7px;">
+              <sc-for list="{{ portalQuickList }}" as="a" hint-placeholder-count="5">
+                <button onClick="{{ a.onClick }}" style="cursor:pointer;display:flex;align-items:center;gap:10px;text-align:left;border:1px solid #e6e0d0;background:#fff;border-radius:8px;padding:10px 13px;">
+                  <span style="flex:1;"><span style="font-weight:600;font-size:13px;">{{ a.name }}</span> <span style="font-size:11px;color:#9a9788;">{{ a.club }}</span><br><span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9a9788;">{{ a.email }}</span></span>
+                  <span style="font-size:12px;color:#1f7a4f;font-weight:600;">Sign in</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+          </sc-if>
+
+          <sc-if value="{{ portalLoggedIn }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:340px 1fr;gap:22px;align-items:start;">
+            <!-- profile + tournaments -->
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;padding:18px;">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                  <span style="width:42px;height:42px;border-radius:50%;flex:none;background:#103d2a;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;">{{ portalInitials }}</span>
+                  <div style="flex:1;min-width:0;"><div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:17px;line-height:1.1;">{{ portalName }}</div><div style="font-size:11px;color:#9a9788;">My profile</div></div>
+                  <button onClick="{{ portalLogout }}" style="cursor:pointer;border:1px solid #e6e0d0;background:#fff;border-radius:7px;padding:7px 11px;font-size:12px;font-weight:600;color:#76796f;">Sign out</button>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:11px;">
+                  <label style="display:flex;flex-direction:column;gap:5px;font-size:11px;color:#76796f;">Full name<input value="{{ portalName }}" onInput="{{ setPName }}" style="border:1px solid #e6e0d0;border-radius:7px;padding:9px 11px;font-size:13px;background:#fff;" /></label>
+                  <label style="display:flex;flex-direction:column;gap:5px;font-size:11px;color:#76796f;">Club<input value="{{ portalClub }}" onInput="{{ setPClub }}" style="border:1px solid #e6e0d0;border-radius:7px;padding:9px 11px;font-size:13px;background:#fff;" /></label>
+                  <label style="display:flex;flex-direction:column;gap:5px;font-size:11px;color:#76796f;">Email<input value="{{ portalEmail }}" onInput="{{ setPEmail }}" style="border:1px solid #e6e0d0;border-radius:7px;padding:9px 11px;font-size:13px;background:#fff;font-family:'Spline Sans Mono',monospace;" /></label>
+                  <div style="display:flex;flex-direction:column;gap:5px;"><span style="font-size:11px;color:#76796f;">Division</span><div style="display:flex;gap:7px;"><sc-for list="{{ pGenderBtns }}" as="g" hint-placeholder-count="2"><button onClick="{{ g.onClick }}" style="{{ g.style }}">{{ g.label }}</button></sc-for></div></div>
+                  <div style="display:flex;gap:10px;">
+                    <label style="flex:1;display:flex;flex-direction:column;gap:5px;font-size:11px;color:#76796f;">Bow<input value="{{ portalBowVal }}" onInput="{{ setPBow }}" placeholder="Recurve" style="border:1px solid #e6e0d0;border-radius:7px;padding:9px 11px;font-size:13px;background:#fff;" /></label>
+                    <label style="width:88px;display:flex;flex-direction:column;gap:5px;font-size:11px;color:#76796f;">Draw lb<input value="{{ portalDrawVal }}" onInput="{{ setPDraw }}" placeholder="34" style="border:1px solid #e6e0d0;border-radius:7px;padding:9px 11px;font-size:13px;background:#fff;" /></label>
+                  </div>
+                </div>
+              </div>
+
+              <div style="background:#103d2a;color:#eaf3ec;border-radius:9px;padding:18px;">
+                <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.14em;color:#7fb893;margin-bottom:8px;">MY TOURNAMENTS</div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:16px;flex:1;">{{ portalTour.name }}</div>
+                  <span style="display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:#0c2e1f;background:#5fd07f;border-radius:20px;padding:3px 9px;"><span style="width:6px;height:6px;border-radius:50%;background:#0c2e1f;animation:gppulse 1.4s infinite;"></span>LIVE</span>
+                </div>
+                <div style="font-size:12px;color:#a8c7b2;margin-top:6px;line-height:1.5;">{{ portalTour.venue }} · {{ portalTour.dates }}</div>
+                <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:11px;">
+                  <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#cfe3d5;background:rgba(255,255,255,0.08);border-radius:5px;padding:3px 9px;">{{ portalTour.cat }}</span>
+                  <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#cfe3d5;background:rgba(255,255,255,0.08);border-radius:5px;padding:3px 9px;">{{ portalTour.distance }}</span>
+                  <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#cfe3d5;background:rgba(255,255,255,0.08);border-radius:5px;padding:3px 9px;">{{ portalEvents }}</span>
+                </div>
+                <button onClick="{{ goBoard }}" style="margin-top:14px;width:100%;cursor:pointer;border:1px solid rgba(255,255,255,0.25);background:transparent;color:#eaf3ec;font-weight:600;font-size:12px;border-radius:7px;padding:9px;">View live scoreboard →</button>
+              </div>
+            </div>
+
+            <!-- score encoder -->
+            <div style="background:#fffdf8;border:1px solid #e6e0d0;border-radius:9px;padding:20px 22px;">
+              <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:14px;">
+                <div>
+                  <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#9a9788;">ENCODE MY SCORE · LIVE</div>
+                  <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:20px;">Submit your scorecard</div>
+                </div>
+                <div style="flex:1;"></div>
+                <button onClick="{{ portalSave }}" style="cursor:pointer;border:none;background:#1f7a4f;color:#fff;border-radius:7px;padding:10px 18px;font-size:13px;font-weight:700;">Submit to live board</button>
+              </div>
+              <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px;">
+                <sc-for list="{{ portalEventTabs }}" as="t" hint-placeholder-count="5">
+                  <button onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</button>
+                </sc-for>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 230px;gap:22px;align-items:start;">
+                <div style="display:flex;flex-direction:column;gap:7px;">
+                  <div style="display:grid;grid-template-columns:30px repeat(6,1fr) 52px;gap:6px;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9a9788;padding:0 2px;">
+                    <div>END</div><div style="text-align:center;">1</div><div style="text-align:center;">2</div><div style="text-align:center;">3</div><div style="text-align:center;">4</div><div style="text-align:center;">5</div><div style="text-align:center;">6</div><div style="text-align:right;">TOT</div>
+                  </div>
+                  <sc-for list="{{ portalEndRows }}" as="row" hint-placeholder-count="6">
+                    <div style="display:grid;grid-template-columns:30px repeat(6,1fr) 52px;gap:6px;align-items:center;">
+                      <div style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#9a9788;">{{ row.endNo }}</div>
+                      <sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="6">
+                        <button onClick="{{ c.onClick }}" style="{{ c.style }}">{{ c.label }}</button>
+                      </sc-for>
+                      <div style="font-family:'Spline Sans Mono',monospace;font-size:14px;font-weight:600;text-align:right;">{{ row.total }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div>
+                  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px;">
+                    <sc-for list="{{ portalKeypad }}" as="k" hint-placeholder-count="12">
+                      <button onClick="{{ k.onClick }}" style="{{ k.style }}">{{ k.label }}</button>
+                    </sc-for>
+                  </div>
+                  <div style="background:#f5f1e6;border:1px solid #e6e0d0;border-radius:8px;padding:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;"><span style="font-size:12px;color:#76796f;">My total</span><span style="font-family:'Spline Sans Mono',monospace;font-size:26px;font-weight:600;color:#1f7a4f;">{{ portalLive.score }}</span></div>
+                    <div style="display:flex;gap:8px;font-family:'Spline Sans Mono',monospace;font-size:12px;">
+                      <span style="flex:1;text-align:center;background:#fff;border:1px solid #e6e0d0;border-radius:6px;padding:7px 0;"><b style="color:#b23b2c;">X</b><br>{{ portalLive.x }}</span>
+                      <span style="flex:1;text-align:center;background:#fff;border:1px solid #e6e0d0;border-radius:6px;padding:7px 0;"><b>10</b><br>{{ portalLive.ten }}</span>
+                      <span style="flex:1;text-align:center;background:#fff;border:1px solid #e6e0d0;border-radius:6px;padding:7px 0;">done<br>{{ portalLive.done }}/36</span>
+                    </div>
+                  </div>
+                  <div style="font-size:11px;color:#9a9788;margin-top:10px;line-height:1.5;">Tap a cell then a value. Submitting updates the live scoreboard instantly for this event.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          </sc-if>
+        </div>
+        </sc-if>
+
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ loading }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;align-items:center;justify-content:center;height:60vh;color:#9a9788;">
+        <span style="width:30px;height:30px;border-radius:50%;border:3px solid #d8d2c2;border-top-color:#1f7a4f;animation:gpspin .8s linear infinite;"></span>
+      </div>
+      </sc-if>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:860},&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;dashboard&quot;,&quot;options&quot;:[&quot;dashboard&quot;,&quot;setup&quot;,&quot;score&quot;,&quot;standings&quot;,&quot;teams&quot;,&quot;bracket&quot;,&quot;certs&quot;],&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.state = {
+      page: (props && props.startScreen) || 'dashboard',
+      ready: false,
+      parts: [],
+      selId: null, draft: [], cell: 0,
+      flash: '',
+      teamFormat: 'team', teamMode: 'rank',
+      bracketSize: 16, bracketField: 13, bracketEvent: 'individual',
+      byePolicy: 'auto', manualByes: [],
+      tFrom: 3, tTo: 6, roundIdx: 0,
+      rankingMode: 'unset', ranksLocked: false,
+      reg: { cat:'Recurve' },
+      activeCat: 'Recurve',
+      account: { name:'Maria Santos', club:'Pasig AC', gender:'f', email:'maria.santos@pasigac.ph' },
+      regEvents: { individual:true, dbl:false, team:false, mix:false },
+      regLog: [],
+      shootoff: {},
+      openMatch: null, cards: {}, showArrows: false,
+      tournament: { name:'Greenpark Open 2026', start:'2026-07-14', end:'2026-07-16', venue:'Pasig Greenpark Range', distance:'70m', format:'36 arrows · 6 ends' },
+      categories: [
+        { id:'c1', name:'Recurve', equip:'Recurve', distance:'70m', arrows:'36 arrows', ageMin:'18', ageMax:'', desc:'Olympic recurve bow. 70m qualification over 36 arrows. Men & women ranked separately.', ranking:true, individual:true, team:true, dbl:true, mix:true },
+        { id:'c2', name:'Compound', equip:'Compound', distance:'50m', arrows:'36 arrows', ageMin:'18', ageMax:'', desc:'Compound bow with release aid and scope. 50m qualification over 36 arrows.', ranking:true, individual:true, team:true, dbl:true, mix:true },
+        { id:'c3', name:'Barebow', equip:'Barebow', distance:'18m', arrows:'30 arrows', ageMin:'10', ageMax:'15', desc:'Barebow — no sights or stabilisers. Indoor 18m over 30 arrows.', ranking:true, individual:true, team:false, dbl:false, mix:false },
+      ],
+      newCat: '', newCatEquip: 'Recurve',
+      certType: 'achievement',
+      certPreviewId: null,
+      certText: {
+        achievement: { title:'Certificate of Achievement', body:'placed {rank} in {category}\nwith a qualification score of {score}' },
+        medalist: { title:'Medalist Certificate', body:'awarded the {medal} medal in {category}\nat {event}' },
+        participation: { title:'Certificate of Participation', body:'competed in {category}\nat {event} · {date}' },
+      },
+      certCommon: { event:'Greenpark Open 2026', intro:'This is presented to', venue:'Pasig Greenpark Range', sign1:'Coach Rotsen Domingo', role1:'Tournament Director', sign2:'', role2:'', date:'16 July 2026' },
+      certAccent: '#1f7a4f',
+      certBg: '#fffdf8',
+      certLogo: null,
+      certExclude: {},
+      emailSubject: 'Your {event} certificate, {name}',
+      emailBody: 'Hi {name},\n\nCongratulations on competing at {event}. Your official certificate is attached as a PDF.\n\nResult: {rank} — {category}\nScore: {score}\n\nSee you at the next shoot.\n\n— Greenpark Tournament Office',
+      emailOverrides: {},
+      certJobs: {},
+      portalArcherId: null,
+      portalEvent: 'individual',
+      portalDraft: [], portalCell: 0,
+      portalLoginEmail: '',
+      eventScores: {},
+      boardEvent: 'individual',
+      summaryEvent: 'qualification',
+    };
+    // ---- multi-tournament: list of saved events; details & categories differ, archer pool is shared ----
+    this.state.tournaments = [
+      Object.assign({ id:'t1', status:'live', categories: this.state.categories.map(c=>Object.assign({},c)) }, this.state.tournament),
+      { id:'t2', status:'draft', name:'Greenpark Indoor Series · Leg 1', start:'2026-11-08', end:'2026-11-09', venue:'Pasig Sports Center · Indoor', distance:'18m', format:'30 arrows · 10 ends',
+        categories:[
+          { id:'i1', name:'Indoor Recurve', equip:'Recurve', distance:'18m', arrows:'30 arrows', ageMin:'', ageMax:'', desc:'Indoor 18m recurve over 30 arrows on the triangular face.', ranking:true, individual:true, team:true, dbl:true, mix:false },
+          { id:'i2', name:'Indoor Compound', equip:'Compound', distance:'18m', arrows:'30 arrows', ageMin:'', ageMax:'', desc:'Indoor 18m compound, 30 arrows.', ranking:true, individual:true, team:true, dbl:true, mix:false },
+          { id:'i3', name:'Junior Barebow', equip:'Barebow', distance:'18m', arrows:'30 arrows', ageMin:'10', ageMax:'15', desc:'Junior barebow indoor 18m, 30 arrows.', ranking:true, individual:true, team:false, dbl:false, mix:false },
+        ] },
+    ];
+    this.state.activeId = 't1';
+    this.state.setupId = 't1';
+    this.state.draftTour = Object.assign({}, this.state.tournament);
+    this.state.draftCats = this.state.categories.map(c=>Object.assign({},c));
+  }
+  setCertType(t){ this.setState({ certType:t, certPreviewId:null, certJobs:{} }); }
+  setCertText(field,v){ this.setState(s=>({ certText: Object.assign({}, s.certText, { [s.certType]: Object.assign({}, s.certText[s.certType], { [field]:v }) }) })); }
+  setCertCommon(field,v){ this.setState(s=>({ certCommon: Object.assign({}, s.certCommon, { [field]:v }) })); }
+  setCertAccent(c){ this.setState({ certAccent:c }); }
+  setCertBg(c){ this.setState({ certBg:c }); }
+  setCertLogoFile(e){
+    const f = e && e.target && e.target.files && e.target.files[0];
+    if(!f){ return; }
+    const self=this; const rd=new FileReader();
+    rd.onload=()=>{ self.setState({ certLogo: rd.result }); self.flashMsg('Logo updated'); };
+    rd.readAsDataURL(f);
+  }
+  clearCertLogo(){ this.setState({ certLogo:null }); this.flashMsg('Logo reset to target rings'); }
+  toggleCertExclude(id){ this.setState(s=>({ certExclude: Object.assign({}, s.certExclude, { [id]: !s.certExclude[id] }) })); }
+  // ---- archer portal + live scoreboard ----
+  portalEventList(){ return [['individual','Individual'],['dbl','Double'],['team','Team'],['mix','Mix Team'],['olympic','Olympic Round']]; }
+  portalArcher(){ return this.state.parts.find(p=>p.id===this.state.portalArcherId)||null; }
+  eventDraftFor(p,ev){ const es=this.state.eventScores[p.id]||{}; if(ev==='individual') return (es.individual||p.arrows||new Array(36).fill(null)).slice(); return (es[ev]||new Array(36).fill(null)).slice(); }
+  portalLogin(id){ const p=this.state.parts.find(x=>x.id===id); if(!p) return; this.setState({ portalArcherId:id, portalEvent:'individual', portalDraft:this.eventDraftFor(p,'individual'), portalCell:0 }); this.flashMsg('Signed in as '+p.name); }
+  portalLoginByEmail(){ const e=(this.state.portalLoginEmail||'').trim().toLowerCase(); const p=this.state.parts.find(x=>(x.email||'').toLowerCase()===e); if(!p){ this.flashMsg('No registration found for that email'); return; } this.portalLogin(p.id); }
+  setPortalLoginEmail(v){ this.setState({ portalLoginEmail:v }); }
+  portalLogout(){ this.setState({ portalArcherId:null, portalLoginEmail:'' }); }
+  setPortalField(k,v){ const id=this.state.portalArcherId; this.setState(s=>({ parts:s.parts.map(p=> p.id===id?Object.assign({},p,{[k]:v}):p) })); }
+  setPortalEvent(ev){ const p=this.portalArcher(); this.setState({ portalEvent:ev, portalDraft: p?this.eventDraftFor(p,ev):[], portalCell:0 }); }
+  portalSetCell(i){ this.setState({ portalCell:i }); }
+  portalEnter(v){ const d=this.state.portalDraft.slice(); d[this.state.portalCell]=v; this.setState({ portalDraft:d, portalCell:Math.min(this.state.portalCell+1,35) }); }
+  portalClearArrow(){ const d=this.state.portalDraft.slice(); d[this.state.portalCell]=null; this.setState({ portalDraft:d }); }
+  portalSave(){
+    const id=this.state.portalArcherId, ev=this.state.portalEvent, draft=this.state.portalDraft.slice();
+    this.setState(s=>{ const es=Object.assign({},s.eventScores); es[id]=Object.assign({}, es[id], { [ev]:draft });
+      let parts=s.parts; if(ev==='individual'){ parts=s.parts.map(p=> p.id===id?Object.assign({},p,{arrows:draft}):p); }
+      return { eventScores:es, parts }; });
+    this.flashMsg('Score submitted — live board updated');
+  }
+  setBoardEvent(ev){ this.setState({ boardEvent:ev }); }
+  scoresForEvent(ev){
+    const E=this.E();
+    return this.state.parts.map(p=>{
+      let arr=null;
+      if(ev==='individual') arr=(this.state.eventScores[p.id]&&this.state.eventScores[p.id].individual)||p.arrows;
+      else arr=this.state.eventScores[p.id]&&this.state.eventScores[p.id][ev];
+      if(!arr||!arr.some(v=>v!=null)) return null;
+      const t=E.tally(arr); const done=arr.filter(v=>v!=null).length;
+      return { id:p.id, name:p.name, club:p.club, cat:p.cat, gender:p.gender, score:t.score, x:t.x, ten:t.ten, nine:t.nine, done };
+    }).filter(Boolean).sort((a,b)=> b.score-a.score || b.x-a.x || b.ten-a.ten || b.nine-a.nine);
+  }
+  setCertPreview(id){ this.setState({ certPreviewId:id }); }
+  setEmailField(k,v){ this.setState({ [k]:v }); }
+  setRecipientEmail(id,v){ this.setState(s=>({ emailOverrides: Object.assign({}, s.emailOverrides, { [id]:v }) })); }
+  recipEmail(r){ const o=this.state.emailOverrides[r.id]; return o!=null?o:(r.email||''); }
+  fillTpl(tpl,r){ const c=this.state.certCommon; const map={ name:r.name||'', club:r.club||'', category:r.category||'', rank:r.rankLabel||'', score:r.score||'', date:c.date, event:c.event, venue:c.venue, medal:r.medal||'' }; return String(tpl||'').replace(/\{(\w+)\}/g,(m,k)=> map[k]!=null?map[k]:m); }
+  certRecips(){
+    const cat=this.activeCatName();
+    const div=(g)=> g==='m'?'Men':(g==='f'?'Women':'Open');
+    const type=this.state.certType;
+    if(type==='participation'){
+      return this.partsInActive().map(p=>({ id:p.id, name:p.name, club:p.club, gender:p.gender, email:p.email||'', category:cat+' '+div(p.gender), rankLabel:'', score:'', medal:'' }));
+    }
+    const rk=this.ranked();
+    const top= type==='medalist'? rk.slice(0,3) : rk.slice(0,8);
+    return top.map(a=>({ id:a.id, name:a.name, club:a.club, gender:a.gender, email:a.email||'', category:cat+' '+div(a.gender), rankLabel:a.rank, score:String(a.score), medal: a.rankNum===1?'Gold':(a.rankNum===2?'Silver':(a.rankNum===3?'Bronze':'')) }));
+  }
+  sendCerts(){
+    const recips=this.certRecips().filter(r=>!this.state.certExclude[r.id]);
+    if(!recips.length){ this.flashMsg('No recipients selected to send'); return; }
+    const jobs={}; recips.forEach(r=>{ jobs[r.id]='queued'; });
+    this.setState({ certJobs:jobs });
+    const self=this;
+    recips.forEach((r,i)=>{
+      setTimeout(()=>{ self.setState(s=>({ certJobs:Object.assign({},s.certJobs,{ [r.id]:'sending' }) })); }, 260*i+200);
+      setTimeout(()=>{ const bad=!self.recipEmail(r) || !/@/.test(self.recipEmail(r)); self.setState(s=>({ certJobs:Object.assign({},s.certJobs,{ [r.id]: bad?'failed':'sent' }) })); }, 260*i+760);
+    });
+    this.flashMsg('Sending '+recips.length+' certificate'+(recips.length>1?'s':'')+' by email…');
+  }
+  retryCert(id){
+    const self=this;
+    this.setState(s=>({ certJobs:Object.assign({},s.certJobs,{ [id]:'sending' }) }));
+    setTimeout(()=>{ self.setState(s=>({ certJobs:Object.assign({},s.certJobs,{ [id]:'sent' }) })); }, 700);
+    this.flashMsg('Retrying delivery…');
+  }
+  setTour(k,v){ this.setState(s=>({ draftTour: Object.assign({}, s.draftTour, { [k]:v }) })); }
+  setNewCat(v){ this.setState({ newCat:v }); }
+  setNewCatEquip(v){ this.setState({ newCatEquip:v }); }
+  addCat(){ const n=(this.state.newCat||'').trim(); if(!n) return; const eq=this.state.newCatEquip; this.setState(s=>({ draftCats: s.draftCats.concat([{ id:'c'+Date.now(), name:n, equip:eq, distance:'70m', arrows:'36 arrows', ageMin:'', ageMax:'', desc:'', ranking:true, individual:true, team:true, dbl:true, mix:true }]), newCat:'' })); }
+  setActiveCat(name){ this.setState({ activeCat:name, selId:null }); }
+  toggleArrows(){ this.setState(s=>({ showArrows: !s.showArrows })); }
+  catQual(c){ const parts=[c.distance, c.arrows].filter(function(x){return x&&String(x).trim();}); return parts.length?parts.join(' · '):(c.qual||''); }
+  catAge(c){ const lo=(c.ageMin||'').trim(), hi=(c.ageMax||'').trim(); if(lo&&hi) return lo+'–'+hi; if(lo) return lo+'+'; if(hi) return '≤'+hi; return c.age||'Open'; }
+  setCatField(id,k,v){ this.setState(s=>({ draftCats: s.draftCats.map(c=> c.id===id ? Object.assign({}, c, { [k]:v }) : c) })); }
+  removeCat(id){ this.setState(s=>({ draftCats: s.draftCats.filter(c=>c.id!==id) })); }
+  toggleFlag(id,f){ this.setState(s=>({ draftCats: s.draftCats.map(c=> c.id===id ? Object.assign({}, c, { [f]: !c[f] }) : c) })); }
+  // ---- tournament list / switching ----
+  cloneTour(t){ return Object.assign({}, t, { categories: (t.categories||[]).map(c=>Object.assign({},c)) }); }
+  blankTourDetails(){ return { name:'New Tournament', start:'', end:'', venue:'', distance:'70m', format:'36 arrows · 6 ends' }; }
+  newTournament(){ this.setState({ setupId:null, draftTour:this.blankTourDetails(), draftCats:[] }); this.nav('setup'); this.flashMsg('New tournament — fill in details & categories'); }
+  editTournament(id){ const t=this.state.tournaments.find(x=>x.id===id); if(!t) return; const c=this.cloneTour(t); this.setState({ setupId:id, draftTour:{ name:c.name, start:c.start, end:c.end, venue:c.venue, distance:c.distance, format:c.format }, draftCats:c.categories }); this.nav('setup'); }
+  selectTournament(id){ const t=this.state.tournaments.find(x=>x.id===id); if(!t) return; const c=this.cloneTour(t); const firstCat=(c.categories[0]?c.categories[0].name:'Recurve'); this.setState({ activeId:id, tournament:{ name:c.name, start:c.start, end:c.end, venue:c.venue, distance:c.distance, format:c.format }, categories:c.categories, activeCat:firstCat, reg:Object.assign({}, this.state.reg, { cat:firstCat }), selId:null }); this.nav('dashboard'); this.flashMsg('Now managing — '+c.name); }
+  createTournament(){
+    const d=this.state.draftTour, cats=this.state.draftCats.map(c=>Object.assign({},c));
+    const name=(d.name||'').trim()||'Untitled Tournament';
+    if(this.state.setupId){
+      const id=this.state.setupId;
+      this.setState(s=>{
+        const tournaments=s.tournaments.map(t=> t.id===id ? Object.assign({}, t, d, { name, categories:cats }) : t);
+        const isActive = id===s.activeId;
+        return Object.assign({ tournaments }, isActive ? { tournament:Object.assign({},d,{name}), categories:cats.map(c=>Object.assign({},c)), activeCat:(cats[0]?cats[0].name:s.activeCat) } : {});
+      });
+      this.flashMsg('Tournament updated — '+name);
+    } else {
+      const id='t'+Date.now();
+      const entry=Object.assign({ id, status:'draft', categories:cats }, d, { name });
+      this.setState(s=>({ tournaments:s.tournaments.concat([entry]), activeId:id, setupId:id, tournament:Object.assign({},d,{name}), categories:cats.map(c=>Object.assign({},c)), activeCat:(cats[0]?cats[0].name:'Recurve'), selId:null }));
+      this.flashMsg('Tournament created — '+name);
+    }
+    this.nav('dashboard');
+  }
+  setSummaryEvent(ev){ this.setState({ summaryEvent:ev }); }
+  setShootWinner(key, side){ this.setState(s=>{ const cards=Object.assign({}, s.cards); const card=cards[key]?this.copyCard(cards[key]):this.ensureCard(key); card.shoot=Object.assign({}, card.shoot, { winner: card.shoot.winner===side?null:side }); cards[key]=card; return { cards }; }); this.flashMsg('Shoot-off winner recorded'); }
+  // ---- persistence: keep all tournament data across reloads (localStorage) ----
+  persistKeys(){ return ['parts','eventScores','shootoff','tournaments','activeId','activeCat','setupId','ranksLocked','regLog','rankingMode','reg','categories','tournament','certText','certCommon','certAccent','certBg','certExclude','emailSubject','emailBody','emailOverrides','certJobs']; }
+  loadPersist(){ try{ const r=localStorage.getItem('pgts_state_v1'); return r?JSON.parse(r):null; }catch(e){ return null; } }
+  savePersist(){ try{ const o={}; this.persistKeys().forEach(k=>{ if(this.state[k]!==undefined) o[k]=this.state[k]; }); localStorage.setItem('pgts_state_v1', JSON.stringify(o)); }catch(e){} }
+  resetDemoData(){ try{ localStorage.removeItem('pgts_state_v1'); }catch(e){} if(typeof location!=='undefined') location.reload(); }
+  componentDidUpdate(){ if(this.state.ready) this.savePersist(); }
+  componentDidMount(){
+    const self = this;
+    const saved = self.loadPersist();
+    (function tryInit(){
+      if (window.ArcheryEngine){
+        if (saved && Array.isArray(saved.parts) && saved.parts.length){
+          self.setState(Object.assign({}, saved, { ready:true }));
+        } else {
+          const cats = self.state.categories;
+          const parts = window.ArcheryEngine.seedData().map(function(p,i){ const c = cats[i % cats.length]; return Object.assign({}, p, { cat: c.name, equip: c.equip }); });
+          self.setState({ parts: parts, ready:true });
+        }
+      }
+      else setTimeout(tryInit, 30);
+    })();
+  }
+  E(){ return window.ArcheryEngine; }
+  ranked(){ const m = this.state.rankingMode==='separate'?'separate':'combined'; return this.E().rankMode(this.partsInActive().filter(p=>!p.dq), this.state.shootoff, m); }
+  activeCatName(){ const cats=this.state.categories; const a=this.state.activeCat; return (cats.some(c=>c.name===a)) ? a : (cats[0]?cats[0].name:''); }
+  // Resolve an archer's equipment from their registered category name (searching
+  // every tournament's categories), so a shared archer pool can be matched to a
+  // different tournament whose category names differ but equipment lines up.
+  equipOfCat(name){
+    for(const t of (this.state.tournaments||[])){ const c=(t.categories||[]).find(x=>x.name===name); if(c) return c.equip; }
+    const c=(this.state.categories||[]).find(x=>x.name===name); return c?c.equip:'';
+  }
+  partsInActive(){
+    const ac=this.state.categories.find(c=>c.name===this.activeCatName());
+    if(!ac) return [];
+    return this.state.parts.filter(p=>{
+      if((p.cat||'')===ac.name) return true;                 // same-tournament exact match
+      const eq = p.equip || this.equipOfCat(p.cat);          // else match shared pool by equipment
+      return !!eq && eq===ac.equip;
+    });
+  }
+  nav(k){ this.setState({ page:k }); try{ window.scrollTo(0,0); }catch(e){} }
+  flashMsg(m){ const self=this; this.setState({flash:m}); clearTimeout(this._ft); this._ft=setTimeout(()=>self.setState({flash:''}),1900); }
+
+  pickArcher(id){
+    const p = this.state.parts.find(x=>x.id===id);
+    const d = p.arrows.slice();
+    let c = d.findIndex(v=>v==null); if(c<0)c=0;
+    this.setState({ selId:id, draft:d, cell:c });
+  }
+  setCell(i){ this.setState({ cell:i }); }
+  enter(v){
+    const d = this.state.draft.slice(); d[this.state.cell]=v;
+    const next = Math.min(this.state.cell+1, 35);
+    this.setState({ draft:d, cell:next });
+  }
+  clearArrow(){ const d=this.state.draft.slice(); d[this.state.cell]=null; this.setState({draft:d}); }
+  clearCard(){ this.setState({ draft: new Array(36).fill(null), cell:0 }); }
+  saveScore(){
+    const p = this.state.parts.find(x=>x.id===this.state.selId);
+    if(p){ p.arrows = this.state.draft.slice(); }
+    this.flashMsg('Saved — ranking updated');
+    this.forceUpdate();
+  }
+  toggleDQ(id){
+    const tid = id || this.state.selId;
+    if(!tid) return;
+    this.setState(s=>({ parts: s.parts.map(p=> p.id===tid ? Object.assign({}, p, { dq: !p.dq }) : p) }));
+    const p = this.state.parts.find(x=>x.id===tid);
+    this.flashMsg(p && !p.dq ? (p.name+' marked Default / DQ — score voided') : 'Archer reinstated');
+  }
+  resolveTie(id, val){ const s=Object.assign({}, this.state.shootoff); s[id]=val; this.setState({shootoff:s}); this.flashMsg('Shoot-off recorded'); }
+  setTeamFormat(f){ this.setState({teamFormat:f}); }
+  setTeamMode(m){ this.setState({teamMode:m}); }
+  setBracketEvent(e){ this.setState({bracketEvent:e, roundIdx:0}); }
+  setSize(n){ this.setState({bracketSize:n, roundIdx:0}); }
+  setReg(k,v){ this.setState(s=>({ reg: Object.assign({}, s.reg, { [k]:v }) })); }
+  toggleRegEvent(k){ this.setState(s=>({ regEvents: Object.assign({}, s.regEvents, { [k]:!s.regEvents[k] }) })); }
+  submitReg(){
+    const a = this.state.account; const r = this.state.reg;
+    const cat = this.state.categories.find(c=>c.name===r.cat) || {};
+    const evs = Object.keys(this.state.regEvents).filter(k=>this.state.regEvents[k] && cat[k]);
+    if(!evs.length){ this.flashMsg('Select at least one event for this category'); return; }
+    const id = 'R'+Date.now();
+    const np = { id, first:a.name.split(' ')[0], last:a.name.split(' ').slice(1).join(' '), name:a.name, club:a.club, gender:a.gender, email:a.email, equip:cat.equip, cat:r.cat, events:evs, arrows:new Array(36).fill(null) };
+    this.setState(s=>({ parts: s.parts.concat([np]), regLog: [{ id, name:np.name, club:np.club, cat:r.cat, events:evs, when:'just now' }].concat(s.regLog) }));
+    this.flashMsg('Payment complete — '+evs.length+' slot'+(evs.length>1?'s':'')+' reserved as TBD in '+r.cat);
+  }
+  setField(n){ this.setState({bracketField:n}); }
+  parseArrow(raw){ if(raw==null) return null; const s=String(raw).trim().toUpperCase(); if(s===''||s==='-') return null; if(s==='X') return 11; if(s==='M') return 0; const n=parseInt(s,10); if(isNaN(n)) return null; return Math.max(0, Math.min(10, n)); }
+  ensureCard(key){ const c=this.state.cards[key]; if(c) return c; const sets=[]; for(let i=0;i<5;i++) sets.push({ a:new Array(6).fill(null), b:new Array(6).fill(null) }); return { sets, shoot:{a:null,b:null}, dq:{a:false,b:false} }; }
+  openCard(key){ this.setState({ openMatch:key }); }
+  closeCard(){ this.setState({ openMatch:null }); }
+  copyCard(c){ const base=c||this.ensureCard(); return { sets:base.sets.map(st=>({a:st.a.slice(),b:st.b.slice()})), shoot:Object.assign({},base.shoot), dq:Object.assign({a:false,b:false}, base.dq) }; }
+  setArrow(key, side, setIdx, arrowIdx, raw){
+    const v=this.parseArrow(raw);
+    this.setState(s=>{
+      const cards=Object.assign({}, s.cards);
+      const card=cards[key] ? this.copyCard(cards[key]) : this.ensureCard(key);
+      card.sets[setIdx][side][arrowIdx]=v;
+      cards[key]=card; return { cards };
+    });
+  }
+  setShoot(key, side, raw){
+    const v=this.parseArrow(raw);
+    this.setState(s=>{
+      const cards=Object.assign({}, s.cards);
+      const card = cards[key] ? this.copyCard(cards[key]) : this.ensureCard(key);
+      card.shoot[side]=v; cards[key]=card; return { cards };
+    });
+  }
+  toggleCardDq(key, side){
+    this.setState(s=>{
+      const cards=Object.assign({}, s.cards);
+      const card = cards[key] ? this.copyCard(cards[key]) : this.ensureCard(key);
+      card.dq[side]=!card.dq[side];
+      if(card.dq[side]) card.dq[side==='a'?'b':'a']=false;
+      cards[key]=card; return { cards };
+    });
+    this.flashMsg('Default / DQ updated — winner advances by default');
+  }
+  clearCardScores(key){ this.setState(s=>{ const cards=Object.assign({},s.cards); delete cards[key]; return { cards }; }); this.flashMsg('Match card cleared'); }
+  setByePolicy(p){ this.setState({byePolicy:p}); this.flashMsg('BYE policy: '+(p==='auto'?'Auto top seeds':'Admin choose')); }
+  toggleManualBye(seed){ this.setState(s=>{ const has=s.manualByes.indexOf(seed)>=0; return { manualByes: has ? s.manualByes.filter(x=>x!==seed) : s.manualByes.concat([seed]) }; }); }
+  setTFrom(v){ const n=parseInt(v,10); if(!isNaN(n)) this.setState({tFrom:Math.max(1,n)}); }
+  setTTo(v){ const n=parseInt(v,10); if(!isNaN(n)) this.setState({tTo:Math.max(1,n)}); }
+  setRoundIdx(i){ this.setState({roundIdx:i}); }
+  setRankingMode(m){ const had=this.state.rankingMode!=='unset'; this.setState({rankingMode:m, ranksLocked:false}); this.flashMsg(had?'Rankings recomputed — '+(m==='separate'?'Separate (by gender)':'Combined'):'Ranking Mode set — '+(m==='separate'?'Separate':'Combined')); }
+  lockRanks(){ const rk=this.ranked(); if(this.E().tieGroups(rk).length>0){ this.flashMsg('Resolve all ties before locking'); this.nav('standings'); return; } this.setState({ranksLocked:true}); this.flashMsg('Final ranks locked — teams & brackets unblocked'); }
+  unlockRanks(){ this.setState({ranksLocked:false}); this.flashMsg('Ranks unlocked — downstream brackets may be invalidated'); }
+
+  cellObj(idx, v){
+    const E=this.E();
+    const sel = this.state.cell===idx;
+    const label = v==null ? '·' : (v===11 ? 'X' : (v===0 ? 'M' : String(v)));
+    const isX = v===11;
+    const filled = v!=null;
+    const style = [
+      'cursor:pointer','border-radius:6px','padding:9px 0','text-align:center',
+      "font-family:'Spline Sans Mono',monospace",'font-size:14px','font-weight:600',
+      'border:'+(sel?'2px solid #1f7a4f':'1px solid #e6e0d0'),
+      'background:'+(sel?'#e6f0e8':(filled?'#fff':'#faf7ef')),
+      'color:'+(isX?'#b23b2c':(filled?'#18211c':'#c9c3b2')),
+    ].join(';');
+    return { idx, label, style, onClick:()=>this.setCell(idx) };
+  }
+  portalCellObj(idx, v){
+    const sel = this.state.portalCell===idx;
+    const label = v==null ? '·' : (v===11 ? 'X' : (v===0 ? 'M' : String(v)));
+    const isX = v===11; const filled = v!=null;
+    const style = ['cursor:pointer','border-radius:6px','padding:9px 0','text-align:center',"font-family:'Spline Sans Mono',monospace",'font-size:14px','font-weight:600','border:'+(sel?'2px solid #1f7a4f':'1px solid #e6e0d0'),'background:'+(sel?'#e6f0e8':(filled?'#fff':'#faf7ef')),'color:'+(isX?'#b23b2c':(filled?'#18211c':'#c9c3b2'))].join(';');
+    return { idx, label, style, onClick:()=>this.portalSetCell(idx) };
+  }
+
+  renderVals(){
+    const p = this.state.page;
+    const def = [
+      ['dashboard','Dashboard','01'],
+      ['tournaments','Tournaments','02'],
+      ['setup','Create / Setup','03'],
+      ['register','Registration','04'],
+      ['participants','Participants','05'],
+      ['score','Score Entry','06'],
+      ['standings','Live Standings','07'],
+      ['teams','Team Assembly','08'],
+      ['bracket','Bracket Generator','09'],
+      ['summary','Results & Print','10'],
+      ['certs','Certificates','11'],
+      ['scoreboard','Live Scoreboard','12'],
+      ['portal','Archer Portal','13'],
+    ];
+    const titles = {
+      dashboard:['CONTROL ROOM','Dashboard'],
+      tournaments:['EVENTS','Tournaments'],
+      setup:['SETUP', this.state.setupId ? 'Edit Tournament' : 'Create Tournament'],
+      register:['PUBLIC','Registration & Payment'],
+      participants:['ENTRIES','Participants by Category'],
+      score:['QUALIFICATION','Score Entry'],
+      standings:['QUALIFICATION','Live Standings'],
+      teams:['ELIMINATION','Team Assembly'],
+      bracket:['OLYMPIC ROUND','Bracket Generator'],
+      summary:['RESULTS','Results & Print Summary'],
+      certs:['AWARDS','Certificate Designer'],
+      scoreboard:['LIVE','Live Scoreboard'],
+      portal:['ARCHER','My Archer Portal'],
+    };
+    const ready = this.state.ready && !!this.E();
+
+    // tie count for nav badge
+    let tieCount = 0;
+    if (ready){ const rk=this.ranked(); tieCount = this.E().tieGroups(rk).length; }
+
+    const navItems = def.map(d=>{
+      const active = p===d[0];
+      const rowStyle = [
+        'display:flex','align-items:center','gap:9px','width:100%','margin-top:3px',
+        'border:none','cursor:pointer','padding:9px 10px','border-radius:7px',
+        "font-family:'Public Sans',sans-serif",'font-size:13.5px','font-weight:'+(active?'700':'500'),
+        'background:'+(active?'#1f7a4f':'transparent'),
+        'color:'+(active?'#fff':'#bcd6c4'),
+      ].join(';');
+      const out = { tag:d[2], label:d[1], rowStyle, onClick:()=>this.nav(d[0]) };
+      if(d[0]==='standings' && tieCount>0){ out.badge=String(tieCount); out.badgeStyle='font-family:\'Spline Sans Mono\',monospace;font-size:10px;font-weight:600;background:#b23b2c;color:#fff;border-radius:10px;padding:1px 7px;'; }
+      return out;
+    });
+
+    const out = {
+      navItems, ready, loading: !ready,
+      resetDemo: ()=>{ if(typeof confirm==='undefined' || confirm('Reset all tournament data back to the sample set? This clears scores, registrations, brackets and edits saved in this browser.')) this.resetDemoData(); },
+      crumb: (titles[p]||['',''])[0], screenTitle: (titles[p]||['',''])[1],
+      flash: this.state.flash,
+      isDash:p==='dashboard', isSetup:p==='setup', isReg:p==='register', isScore:p==='score', isStandings:p==='standings',
+      isTeams:p==='teams', isBracket:p==='bracket', isCerts:p==='certs', isParticipants:p==='participants',
+      isBoard:p==='scoreboard', isPortal:p==='portal', isTournaments:p==='tournaments', isSummary:p==='summary',
+      goPortal:()=>this.nav('portal'), goBoard:()=>this.nav('scoreboard'),
+      goScore:()=>this.nav('score'), goStand:()=>this.nav('standings'), goSetup:()=>this.nav('setup'), goReg:()=>this.nav('register'),
+      goTournaments:()=>this.nav('tournaments'), goSummary:()=>this.nav('summary'),
+      newTournament:()=>this.newTournament(),
+      setupIsEdit: !!this.state.setupId,
+      saveTourLabel: this.state.setupId ? 'Save changes →' : 'Create tournament →',
+      tName: this.state.tournament.name,
+      tHeroDates: ((this.state.tournament.start||'?')+' – '+(this.state.tournament.end||'?')+' · '+(this.state.tournament.venue||'—')+' · '+this.state.categories.length+' categories'),
+      tourSwitchOptions: this.state.tournaments.map(t=>({ id:t.id, name:t.name, active:t.id===this.state.activeId })),
+      activeTourId: this.state.activeId,
+      onSwitchTour: (e)=>this.selectTournament(e.target.value),
+      tourCards: this.state.tournaments.map(t=>{
+        const active=t.id===this.state.activeId;
+        return { id:t.id, name:t.name, active,
+          dates:(t.start||'?')+' – '+(t.end||'?'), venue:t.venue||'—', distance:t.distance||'', format:t.format||'',
+          catCount:(t.categories||[]).length,
+          catNames:(t.categories||[]).map(c=>c.name).join(' · ')||'No categories yet',
+          statusLabel: active?'MANAGING':(t.status==='live'?'LIVE':'DRAFT'),
+          onOpen:()=>this.selectTournament(t.id), onEdit:()=>this.editTournament(t.id),
+          cardStyle:['background:#fffdf8','border:1px solid '+(active?'#1f7a4f':'#e6e0d0'),'border-radius:11px','padding:18px 20px','box-shadow:'+(active?'0 6px 20px rgba(16,61,42,0.12)':'none')].join(';'),
+          badgeStyle:["font-family:'Spline Sans Mono',monospace",'font-size:9px','font-weight:700','letter-spacing:0.1em','border-radius:20px','padding:3px 9px','background:'+(active?'#1f7a4f':(t.status==='live'?'#e6f0e8':'#f1ece0')),'color:'+(active?'#fff':(t.status==='live'?'#1f7a4f':'#9a9788'))].join(';') };
+      }),
+      tSub: (this.state.categories[0] ? this.state.categories[0].name : 'Recurve Men') + ' · ' + this.state.tournament.distance,
+      catCount: this.state.categories.length,
+      activeCat: this.activeCatName(),
+      catTabs: this.state.categories.map(c=>{
+        const on = c.name===this.activeCatName();
+        return { label:c.name, onClick:()=>this.setActiveCat(c.name),
+          style:['cursor:pointer','padding:7px 14px','font-size:13px','font-weight:600','white-space:nowrap',"font-family:'Public Sans',sans-serif",'border-radius:7px','border:1px solid '+(on?'#1f7a4f':'#e6e0d0'),'background:'+(on?'#1f7a4f':'#fff'),'color:'+(on?'#fff':'#76796f')].join(';') };
+      }),
+      tour: this.state.draftTour,
+      newCat: this.state.newCat,
+      onName:(e)=>this.setTour('name', e.target.value),
+      onStart:(e)=>this.setTour('start', e.target.value),
+      onEnd:(e)=>this.setTour('end', e.target.value),
+      onVenue:(e)=>this.setTour('venue', e.target.value),
+      onDistance:(e)=>this.setTour('distance', e.target.value),
+      onFormat:(e)=>this.setTour('format', e.target.value),
+      onNewCat:(e)=>this.setNewCat(e.target.value),
+      newCatEquip: this.state.newCatEquip,
+      newCatEquipBtns: ['Recurve','Compound','Barebow'].map(eq=>({
+        label:eq, onClick:()=>this.setNewCatEquip(eq),
+        style:['cursor:pointer','padding:7px 11px','font-size:12px','font-weight:600',"font-family:'Public Sans',sans-serif",'border:1px solid '+(this.state.newCatEquip===eq?'#1f7a4f':'#e6e0d0'),'border-radius:7px','background:'+(this.state.newCatEquip===eq?'#1f7a4f':'#fff'),'color:'+(this.state.newCatEquip===eq?'#fff':'#76796f')].join(';'),
+      })),
+      addCat:()=>this.addCat(),
+      createTournament:()=>this.createTournament(),
+      // registration form (account-driven)
+      reg: this.state.reg,
+      account: this.state.account,
+      acctInitials: this.state.account.name.split(' ').map(w=>w[0]).join('').slice(0,2),
+      acctDivision: this.state.account.gender==='m' ? '♂ Men / Boys' : '♀ Women / Girls',
+      regCatOptions: this.state.categories.map(c=>c.name),
+      regCatInfo: (()=>{ const c=this.state.categories.find(c=>c.name===this.state.reg.cat)||{}; return { equip:c.equip||'—', age:this.catAge(c), qual:this.catQual(c), desc:c.desc||'', hasDesc:!!(c.desc&&c.desc.trim()) }; })(),
+      onRegCat:(e)=>this.setReg('cat', e.target.value),
+      regEventChoices: (()=>{ const cat=this.state.categories.find(c=>c.name===this.state.reg.cat)||{}; return [['individual','Individual'],['dbl','Double'],['team','Team'],['mix','Mix Team']].map(f=>({
+        label:f[1], enabled:!!cat[f[0]], on:!!this.state.regEvents[f[0]] && !!cat[f[0]],
+        onClick: cat[f[0]] ? (()=>this.toggleRegEvent(f[0])) : (()=>this.flashMsg(f[1]+' is not offered in '+this.state.reg.cat)),
+        style:['cursor:'+(cat[f[0]]?'pointer':'not-allowed'),'display:flex','align-items:center','gap:9px','padding:11px 13px','border-radius:8px','font-size:13px','font-weight:600',"font-family:'Public Sans',sans-serif",'border:1px solid '+((this.state.regEvents[f[0]]&&cat[f[0]])?'#1f7a4f':'#e6e0d0'),'background:'+((this.state.regEvents[f[0]]&&cat[f[0]])?'#eaf3ec':'#fff'),'color:'+(cat[f[0]]?'#18211c':'#c2bdae'),'opacity:'+(cat[f[0]]?'1':'0.6')].join(';'),
+        box:['width:18px','height:18px','border-radius:5px','flex:none','display:flex','align-items:center','justify-content:center','font-size:12px','color:#fff','border:1px solid '+((this.state.regEvents[f[0]]&&cat[f[0]])?'#1f7a4f':'#cfc9b8'),'background:'+((this.state.regEvents[f[0]]&&cat[f[0]])?'#1f7a4f':'#fff')].join(';'),
+        check:(this.state.regEvents[f[0]]&&cat[f[0]])?'✓':'',
+      })); })(),
+      submitReg:()=>this.submitReg(),
+      regLog: this.state.regLog.map(r=>({ name:r.name, club:r.club, cat:r.cat, evtext:(r.events||[]).map(e=>({individual:'Ind',dbl:'Dbl',team:'Team',mix:'Mix'}[e]||e)).join(' · '), when:r.when })),
+      regCount: this.state.regLog.length,
+      regHasLog: this.state.regLog.length>0,
+      setupCats: this.state.draftCats.map(c=>({
+        id:c.id, name:c.name, equip:c.equip||'—', distance:c.distance||'', arrows:c.arrows||'', ageMin:c.ageMin||'', ageMax:c.ageMax||'', desc:c.desc||'',
+        onRemove:()=>this.removeCat(c.id),
+        onDist:(e)=>this.setCatField(c.id,'distance',e.target.value),
+        onArrows:(e)=>this.setCatField(c.id,'arrows',e.target.value),
+        onAgeMin:(e)=>this.setCatField(c.id,'ageMin',e.target.value),
+        onAgeMax:(e)=>this.setCatField(c.id,'ageMax',e.target.value),
+        onDesc:(e)=>this.setCatField(c.id,'desc',e.target.value),
+        onName:(e)=>this.setCatField(c.id,'name',e.target.value),
+        equipBtns: ['Recurve','Compound','Barebow'].map(eq=>({
+          label:eq, onClick:()=>this.setCatField(c.id,'equip',eq),
+          style:['cursor:pointer','padding:4px 10px','font-size:11px','font-weight:600',"font-family:'Public Sans',sans-serif",'border-radius:6px','border:1px solid '+(c.equip===eq?'#1f7a4f':'#e6e0d0'),'background:'+(c.equip===eq?'#1f7a4f':'#fff'),'color:'+(c.equip===eq?'#fff':'#76796f')].join(';'),
+        })),
+        events: [['individual','Individual'],['dbl','Double'],['team','Team'],['mix','Mix Team']].map(f=>({
+          label:f[1], on:!!c[f[0]], onClick:()=>this.toggleFlag(c.id,f[0]),
+          style:['cursor:pointer','display:inline-flex','align-items:center','gap:6px','border-radius:20px','padding:5px 12px','font-size:12px','font-weight:600','white-space:nowrap',"font-family:'Public Sans',sans-serif",'border:1px '+(c[f[0]]?'solid #1f7a4f':'dashed #cfc9b8'),'background:'+(c[f[0]]?'#1f7a4f':'#fff'),'color:'+(c[f[0]]?'#fff':'#9a9788')].join(';'),
+          dot:['width:7px','height:7px','border-radius:50%','background:'+(c[f[0]]?'#9be8b3':'#cfc9b8')].join(';'),
+        })),
+      })),
+    };
+    if(!ready) return out;
+
+    const E = this.E();
+    const rk = this.ranked();
+
+    // ---- dashboard (all categories) ----
+    // Exclude disqualified/voided archers so a DQ'd shooter can't headline the dashboard.
+    const rkAll = E.rank(this.state.parts.filter(p=>!p.dq), this.state.shootoff);
+    const total = rkAll.reduce((s,r)=>s+r.score,0);
+    const ties = E.tieGroups(rkAll);
+    out.stat = {
+      entries: rkAll.length,
+      leader: rkAll[0]? rkAll[0].name : '—',
+      leaderScore: rkAll[0]? rkAll[0].score+' · '+rkAll[0].x+'X' : '',
+      avg: rkAll.length? Math.round(total/rkAll.length) : 0,
+      ties: ties.length,
+      tieMsg: ties.length? 'needs resolution' : 'all clear',
+      tieBg: ties.length? '#fbf1e3':'#fffdf8',
+      tieBorder: ties.length? '#e3c98a':'#e6e0d0',
+      tieInk: ties.length? '#9a6a16':'#9a9788',
+    };
+    out.flowCards = [
+      {no:'01',label:'Score Entry',desc:'36-arrow cards, live X/10/9 capture.',onClick:()=>this.nav('score')},
+      {no:'02',label:'Standings',desc:'WA ranking with tie-break & shoot-offs.',onClick:()=>this.nav('standings')},
+      {no:'03',label:'Teams',desc:'Auto team assembly, high+low pairing.',onClick:()=>this.nav('teams')},
+      {no:'04',label:'Bracket',desc:'WA seeding & BYEs for the Olympic round.',onClick:()=>this.nav('bracket')},
+      {no:'05',label:'Certificates',desc:'Podium certificates from live data.',onClick:()=>this.nav('certs')},
+    ];
+
+    // ---- score entry ----
+    const scoreRow = (a, dq)=>{
+      const active = a.id===this.state.selId;
+      const rowStyle = [
+        'display:flex','align-items:center','gap:10px','width:100%',
+        'border:none','cursor:pointer','padding:10px 14px','border-bottom:1px solid #f1ebdc',
+        'background:'+(active?'#e6f0e8':(dq?'#fbf1ef':'transparent')),'opacity:'+(dq?'0.78':'1'),
+      ].join(';');
+      return { id:a.id, rank: dq?'—':a.rank, name:a.name, club:a.club, score: dq?'DQ':a.score, dq:!!dq,
+        scoreStyle:["font-family:'Spline Sans Mono',monospace",'font-size:14px','font-weight:600','color:'+(dq?'#b23b2c':'#18211c')].join(';'),
+        rowStyle, onClick:()=>this.pickArcher(a.id) };
+    };
+    const dqParts = this.partsInActive().filter(p=>p.dq).map(p=>Object.assign({}, p, E.tally(p.arrows), { rank:'—', score:String(E.tally(p.arrows).score) }));
+    out.archerList = rk.map(a=>scoreRow(a,false)).concat(dqParts.map(a=>scoreRow(a,true)));
+    const sel = this.state.parts.find(x=>x.id===this.state.selId) || null;
+    out.hasSel = !!sel; out.noSel = !sel;
+    out.sel = sel ? { name:sel.name, club:sel.club } : { name:'', club:'' };
+    out.selDq = !!(sel && sel.dq);
+    out.toggleSelDq = ()=>this.toggleDQ(this.state.selId);
+    out.dqBtnLabel = (sel && sel.dq) ? '↺ Reinstate archer' : '⊘ Default / DQ';
+    out.dqBtnStyle = ['cursor:pointer','border-radius:6px','padding:8px 12px','font-size:12px','font-weight:600',"font-family:'Public Sans',sans-serif",'border:1px solid '+((sel&&sel.dq)?'#1f7a4f':'#d9b3ad'),'background:'+((sel&&sel.dq)?'#fff':'#fbf1ef'),'color:'+((sel&&sel.dq)?'#1f7a4f':'#b23b2c')].join(';');
+    const draft = this.state.draft;
+    const endRows = [];
+    for(let e=0;e<6;e++){
+      const cells=[]; let tot=0;
+      for(let k=0;k<6;k++){ const idx=e*6+k; const v=draft[idx]; tot+=(v==null?0:E.arrowScore(v)); cells.push(this.cellObj(idx,v)); }
+      endRows.push({ endNo:e+1, cells, total:tot });
+    }
+    out.endRows = endRows;
+    out.live = sel ? Object.assign({}, E.tally(draft), { done: draft.filter(v=>v!=null).length }) : {score:0,x:0,ten:0,nine:0,done:0};
+    const keys = [11,10,9,8,7,6,5,4,3,2,1];
+    out.keypad = keys.map(v=>({
+      label: v===11?'X':String(v),
+      onClick: ()=>this.enter(v),
+      style: ['cursor:pointer','border-radius:7px','padding:14px 0','text-align:center',"font-family:'Spline Sans Mono',monospace",'font-size:17px','font-weight:600','border:1px solid #e6e0d0','background:'+(v===11?'#fbeae7':'#fff'),'color:'+(v===11?'#b23b2c':'#18211c')].join(';'),
+    })).concat([
+      { label:'M', onClick:()=>this.enter(0), style:['cursor:pointer','border-radius:7px','padding:14px 0','text-align:center',"font-family:'Spline Sans Mono',monospace",'font-size:15px','border:1px solid #e6e0d0','background:#f5f1e6','color:#76796f'].join(';') },
+      { label:'⌫', onClick:()=>this.clearArrow(), style:['cursor:pointer','border-radius:7px','padding:14px 0','text-align:center','font-size:15px','border:1px solid #e6e0d0','background:#f5f1e6','color:#76796f'].join(';') },
+      { label:'→', onClick:()=>this.setCell(Math.min(this.state.cell+1,35)), style:['cursor:pointer','border-radius:7px','padding:14px 0','text-align:center','font-size:15px','border:1px solid #e6e0d0','background:#f5f1e6','color:#76796f'].join(';') },
+    ]);
+
+    // ---- standings ----
+    const medal = (n)=> n===1?{bg:'#fbf3df',ink:'#9a6a16',bar:'#c8a23a'} : n===2?{bg:'#f0f0ec',ink:'#6f7268',bar:'#b9bcb0'} : n===3?{bg:'#f6ece2',ink:'#915b32',bar:'#c08a55'} : null;
+    const medalRow = (a)=>{
+      const m = medal(a.rankNum);
+      const rowStyle = ['display:grid','grid-template-columns:54px 1fr 78px 46px 46px 46px','gap:8px','align-items:center','padding:11px 18px','border-bottom:1px solid #f1ebdc',
+        'background:'+(a.tie?'#fbf3df':(m?m.bg:'transparent'))].join(';');
+      const rankStyle = ["font-family:'Spline Sans Mono',monospace",'font-weight:700','font-size:15px','color:'+(a.tie?'#9a6a16':(m?m.ink:'#76796f'))].join(';');
+      const arr = a.arrows || [];
+      const nEnds = Math.ceil(arr.length/6) || 6;
+      const ends = [];
+      for(let e=0;e<nEnds;e++){ const cells=[]; for(let k=0;k<6;k++){ const idx=e*6+k; if(idx>=arr.length){ cells.push({label:'',style:'display:inline-block;min-width:22px;'}); continue; } const v=arr[idx]; const label=v==null?'·':(v===11?'X':(v===0?'M':String(v))); const col=v===11?'#b23b2c':(v==null?'#c9c3b2':'#18211c'); cells.push({ label, style:['display:inline-block','min-width:22px','text-align:center',"font-family:'Spline Sans Mono',monospace",'font-size:12px','font-weight:'+(v===11?'700':'500'),'color:'+col].join(';') }); } ends.push({ no:'E'+(e+1), cells }); }
+      return { rank:a.rank, name:a.name, club:a.club, score:a.score, x:a.x, ten:a.ten, nine:a.nine, tie:a.tie, rowStyle, rankStyle, ends };
+    };
+    const sepMode = this.state.rankingMode==='separate';
+    if(sepMode){
+      const men = rk.filter(a=>a.group==='m').map(medalRow);
+      const women = rk.filter(a=>a.group==='f').map(medalRow);
+      out.standGroups = [
+        { title: out.activeCat+' · Men', tag:'♂', rows:men, empty:men.length===0 },
+        { title: out.activeCat+' · Women', tag:'♀', rows:women, empty:women.length===0 },
+      ];
+    } else {
+      out.standGroups = [ { title: out.activeCat+' — Qualification', tag:'', rows: rk.map(medalRow), empty: rk.length===0 } ];
+    }
+    out.showArrows = this.state.showArrows;
+    out.toggleArrows = ()=>this.toggleArrows();
+    out.arrowsBtnLabel = this.state.showArrows ? '▾ Hide arrows' : '▸ Show all arrows';
+    out.arrowsBtnStyle = ['cursor:pointer','padding:7px 13px','font-size:12px','font-weight:600','white-space:nowrap',"font-family:'Public Sans',sans-serif",'border:1px solid '+(this.state.showArrows?'#1f7a4f':'#cfc9b8'),'border-radius:7px','background:'+(this.state.showArrows?'#1f7a4f':'#fff'),'color:'+(this.state.showArrows?'#fff':'#76796f')].join(';');
+    // ranking mode + lock gate
+    out.rankingMode = this.state.rankingMode;
+    out.rankUnset = this.state.rankingMode==='unset';
+    out.ranksLocked = this.state.ranksLocked;
+    out.modeBtns = [['combined','Combined'],['separate','Separate · by gender']].map(mm=>({
+      label:mm[1], onClick:()=>this.setRankingMode(mm[0]),
+      style:['cursor:pointer','padding:7px 13px','font-size:12px','font-weight:600','white-space:nowrap',"font-family:'Public Sans',sans-serif",'border:1px solid #1f7a4f','background:'+(this.state.rankingMode===mm[0]?'#1f7a4f':'#fff'),'color:'+(this.state.rankingMode===mm[0]?'#fff':'#1f7a4f')].join(';'),
+    }));
+    out.canLock = this.state.rankingMode!=='unset' && !this.state.ranksLocked;
+    out.lockRanks = ()=>this.lockRanks();
+    out.unlockRanks = ()=>this.unlockRanks();
+    const tg = E.tieGroups(rk);
+    out.hasTies = tg.length>0; out.noTies = tg.length===0;
+    out.tieGroupsView = tg.map(g=>{
+      // X (11) beats 10 in a shoot-off (closest to centre), so it must be selectable.
+      const vals = [11,10,9,8,7,6,5];
+      const valLabel = (v)=> v===11 ? 'X' : String(v);
+      const members = g.members.map(mem=>{
+        const cur = this.state.shootoff[mem.id];
+        return {
+          id:mem.id, name:mem.name, club:mem.club, cur: cur==null?'—':valLabel(cur),
+          btns: vals.map(v=>({ label:valLabel(v), onClick:()=>this.resolveTie(mem.id,v),
+            style:['cursor:pointer','border-radius:5px','padding:11px 0','min-width:44px','text-align:center',"font-family:'Spline Sans Mono',monospace",'font-size:13px','border:1px solid '+(cur===v?'#1f7a4f':'#e6e0d0'),'background:'+(cur===v?'#1f7a4f':'#fff'),'color:'+(cur===v?'#fff':'#18211c')].join(';') })),
+        };
+      });
+      return { rank:g.rank, members };
+    });
+
+    // ---- teams ----
+    out.teamsBlocked = !this.state.ranksLocked;
+    const catObj = this.state.categories.find(c=>c.name===this.activeCatName()) || {};
+    const flagOf = (k)=> k==='double' ? 'dbl' : k;
+    const teamFormatDefs = [['individual','Individual','1'],['double','Double','2'],['team','Team','3'],['mix','Mix Team','♂♀']].filter(ff=> catObj[flagOf(ff[0])]);
+    let tFormat = this.state.teamFormat;
+    if(!teamFormatDefs.some(ff=>ff[0]===tFormat)) tFormat = (teamFormatDefs[0]||['individual'])[0];
+    out.teamFormat = tFormat;
+    out.formatBtns = teamFormatDefs.map(ff=>({
+      label:ff[1], sz:ff[2], onClick:()=>this.setTeamFormat(ff[0]),
+      style:['cursor:pointer','padding:8px 14px','font-size:13px','font-weight:600','white-space:nowrap',"font-family:'Public Sans',sans-serif",'border:1px solid #1f7a4f','background:'+(tFormat===ff[0]?'#1f7a4f':'#fff'),'color:'+(tFormat===ff[0]?'#fff':'#1f7a4f')].join(';'),
+    }));
+    // grouping toggle only relevant for double + team
+    out.teamShowMode = tFormat==='double' || tFormat==='team' || tFormat==='mix';
+    out.modeBtnsT = [['rank','By Rank'],['club','By Club']].map(mm=>({
+      label:mm[1], onClick:()=>this.setTeamMode(mm[0]),
+      style:['cursor:pointer','padding:7px 13px','font-size:12px','font-weight:600','white-space:nowrap',"font-family:'Public Sans',sans-serif",'border:1px solid #cfc9b8','background:'+(this.state.teamMode===mm[0]?'#103d2a':'#fff'),'color:'+(this.state.teamMode===mm[0]?'#fff':'#76796f')].join(';'),
+    }));
+    const sizeLabel = {individual:1,double:2,team:3,mix:2}[tFormat];
+    out.teamSub = tFormat==='mix'
+      ? (this.state.teamMode==='club' ? 'Mix pairs · one man + one woman within each club' : 'Mix pairs · best man + lowest-ranked woman, inward')
+      : tFormat==='individual'
+        ? 'Each archer is one seed · ranked entries'
+        : (sizeLabel+'-archer '+(tFormat==='double'?'pairs':'teams')+' · '+(this.state.teamMode==='club'?'grouped by club, top '+sizeLabel+' each':'high + low seed balancing'));
+    const ent = E.entrants(rk, tFormat, this.state.teamMode);
+    out.teamIsIndividual = tFormat==='individual';
+    out.teamCards = ent.list.map((t,i)=>({
+      name:t.name, seedSum:t.seedSum||t.members[0].rankNum, idx:String.fromCharCode(65+(i%26)), seed:'Seed '+(i+1),
+      members:t.members.map(mb=>({ rank:'#'+mb.rankNum, name:mb.name, club:mb.club, score:mb.score, tag: mb.gender==='m'?'♂':(mb.gender==='f'?'♀':'') })),
+    }));
+    out.teamExcluded = ent.excluded.map(e=>({ rank:'#'+e.rankNum, name:e.name, club:e.club }));
+    out.teamHasExcluded = ent.excluded.length>0;
+    out.teamExclMsg = ent.excluded.length>0 ? (ent.excluded.length+' archer'+(ent.excluded.length>1?'s':'')+' excluded — '+ent.reason) : '';
+
+    // ---- bracket ----
+    out.bracketSize = this.state.bracketSize;
+    out.ranksLocked = this.state.ranksLocked;
+    out.bracketLocked = this.state.ranksLocked;
+    out.bracketBlocked = !this.state.ranksLocked;
+
+    // event-type selector — each format is its own bracket, seeded from its entrants
+    const bracketEventDefs = [['individual','Individual'],['double','Double'],['team','Team'],['mix','Mix Team']].filter(ee=> catObj[flagOf(ee[0])]);
+    let bEvent = this.state.bracketEvent;
+    if(!bracketEventDefs.some(ee=>ee[0]===bEvent)) bEvent = (bracketEventDefs[0]||['individual'])[0];
+    out.bracketEvent = bEvent;
+    out.eventBtns = bracketEventDefs.map(ee=>({
+      label:ee[1], onClick:()=>this.setBracketEvent(ee[0]),
+      style:['cursor:pointer','padding:7px 12px','font-size:12px','font-weight:600','white-space:nowrap',"font-family:'Public Sans',sans-serif",'border:1px solid #1f7a4f','background:'+(bEvent===ee[0]?'#1f7a4f':'#fff'),'color:'+(bEvent===ee[0]?'#fff':'#1f7a4f')].join(';'),
+    }));
+    const bEnt = E.entrants(rk, bEvent, this.state.teamMode);
+    const entList = bEnt.list;
+    out.entrantNoun = bEvent==='individual' ? 'ARCHERS' : (bEvent==='team' ? 'TEAMS' : 'PAIRS');
+    out.bracketEntrantCount = entList.length;
+
+    out.sizeBtns = [8,16,32].map(n=>({ label:'R'+n, onClick:()=>this.setSize(n),
+      style:['cursor:pointer','padding:7px 13px','font-size:13px','font-weight:600',"font-family:'Spline Sans Mono',monospace",'border:1px solid #1f7a4f','background:'+(this.state.bracketSize===n?'#1f7a4f':'#fff'),'color:'+(this.state.bracketSize===n?'#fff':'#1f7a4f')].join(';') }));
+    const fieldMax = Math.min(entList.length, this.state.bracketSize);
+    const fieldUse = Math.max(2, Math.min(this.state.bracketField, fieldMax));
+    out.bracketField = fieldUse;
+    out.fieldDec = ()=>this.setField(Math.max(2, fieldUse-1));
+    out.fieldInc = ()=>this.setField(Math.min(fieldMax, fieldUse+1));
+
+    // BYE policy toggle
+    out.byePolicy = this.state.byePolicy;
+    out.byePolicyBtns = [['auto','Auto · top seeds'],['admin','Admin choose']].map(pp=>({
+      label:pp[1], onClick:()=>this.setByePolicy(pp[0]),
+      style:['cursor:pointer','flex:1','padding:8px 6px','font-size:12px','font-weight:600','white-space:nowrap',"font-family:'Public Sans',sans-serif",'border:1px solid #1f7a4f','background:'+(this.state.byePolicy===pp[0]?'#1f7a4f':'#fff'),'color:'+(this.state.byePolicy===pp[0]?'#fff':'#1f7a4f')].join(';'),
+    }));
+
+    const br = E.bracketEx(entList, this.state.bracketSize, fieldUse, { policy:this.state.byePolicy, manualByes:this.state.manualByes });
+    out.bracketByes = br.byes;
+    out.byePolicyNote = this.state.byePolicy==='auto'
+      ? 'Auto: '+br.byes+' BYEs placed on the top seeds so they don\u2019t meet early.'
+      : 'Admin choose: unfilled slots stay TBD until you flag them. Tap a seed to toggle a manual BYE.';
+
+    const reasonText = { 'manual':'Manually flagged BYE', 'empty-auto':'Empty slot \u2014 auto top-seed BYE', 'empty-tbd':'Empty slot \u2014 awaiting placement (TBD)' };
+    const matchKeyOf = (no)=> bEvent+'|'+this.state.bracketSize+'|M'+no;
+    out.bracketMatches = br.matches.map(mt=>{
+      const slot = (player, bye, tbd, reason, seed)=>{
+        if(player) return { label:player.name, sub:'#'+seed, kind:'live', reason:'' };
+        if(tbd) return { label:'TBD', sub:'#'+seed, kind:'tbd', reason:reasonText[reason]||'' };
+        return { label:'BYE', sub:'#'+seed, kind:'bye', reason:reasonText[reason]||'' };
+      };
+      const a = slot(mt.a, mt.byeA, mt.tbdA, mt.reasonA, mt.seedA);
+      const b = slot(mt.b, mt.byeB, mt.tbdB, mt.reasonB, mt.seedB);
+      const key = matchKeyOf(mt.no);
+      const scorable = a.kind==='live' && b.kind==='live';
+      const card = this.state.cards[key];
+      let res=null; if(scorable && card){ res=E.scoreMatch(card.sets, card.shoot); }
+      const dq = (card && card.dq) ? card.dq : null;
+      const dqWinner = dq ? (dq.a && !dq.b ? 'b' : (dq.b && !dq.a ? 'a' : null)) : null;
+      const aLive=a.kind==='live', bLive=b.kind==='live';
+      let statusLabel='', statusKind='empty';
+      if(!aLive && !bLive){ statusLabel='— empty —'; statusKind='tbd'; }
+      else if(mt.bye){ statusLabel=(aLive?a.label:b.label)+' advances (BYE)'; statusKind='bye'; }
+      else if(mt.tbd){ statusLabel='Awaiting placement'; statusKind='tbd'; }
+      else if(dqWinner){ const wn=dqWinner==='a'?a.label:b.label; statusLabel='⊘ '+wn+' advances · default'; statusKind='dq'; }
+      else if(res && res.winner){ const wn=res.winner==='a'?a.label:b.label; statusLabel='✓ '+wn+' '+res.spA+'–'+res.spB+(res.note==='tie-shoot'?' · S-Off':''); statusKind='done'; }
+      else if(res && (res.spA>0||res.spB>0||res.note)){ statusLabel='In progress '+res.spA+'–'+res.spB+(res.note==='tie-shoot-needed'?' · shoot-off needed':''); statusKind='live'; }
+      else { statusLabel='Enter score →'; statusKind='empty'; }
+      const sk = { bye:['#9a6a16','#fbf3df','#e3c98a'], tbd:['#76796f','#f1ebdc','#e6e0d0'], done:['#1f7a4f','#e6f0e8','#bcd9c5'], dq:['#b23b2c','#fbf1ef','#e3bdb5'], live:['#9a6a16','#fbf3df','#e3c98a'], empty:['#1f7a4f','#fff','#bcd9c5'] }[statusKind];
+      return {
+        no:'M'+mt.no, key, scorable,
+        seedA:'#'+mt.seedA, nameA:a.label, kindA:a.kind, reasonA:a.reason,
+        seedB:'#'+mt.seedB, nameB:b.label, kindB:b.kind, reasonB:b.reason,
+        bye:mt.bye, tbd:mt.tbd,
+        statusLabel,
+        statusStyle:['font-size:11px','font-weight:600',"font-family:'Public Sans',sans-serif",'color:'+sk[0],'background:'+sk[1],'border:1px solid '+sk[2],'border-radius:20px','padding:3px 10px','white-space:nowrap'].join(';'),
+        onClick: scorable ? (()=>this.openCard(key)) : (()=>{}),
+        onScore: scorable ? ((e)=>{ try{e.stopPropagation();}catch(err){} this.openCard(key); }) : (()=>{}),
+        showScoreBtn: scorable,
+        scoreBtnStyle:['cursor:pointer','border:1px solid #1f7a4f','background:'+(card?'#1f7a4f':'#fff'),'color:'+(card?'#fff':'#1f7a4f'),'font-size:11px','font-weight:700',"font-family:'Public Sans',sans-serif",'border-radius:6px','padding:4px 11px','white-space:nowrap'].join(';'),
+        scoreBtnLabel: (res && res.winner) || dqWinner ? '✎ Edit score' : '▸ Score',
+        nameAStyle: ['font-size:12px','font-weight:600','color:'+(a.kind==='bye'?'#9a6a16':(a.kind==='tbd'?'#9a9788':'#18211c'))].join(';'),
+        nameBStyle: ['font-size:12px','font-weight:600','text-align:right','color:'+(b.kind==='bye'?'#9a6a16':(b.kind==='tbd'?'#9a9788':'#18211c'))].join(';'),
+        rowStyle:['display:block',(scorable?'cursor:pointer':'cursor:default'),'padding:10px 12px','border:1px solid '+(mt.bye?'#e3c98a':(mt.tbd?'#d8d2c2':'#e6e0d0')),'border-radius:7px','background:'+(mt.bye?'#fbf3df':'#fff')].join(';'),
+      };
+    });
+
+    // --- Olympic Card (per-match set scoring) ---
+    out.openCardVisible = false;
+    if(this.state.openMatch){
+      const mt = br.matches.find(m=>matchKeyOf(m.no)===this.state.openMatch);
+      if(mt && mt.a && mt.b){
+        const key = this.state.openMatch;
+        const card = this.state.cards[key] || this.ensureCard(key);
+        const res = E.scoreMatch(card.sets, card.shoot);
+        const dispVal = (v)=> v==null?'':(v===11?'X':(v===0?'M':String(v)));
+        const arrowCell = (side, si, ai, v)=>({
+          val: dispVal(v),
+          onInput: (e)=>this.setArrow(key, side, si, ai, e.target.value),
+          style:['width:100%','height:30px','text-align:center','border:1px solid '+(v!=null?'#cfe0d4':'#e6e0d0'),'border-radius:5px','padding:0',"font-family:'Spline Sans Mono',monospace",'font-size:13px','font-weight:600','background:'+(v==null?'#fffceb':'#fff'),'color:'+(v===11?'#b23b2c':'#18211c')].join(';'),
+        });
+        out.cardSets = card.sets.map((st,si)=>{
+          const line = res.lines[si] || {sa:0,sb:0,ptA:0,ptB:0,any:false};
+          const ptText = line.any ? (line.ptA+' – '+line.ptB) : '–';
+          const ptInk = !line.any ? '#c9c3b2' : (line.ptA>line.ptB ? '#1f7a4f' : (line.ptB>line.ptA ? '#b23b2c' : '#9a6a16'));
+          return {
+            setNo:'SET '+(si+1),
+            aCells: st.a.map((v,ai)=>arrowCell('a',si,ai,v)),
+            bCells: st.b.map((v,ai)=>arrowCell('b',si,ai,v)),
+            aTot: line.sa, bTot: line.sb,
+            ptText, ptStyle:['font-family:\'Spline Sans Mono\',monospace','font-size:13px','font-weight:700','text-align:center','color:'+ptInk].join(';'),
+          };
+        });
+        const shootCell = (side,v)=>({ val:dispVal(v), onInput:(e)=>this.setShoot(key,side,e.target.value),
+          style:['width:54px','height:30px','text-align:center','border:1px solid '+(v!=null?'#cfe0d4':'#e6e0d0'),'border-radius:5px',"font-family:'Spline Sans Mono',monospace",'font-size:13px','font-weight:600','background:'+(v==null?'#fffceb':'#fff'),'color:'+(v===11?'#b23b2c':'#18211c')].join(';') });
+        out.cardShootA = shootCell('a', card.shoot.a);
+        out.cardShootB = shootCell('b', card.shoot.b);
+        out.cardShowShoot = (res.spA===5 && res.spB===5);
+        const aNm0 = mt.a.name, bNm0 = mt.b.name;
+        const swin = card.shoot.winner||null;
+        out.cardShootWinA = swin==='a'; out.cardShootWinB = swin==='b';
+        out.setShootWinA = ()=>this.setShootWinner(key,'a');
+        out.setShootWinB = ()=>this.setShootWinner(key,'b');
+        out.cardShootWinBtnA = ['cursor:pointer','flex:1','padding:8px 6px','font-size:12px','font-weight:700','border-radius:7px',"font-family:'Public Sans',sans-serif",'border:1px solid '+(swin==='a'?'#1f7a4f':'#e3c98a'),'background:'+(swin==='a'?'#1f7a4f':'#fff'),'color:'+(swin==='a'?'#fff':'#9a6a16')].join(';');
+        out.cardShootWinBtnB = ['cursor:pointer','flex:1','padding:8px 6px','font-size:12px','font-weight:700','border-radius:7px',"font-family:'Public Sans',sans-serif",'border:1px solid '+(swin==='b'?'#1f7a4f':'#e3c98a'),'background:'+(swin==='b'?'#1f7a4f':'#fff'),'color:'+(swin==='b'?'#fff':'#9a6a16')].join(';');
+        out.cardShootWinLabelA = '◎ '+aNm0+' closest';
+        out.cardShootWinLabelB = '◎ '+bNm0+' closest';
+        const aName = mt.a.name, bName = mt.b.name;
+        const dq = card.dq || {a:false,b:false};
+        const dqWinner = dq.a&&!dq.b?'b':(dq.b&&!dq.a?'a':null);
+        const effWinner = dqWinner || res.winner;
+        out.openCardVisible = true;
+        out.card = {
+          round: out.bracketSize+' draw · '+('M'+mt.no),
+          aName, bName, aSeed:'#'+mt.seedA, bSeed:'#'+mt.seedB,
+          spA:res.spA, spB:res.spB, totA:res.totA, totB:res.totB,
+          winnerName: effWinner ? (effWinner==='a'?aName:bName) : '',
+          status: dqWinner ? ('⊘ '+(dqWinner==='a'?bName:aName)+' defaulted / DQ — '+(dqWinner==='a'?aName:bName)+' advances')
+                  : (res.winner ? ('✓ '+(res.winner==='a'?aName:bName)+' advances'+(res.note==='tie-shoot'?' (won on shoot-off)':''))
+                  : (res.note==='tie-shoot-needed' ? 'Set points 5–5 — enter the shoot-off arrow for each archer' : 'First to 6 set points advances')),
+          statusInk: dqWinner ? '#b23b2c' : (res.winner ? '#1f7a4f' : (res.note==='tie-shoot-needed' ? '#9a6a16' : '#76796f')),
+          aWin: effWinner==='a', bWin: effWinner==='b',
+          dqA: dq.a, dqB: dq.b,
+          dqABoxStyle:['width:17px','height:17px','flex:none','border-radius:4px','display:flex','align-items:center','justify-content:center','font-size:11px','color:#fff','border:1px solid '+(dq.a?'#b23b2c':'#cfc9b8'),'background:'+(dq.a?'#b23b2c':'#fff')].join(';'),
+          dqBBoxStyle:['width:17px','height:17px','flex:none','border-radius:4px','display:flex','align-items:center','justify-content:center','font-size:11px','color:#fff','border:1px solid '+(dq.b?'#b23b2c':'#cfc9b8'),'background:'+(dq.b?'#b23b2c':'#fff')].join(';'),
+          dqACheck: dq.a?'✓':'', dqBCheck: dq.b?'✓':'',
+        };
+        out.toggleDqA = ()=>this.toggleCardDq(key,'a');
+        out.toggleDqB = ()=>this.toggleCardDq(key,'b');
+        out.closeCard = ()=>this.closeCard();
+        out.clearCardScores = ()=>this.clearCardScores(key);
+      }
+    }
+
+    // --- per-round target assignment (§8.2) ---
+    const rounds = E.roundsFor(this.state.bracketSize);
+    const rIdx = Math.min(this.state.roundIdx, rounds.length-1);
+    out.roundTabs = rounds.map((rd,i)=>({
+      label: rd.key, onClick:()=>this.setRoundIdx(i),
+      style:['cursor:pointer','padding:6px 11px','font-size:11px','font-weight:600',"font-family:'Spline Sans Mono',monospace",'border-radius:6px','border:1px solid '+(i===rIdx?'#1f7a4f':'#e6e0d0'),'background:'+(i===rIdx?'#1f7a4f':'#fff'),'color:'+(i===rIdx?'#fff':'#76796f')].join(';'),
+    }));
+    const curRound = rounds[rIdx];
+    out.tFrom = this.state.tFrom; out.tTo = this.state.tTo;
+    out.onTFrom = (e)=>this.setTFrom(e.target.value);
+    out.onTTo = (e)=>this.setTTo(e.target.value);
+    const ta = E.assignTargets(curRound.matches, this.state.tFrom, this.state.tTo);
+    out.targetRoundLabel = curRound.key;
+    out.targetRuleNote = ta.rule===1
+      ? 'Range fits every archer \u2014 each gets a unique butt, no letters.'
+      : ta.rule===2
+        ? 'One butt per match \u2014 split L (top) / R (bottom).'
+        : 'Range too small for this round \u2014 butts cycle, letters mark each repeated pass (A/B, C/D, E/F\u2026).';
+    out.targetLettered = ta.rule===3;
+    out.targetRuleBg = ta.rule===3 ? '#fbf3df' : '#eaf3ec';
+    out.targetRuleBorder = ta.rule===3 ? '#e3c98a' : '#cde0d3';
+    out.targetRuleInk = ta.rule===3 ? '#9a6a16' : '#1f7a4f';
+    out.targetRuleIcon = ta.rule===3 ? '⚑' : 'ℹ';
+    out.targetRows = ta.matches.map((m,i)=>({
+      no:'M'+(i+1),
+      aLabel:m.aLabel, bLabel:m.bLabel,
+      chipA:['display:inline-block','min-width:46px','text-align:center',"font-family:'Spline Sans Mono',monospace",'font-size:13px','font-weight:600','padding:5px 8px','border-radius:6px','border:1px solid '+(ta.rule===3?'#e3c98a':'#cde0d3'),'background:'+(ta.rule===3?'#fbf3df':'#eaf3ec'),'color:'+(ta.rule===3?'#9a6a16':'#1f7a4f')].join(';'),
+      chipB:['display:inline-block','min-width:46px','text-align:center',"font-family:'Spline Sans Mono',monospace",'font-size:13px','font-weight:600','padding:5px 8px','border-radius:6px','border:1px solid '+(ta.rule===3?'#e3c98a':'#cdce'),'background:'+(ta.rule===3?'#fbf3df':'#f2efe6'),'color:'+(ta.rule===3?'#9a6a16':'#18211c')].join(';'),
+    }));
+
+    // ---- participants (per category) ----
+    const pcats = this.state.categories;
+    const lc = (s)=>String(s||'').toLowerCase();
+    const compat = (p,c)=>{ const n=lc(c.name); if(/women|girls|ladies/.test(n)) return p.gender==='f'; if(/\bmen\b|boys/.test(n)) return p.gender==='m'; return true; };
+    const phash = (id)=>{ let h=0; const s=String(id); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return h; };
+    const catOf = (p)=>{ if(p.cat) return p.cat; const ok=pcats.filter(c=>compat(p,c)); const pool=ok.length?ok:pcats; if(!pool.length) return '—'; return pool[phash(p.id)%pool.length].name; };
+    out.partTotal = this.state.parts.length;
+    out.participantGroups = pcats.map(c=>{
+      const members = this.state.parts.filter(r=>catOf(r)===c.name).slice().sort((a,b)=> a.name<b.name?-1:1);
+      return {
+        name:c.name, equip:c.equip||'—', age:this.catAge(c), desc:c.desc||'', qual:this.catQual(c), count:members.length, empty:members.length===0,
+        rows: members.map((m,i)=>({ seq:String(i+1).padStart(2,'0'), name:m.name, club:m.club,
+          division: m.gender==='m'?'Men':(m.gender==='f'?'Women':'Open'),
+          tag: m.gender==='m'?'♂':(m.gender==='f'?'♀':'') })),
+      };
+    });
+    out.partChips = out.participantGroups.map(g=>({ name:g.name, count:g.count }));
+
+    // ---- certificates ----
+    const certType = this.state.certType;
+    const ac = this.state.certAccent;
+    out.certType = certType;
+    out.certTypeBtns = [['achievement','Achievement','Top 8 performers'],['medalist','Medalist','Podium · top 3'],['participation','Participation','Every entrant']].map(t=>{
+      const on = certType===t[0];
+      return {
+        key:t[0], label:t[1], sub:t[2], onClick:()=>this.setCertType(t[0]),
+        style:['flex:1','cursor:pointer','text-align:left','border-radius:9px','padding:12px 14px',"font-family:'Public Sans',sans-serif",'border:1px solid '+(on?ac:'#e6e0d0'),'background:'+(on?ac:'#fffdf8'),'color:'+(on?'#fff':'#18211c'),'box-shadow:'+(on?'0 4px 14px rgba(16,61,42,0.16)':'none')].join(';'),
+        labelStyle:["font-family:'Archivo',sans-serif",'font-weight:700','font-size:14px'].join(';'),
+        subStyle:['font-size:11px','margin-top:2px','color:'+(on?'rgba(255,255,255,0.8)':'#9a9788')].join(';'),
+      };
+    });
+    const recips = this.certRecips();
+    const previewId = (this.state.certPreviewId && recips.some(r=>r.id===this.state.certPreviewId)) ? this.state.certPreviewId : (recips[0]?recips[0].id:null);
+    const pr = recips.find(r=>r.id===previewId) || { name:'—', club:'', category:this.activeCatName(), rankLabel:'', score:'', medal:'', email:'', id:null };
+    const ct = this.state.certText[certType];
+    const cc = this.state.certCommon;
+    out.certAccent = ac;
+    const bg = this.state.certBg;
+    const darkBg = (bg==='#14241c' || bg==='#103d2a' || bg==='#2a2438');
+    out.certInk = darkBg ? '#eef3ee' : '#18211c';
+    out.certSubInk = darkBg ? '#9fb6a6' : '#76796f';
+    out.certBodyInk = darkBg ? '#cdd9cf' : '#55584f';
+    out.certSigLine = darkBg ? 'rgba(255,255,255,0.4)' : '#b9b3a2';
+    out.certCardStyle = 'position:relative;width:100%;max-width:640px;background:'+bg+';border:1px solid #e6e0d0;border-radius:9px;box-shadow:0 6px 24px rgba(16,61,42,0.07);aspect-ratio:1.414/1;padding:clamp(20px,4%,40px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;';
+    out.certBorderStyle = 'position:absolute;inset:16px;border:2px solid '+ac+';border-radius:4px;pointer-events:none;';
+    out.certNameStyle = "font-family:'Archivo',sans-serif;font-weight:700;font-size:clamp(15px,3vw,25px);color:"+ac+";margin-top:clamp(4px,1.2%,6px);line-height:1.1;";
+    out.certHasLogo = !!this.state.certLogo;
+    out.certLogoEl = this.state.certLogo
+      ? React.createElement('img', { src: this.state.certLogo, style: { maxHeight:'52px', maxWidth:'140px', objectFit:'contain' } })
+      : React.createElement('span', { style: { width:'40px', height:'40px', borderRadius:'50%', background:'radial-gradient(circle,#f6c84b 0 22%,#e0452f 22% 46%,#2f6fb0 46% 70%,#15321f 70% 100%)' } });
+    out.certPreview = { title:ct.title, event:cc.event, intro:cc.intro, name:pr.name, body:this.fillTpl(ct.body,pr), sign1:cc.sign1, role1:cc.role1, sign2:cc.sign2, role2:cc.role2, date:cc.date, hasSign2: !!(cc.sign2 && cc.sign2.trim()) };
+    // editable bindings
+    out.certTitleVal=ct.title; out.certBodyVal=ct.body; out.certEventVal=cc.event; out.certIntroVal=cc.intro;
+    out.certSignVal=cc.sign1; out.certRoleVal=cc.role1; out.certSign2Val=cc.sign2; out.certRole2Val=cc.role2; out.certDateVal=cc.date;
+    out.setCertTitle=(e)=>this.setCertText('title',e.target.value);
+    out.setCertBody=(e)=>this.setCertText('body',e.target.value);
+    out.setCertEvent=(e)=>this.setCertCommon('event',e.target.value);
+    out.setCertIntro=(e)=>this.setCertCommon('intro',e.target.value);
+    out.setCertSign=(e)=>this.setCertCommon('sign1',e.target.value);
+    out.setCertRole=(e)=>this.setCertCommon('role1',e.target.value);
+    out.setCertSign2=(e)=>this.setCertCommon('sign2',e.target.value);
+    out.setCertRole2=(e)=>this.setCertCommon('role2',e.target.value);
+    out.setCertDate=(e)=>this.setCertCommon('date',e.target.value);
+    out.accentSwatches = ['#1f7a4f','#9a6a16','#2f4858','#8a2d2d'].map(c=>({ color:c, onClick:()=>this.setCertAccent(c),
+      style:['width:26px','height:26px','border-radius:50%','cursor:pointer','background:'+c,'border:2px solid '+(this.state.certAccent===c?'#18211c':'#fff'),'box-shadow:0 0 0 1px #e6e0d0'].join(';') }));
+    out.bgSwatches = ['#fffdf8','#ffffff','#f5ecd6','#14241c'].map(c=>({ color:c, onClick:()=>this.setCertBg(c),
+      style:['width:26px','height:26px','border-radius:7px','cursor:pointer','background:'+c,'border:2px solid '+(this.state.certBg===c?'#18211c':'#fff'),'box-shadow:0 0 0 1px #e6e0d0'].join(';') }));
+    out.onCertLogoFile=(e)=>this.setCertLogoFile(e);
+    out.clearCertLogo=()=>this.clearCertLogo();
+    out.certPlaceholders = ['{name}','{category}','{rank}','{score}','{medal}','{date}','{event}'];
+    // recipients
+    const jobs = this.state.certJobs;
+    const jobMeta=(st)=> st==='sent'?{label:'Sent',bg:'#e6f0e8',ink:'#1f7a4f',dot:'#1f7a4f'} : st==='sending'?{label:'Sending',bg:'#eef4fb',ink:'#2f5e8a',dot:'#3f7fc4'} : st==='failed'?{label:'Failed',bg:'#fbe9e6',ink:'#b23b2c',dot:'#b23b2c'} : st==='queued'?{label:'Queued',bg:'#f6efdc',ink:'#9a6a16',dot:'#c8a23a'} : {label:'Ready',bg:'#f1ece0',ink:'#9a9788',dot:'#cfc9b8'};
+    out.certRecips = recips.map(r=>{
+      const st=jobs[r.id]||''; const jm=jobMeta(st); const active=r.id===previewId;
+      const inc=!this.state.certExclude[r.id];
+      return {
+        id:r.id, name:r.name, club:r.club, rankLabel:r.rankLabel||'—', email:this.recipEmail(r),
+        onPick:()=>this.setCertPreview(r.id), onEmail:(e)=>this.setRecipientEmail(r.id,e.target.value),
+        included:inc, onToggleInc:()=>this.toggleCertExclude(r.id),
+        incBoxStyle:['width:18px','height:18px','flex:none','border-radius:5px','display:flex','align-items:center','justify-content:center','font-size:12px','color:#fff','cursor:pointer','border:1px solid '+(inc?'#1f7a4f':'#cfc9b8'),'background:'+(inc?'#1f7a4f':'#fff')].join(';'),
+        incCheck: inc?'✓':'',
+        rowStyle:['border-bottom:1px solid #f1ebdc','padding:10px 14px','cursor:pointer','opacity:'+(inc?'1':'0.55'),'background:'+(active?'#eef5ef':'transparent'),'border-left:3px solid '+(active?ac:'transparent')].join(';'),
+        statusLabel:jm.label, statusStyle:["font-family:'Spline Sans Mono',monospace",'font-size:9px','font-weight:600','letter-spacing:0.04em','border-radius:9px','padding:2px 8px','white-space:nowrap','background:'+jm.bg,'color:'+jm.ink].join(';'),
+        emailStyle:['width:100%','box-sizing:border-box','margin-top:5px','border:1px solid #e6e0d0','border-radius:6px','padding:5px 8px','font-size:11px',"font-family:'Spline Sans Mono',monospace",'color:'+(/@/.test(this.recipEmail(r))?'#18211c':'#b23b2c'),'background:#fff'].join(';'),
+        failed: st==='failed', onRetry:()=>this.retryCert(r.id),
+      };
+    });
+    const includedCount = recips.filter(r=>!this.state.certExclude[r.id]).length;
+    out.certCount = recips.length;
+    out.certIncludedCount = includedCount;
+    out.certNoRecips = recips.length===0;
+    out.stop = (e)=>{ try{ e.stopPropagation(); }catch(err){} };
+    out.certCatLabel = this.activeCatName();
+    const states = recips.map(r=>jobs[r.id]||'');
+    out.certSent = states.filter(s=>s==='sent').length;
+    out.certFailed = states.filter(s=>s==='failed').length;
+    out.certPending = states.filter(s=>s==='queued'||s==='sending').length;
+    out.certHasJobs = states.some(s=>s);
+    out.certNoneState = states.every(s=>!s);
+    out.sendCerts=()=>this.sendCerts();
+    out.sendBtnLabel = out.certPending>0 ? 'Sending…' : (out.certHasJobs ? 'Resend '+includedCount+' selected' : 'Send '+includedCount+' by email');
+    // email composer + preview
+    out.emailSubjectVal=this.state.emailSubject; out.emailBodyVal=this.state.emailBody;
+    out.setEmailSubject=(e)=>this.setEmailField('emailSubject',e.target.value);
+    out.setEmailBody=(e)=>this.setEmailField('emailBody',e.target.value);
+    out.emailPreviewTo = this.recipEmail(pr) || '—';
+    out.emailPreviewSubject = this.fillTpl(this.state.emailSubject, pr);
+    out.emailPreviewBody = this.fillTpl(this.state.emailBody, pr);
+    out.emailPreviewName = pr.name;
+
+    // ---- archer portal ----
+    const pa = this.portalArcher();
+    out.portalLoggedIn = !!pa; out.portalLoggedOut = !pa;
+    out.portalLoginEmailVal = this.state.portalLoginEmail;
+    out.setPortalLoginEmail = (e)=>this.setPortalLoginEmail(e.target.value);
+    out.portalLoginByEmail = ()=>this.portalLoginByEmail();
+    out.portalLogout = ()=>this.portalLogout();
+    out.portalQuickList = this.state.parts.slice(0,8).map(pp=>({ name:pp.name, club:pp.club, email:pp.email||'(no email on file)', onClick:()=>this.portalLogin(pp.id) }));
+    out.portalHasParts = this.state.parts.length>0;
+    if(pa){
+      out.portalName=pa.name; out.portalClub=pa.club||''; out.portalEmail=pa.email||'';
+      out.portalInitials = (pa.name||'?').split(' ').map(w=>w[0]).join('').slice(0,2);
+      out.portalBowVal = pa.bow||''; out.portalDrawVal = pa.draw||''; out.portalLengthVal = pa.length||'';
+      out.setPName=(e)=>this.setPortalField('name',e.target.value);
+      out.setPClub=(e)=>this.setPortalField('club',e.target.value);
+      out.setPEmail=(e)=>this.setPortalField('email',e.target.value);
+      out.setPBow=(e)=>this.setPortalField('bow',e.target.value);
+      out.setPDraw=(e)=>this.setPortalField('draw',e.target.value);
+      out.setPLength=(e)=>this.setPortalField('length',e.target.value);
+      out.pGenderBtns = [['m','Men / Boys'],['f','Women / Girls']].map(g=>({ label:g[1], onClick:()=>this.setPortalField('gender',g[0]),
+        style:['cursor:pointer','flex:1','padding:9px','font-size:12px','font-weight:600',"font-family:'Public Sans',sans-serif",'border-radius:7px','border:1px solid '+(pa.gender===g[0]?'#1f7a4f':'#e6e0d0'),'background:'+(pa.gender===g[0]?'#1f7a4f':'#fff'),'color:'+(pa.gender===g[0]?'#fff':'#76796f')].join(';') }));
+      out.portalTour = { name:this.state.tournament.name, venue:this.state.tournament.venue, dates:this.state.tournament.start+' – '+this.state.tournament.end, cat:pa.cat, distance:this.state.tournament.distance };
+      out.portalEvents = this.portalEventList().filter(ev=> ev[0]==='olympic' || (pa.events&&pa.events.indexOf(ev[0])>=0)).map(ev=>ev[1]).join(' · ') || 'Individual';
+      out.portalEventTabs = this.portalEventList().map(ev=>{
+        const on=this.state.portalEvent===ev[0]; const reg= ev[0]==='olympic' || !!(pa.events&&pa.events.indexOf(ev[0])>=0);
+        return { key:ev[0], label:ev[1], onClick:()=>this.setPortalEvent(ev[0]),
+          style:['cursor:pointer','padding:8px 13px','font-size:12px','font-weight:600','white-space:nowrap',"font-family:'Public Sans',sans-serif",'border-radius:7px','border:1px solid '+(on?'#1f7a4f':'#e6e0d0'),'background:'+(on?'#1f7a4f':'#fff'),'color:'+(on?'#fff':(reg?'#76796f':'#bcb7a8')),'opacity:'+(reg?'1':'0.7')].join(';') };
+      });
+      const pdraft=this.state.portalDraft;
+      const pEndRows=[]; for(let e=0;e<6;e++){ const cells=[]; let tot=0; for(let k=0;k<6;k++){ const idx=e*6+k; const v=pdraft[idx]; tot+=(v==null?0:E.arrowScore(v)); cells.push(this.portalCellObj(idx,v)); } pEndRows.push({ endNo:e+1, cells, total:tot }); }
+      out.portalEndRows=pEndRows;
+      out.portalLive = Object.assign({}, E.tally(pdraft), { done: pdraft.filter(v=>v!=null).length });
+      const pkeys=[11,10,9,8,7,6,5,4,3,2,1];
+      out.portalKeypad = pkeys.map(v=>({ label:v===11?'X':String(v), onClick:()=>this.portalEnter(v),
+        style:['cursor:pointer','border-radius:7px','padding:14px 0','text-align:center',"font-family:'Spline Sans Mono',monospace",'font-size:17px','font-weight:600','border:1px solid #e6e0d0','background:'+(v===11?'#fbeae7':'#fff'),'color:'+(v===11?'#b23b2c':'#18211c')].join(';') })).concat([
+        { label:'M', onClick:()=>this.portalEnter(0), style:['cursor:pointer','border-radius:7px','padding:14px 0','text-align:center',"font-family:'Spline Sans Mono',monospace",'font-size:15px','border:1px solid #e6e0d0','background:#f5f1e6','color:#76796f'].join(';') },
+        { label:'⌫', onClick:()=>this.portalClearArrow(), style:['cursor:pointer','border-radius:7px','padding:14px 0','text-align:center','font-size:15px','border:1px solid #e6e0d0','background:#f5f1e6','color:#76796f'].join(';') },
+        { label:'→', onClick:()=>this.portalSetCell(Math.min(this.state.portalCell+1,35)), style:['cursor:pointer','border-radius:7px','padding:14px 0','text-align:center','font-size:15px','border:1px solid #e6e0d0','background:#f5f1e6','color:#76796f'].join(';') },
+      ]);
+      out.portalSave=()=>this.portalSave();
+    }
+
+    // ---- live scoreboard ----
+    out.boardEvent = this.state.boardEvent;
+    out.boardEventTabs = this.portalEventList().map(ev=>{ const on=this.state.boardEvent===ev[0];
+      return { key:ev[0], label:ev[1], onClick:()=>this.setBoardEvent(ev[0]),
+        style:['cursor:pointer','padding:8px 14px','font-size:13px','font-weight:600','white-space:nowrap',"font-family:'Public Sans',sans-serif",'border-radius:7px','border:1px solid '+(on?'#1f7a4f':'#e6e0d0'),'background:'+(on?'#1f7a4f':'#fff'),'color:'+(on?'#fff':'#76796f')].join(';') }; });
+    const boardRows = this.scoresForEvent(this.state.boardEvent);
+    out.boardRows = boardRows.map((a,i)=>{
+      const medal = i===0?{bg:'#fbf3df',ink:'#9a6a16'} : i===1?{bg:'#f0f0ec',ink:'#6f7268'} : i===2?{bg:'#f6ece2',ink:'#915b32'} : null;
+      return { rank:String(i+1), name:a.name, club:a.club, cat:a.cat, score:String(a.score), x:String(a.x), ten:String(a.ten), done:a.done+'/36',
+        rowStyle:['display:grid','grid-template-columns:54px 1fr 92px 70px 46px 46px 60px','gap:8px','align-items:center','padding:11px 18px','border-bottom:1px solid #f1ebdc','background:'+(medal?medal.bg:'transparent')].join(';'),
+        rankStyle:["font-family:'Spline Sans Mono',monospace",'font-weight:700','font-size:15px','color:'+(medal?medal.ink:'#76796f')].join(';') };
+    });
+    out.boardEmpty = boardRows.length===0;
+    out.boardCount = boardRows.length;
+    out.boardEventLabel = (this.portalEventList().find(e=>e[0]===this.state.boardEvent)||['',''])[1];
+
+    // ---- results & print summary (per event) ----
+    const divLabel = (g)=> g==='m'?'Men':(g==='f'?'Women':'Open');
+    const sumDefs = [['qualification','Qualification']]
+      .concat(catObj.individual ? [['olympic','Olympic Round']] : [])
+      .concat([['double','Double','dbl'],['team','Team','team'],['mix','Mix Team','mix']].filter(d=>catObj[d[2]]).map(d=>[d[0],d[1]]));
+    let sEvent = this.state.summaryEvent;
+    if(!sumDefs.some(d=>d[0]===sEvent)) sEvent = 'qualification';
+    out.summaryEvent = sEvent;
+    out.summaryEventTabs = sumDefs.map(d=>{ const on=d[0]===sEvent;
+      return { label:d[1], onClick:()=>this.setSummaryEvent(d[0]),
+        style:['cursor:pointer','padding:7px 13px','font-size:12px','font-weight:600','white-space:nowrap',"font-family:'Public Sans',sans-serif",'border-radius:7px','border:1px solid '+(on?'#1f7a4f':'#e6e0d0'),'background:'+(on?'#1f7a4f':'#fff'),'color:'+(on?'#fff':'#76796f')].join(';') }; });
+    const sCell = (text,w,o)=>{ o=o||{}; return { text:(text==null?'':String(text)), style:[
+      'flex:'+(w||1),'min-width:0','padding:9px 12px','font-size:13px','box-sizing:border-box',
+      'text-align:'+(o.align||'left'),
+      o.mono?"font-family:'Spline Sans Mono',monospace":"font-family:'Public Sans',sans-serif",
+      'font-weight:'+(o.strong?'700':'500'),'color:'+(o.ink||'#18211c'),
+      o.wrap?'white-space:normal':'white-space:nowrap',o.wrap?'':'overflow:hidden',o.wrap?'':'text-overflow:ellipsis'
+    ].join(';') }; };
+    const sHead = (text,w,o)=>{ o=o||{}; return { text, style:[
+      'flex:'+(w||1),'min-width:0','padding:8px 12px','box-sizing:border-box','text-align:'+(o.align||'left'),
+      "font-family:'Spline Sans Mono',monospace",'font-size:9px','font-weight:600','letter-spacing:0.08em','color:#9a9788','text-transform:uppercase'
+    ].join(';') }; };
+    const medalInk = (i)=> i===0?'#9a6a16':(i===1?'#6f7268':(i===2?'#915b32':'#18211c'));
+    const medalBg = (i)=> i===0?'#fbf3df':(i===1?'#f0f0ec':(i===2?'#f6ece2':'transparent'));
+    let sCols=[], sRows=[], sNote='';
+    if(sEvent==='qualification'){
+      sCols=[sHead('Rank',0.7),sHead('Archer',2.4),sHead('Club',1.6),sHead('Div',1),sHead('Score',1,{align:'right'}),sHead('10+X',0.8,{align:'right'}),sHead('X',0.6,{align:'right'})];
+      sRows = rk.map((a,i)=>({ bg:medalBg(i), cells:[
+        sCell(a.rank,0.7,{mono:true,strong:true,ink:medalInk(i)}),
+        sCell(a.name,2.4,{strong:true}), sCell(a.club,1.6,{ink:'#76796f'}),
+        sCell(divLabel(a.gender),1,{ink:'#76796f'}),
+        sCell(a.score,1,{mono:true,strong:true,align:'right'}),
+        sCell((a.ten+a.x),0.8,{mono:true,align:'right',ink:'#76796f'}),
+        sCell(a.x,0.6,{mono:true,align:'right',ink:'#76796f'}) ]}));
+      sNote = rk.length+' ranked archers \u00b7 WA tie-break (score, X, 10, 9). 18m faces score X=10.';
+    } else if(sEvent==='olympic'){
+      const sEnt = E.entrants(rk,'individual',this.state.teamMode).list;
+      const sField = Math.max(2, Math.min(this.state.bracketField, Math.min(sEnt.length, this.state.bracketSize)));
+      const sBr = E.bracketEx(sEnt, this.state.bracketSize, sField, { policy:this.state.byePolicy, manualByes:this.state.manualByes });
+      sCols=[sHead('Match',0.8),sHead('Top seed',2.2),sHead('Result',1.2,{align:'center'}),sHead('Lower seed',2.2,{align:'right'}),sHead('Advances',1.8,{align:'right'})];
+      sRows = sBr.matches.map(m=>{
+        const aN = m.a?m.a.name:(m.byeA?'BYE':'TBD'); const bN = m.b?m.b.name:(m.byeB?'BYE':'TBD');
+        const key='individual|'+this.state.bracketSize+'|M'+m.no;
+        const card=this.state.cards[key]; const r=(m.a&&m.b&&card)?E.scoreMatch(card.sets,card.shoot):null;
+        const dq=card&&card.dq?card.dq:null; const dqW=dq?(dq.a&&!dq.b?'b':(dq.b&&!dq.a?'a':null)):null;
+        let result='—', adv=''; 
+        if(m.bye){ adv=(m.a?aN:bN)+' (BYE)'; result='BYE'; }
+        else if(dqW){ adv=(dqW==='a'?aN:bN)+' \u00b7 default'; result='DEF'; }
+        else if(r&&r.winner){ adv=(r.winner==='a'?aN:bN); result=r.spA+'–'+r.spB+(r.note==='tie-shoot'?' SO':''); }
+        else if(r&&(r.spA||r.spB)){ result=r.spA+'–'+r.spB; adv='in progress'; }
+        else { result='—'; adv='not scored'; }
+        return { bg:'transparent', cells:[
+          sCell('M'+m.no,0.8,{mono:true,ink:'#76796f'}),
+          sCell('#'+m.seedA+'  '+aN,2.2,{strong:!!m.a}),
+          sCell(result,1.2,{mono:true,align:'center',strong:true,ink:'#1f7a4f'}),
+          sCell(bN+'  #'+m.seedB,2.2,{align:'right',strong:!!m.b}),
+          sCell(adv,1.8,{align:'right',ink:(r&&r.winner)||dqW||m.bye?'#1f7a4f':'#9a9788',strong:!!((r&&r.winner)||dqW)}) ]};
+      });
+      sNote = 'Individual elimination \u00b7 '+this.state.bracketSize+' draw, '+sField+' qualified. Set system: first to 6 set points; 5\u20135 \u2192 one-arrow shoot-off.';
+    } else {
+      const fmt = sEvent;
+      const ent2 = E.entrants(rk, fmt, this.state.teamMode);
+      const noun = fmt==='team'?'Team':'Pair';
+      sCols=[sHead('Seed',0.8),sHead(noun,2),sHead('Members',3.4,{}),sHead('\u03a3 Seed',1,{align:'right'})];
+      sRows = ent2.list.map((t,i)=>({ bg:medalBg(i), cells:[
+        sCell('Seed '+(i+1),0.8,{mono:true,strong:true,ink:medalInk(i)}),
+        sCell(t.name,2,{strong:true}),
+        sCell(t.members.map(mb=>mb.name+' ('+mb.club+')').join(', '),3.4,{ink:'#76796f',wrap:true}),
+        sCell(t.seedSum||'',1,{mono:true,align:'right'}) ]}));
+      sNote = ent2.list.length+' '+(fmt==='team'?'teams':'pairs')+' \u00b7 seeded by combined qualification rank'+(ent2.excluded.length?(' \u00b7 '+ent2.excluded.length+' unpaired'):'');
+    }
+    out.summaryCols = sCols;
+    out.summaryRows = sRows;
+    out.summaryEmpty = sRows.length===0;
+    out.summaryNote = sNote;
+    out.summaryEventLabel = (sumDefs.find(d=>d[0]===sEvent)||['',''])[1];
+    out.summaryTitle = this.state.tournament.name;
+    out.summaryMeta = (this.state.tournament.start||'?')+' – '+(this.state.tournament.end||'?')+' · '+(this.state.tournament.venue||'—');
+    out.summaryCatLabel = this.activeCatName();
+    out.summaryDist = this.state.tournament.distance;
+    out.summaryStamp = 'Generated '+this.state.certCommon.date;
+    out.printSummary = ()=>{ try{ window.print(); }catch(e){} };
+
+    return out;
+  }
+}
+</script>
+</body>
+</html>
