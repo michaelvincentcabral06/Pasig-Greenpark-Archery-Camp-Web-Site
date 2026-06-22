@@ -410,6 +410,10 @@ function doGet(e) {
     if (action === 'plans') {
       return listPlans_(e.parameter.email);
     }
+    if (action === 'version') {
+      // Lets the website (and support) confirm which backend is actually deployed.
+      return json_({ version: 'db-v2', database: true, cancelLog: true });
+    }
     return json_({ error: 'Unknown action' });
   } catch (err) {
     return json_({ error: String(err) });
