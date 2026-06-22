@@ -101,6 +101,24 @@ The calendar permission and the **send-email** permission are **separate**. A bo
 
 ---
 
+## Part D½ — Turn on the database sheet (do this once) 🗂️
+
+Every booking, pass, and cancellation is now also recorded in **one Google Sheet** so you have a single place to see everything (the calendar stays your scheduling view). The sheet is created automatically — you just run a one-time setup so you get its link.
+
+1. In the Apps Script editor, open the **function dropdown** (next to ▶ Run) and choose **`setupDatabase`**.
+2. Click **▶ Run** and approve the permission prompt (this time it asks for **Spreadsheets/Drive** access — click **Allow**).
+3. Open **View → Logs** (or **Execution log**). It prints a line like *"✅ Database ready. Open/bookmark it here: https://docs.google.com/spreadsheets/…"* — **open that link and bookmark it.** That's your database.
+
+It has three tabs:
+- **Bookings** — every booked hour, with status (`booked` / `cancelled`), ref, name, email, program, archers, amount, coach.
+- **Passes** — every pass a customer buys, with the holder, assigned coach, and scheduled sessions.
+- **Cancellations** — an audit log of every cancellation: when, which booking, and **who cancelled** (`customer`, `admin`, `reschedule`, or `plan removed`).
+
+> Writes to the sheet are best-effort: if the sheet ever fails, the booking + calendar event + email still go through. Nothing is lost.
+> This requires a **re-deploy** (Part C) so the new backend is live.
+
+---
+
 ## Part E — Cleaning up extra deployments
 
 If you clicked **“New deployment”** several times, you now have **many deployments** (each with its own `/exec` URL) cluttering the activity list. You only need **one**. To tidy up:

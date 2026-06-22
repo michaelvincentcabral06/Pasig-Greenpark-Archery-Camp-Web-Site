@@ -60,6 +60,94 @@ var COACHES = [
 ];
 // ================================================================
 
+// ====================== DATABASE (Google Sheet) ======================
+// Every booking, pass, and cancellation is recorded in one Google Sheet so the
+// owner has a single place to see everything (Calendar stays the scheduling view).
+// The sheet is created automatically the first time it's needed and its ID saved
+// in Script Properties. Run `setupDatabase` once to create it now and print its link.
+var DB_PROP_KEY = 'DB_SPREADSHEET_ID';
+var DB_NAME = 'Greenpark Archery — Database';
+var DB_SHEETS = {
+  bookings: { name: 'Bookings',      headers: ['Booked At','Ref','Status','Date','Time','Program','Name','Email','Mobile','Archers','Amount','Coach','Concession','Roster','Event ID'] },
+  passes:   { name: 'Passes',        headers: ['Saved At','Email','Holder','Pass','Coach','Sessions','Plan ID'] },
+  cancels:  { name: 'Cancellations', headers: ['Cancelled At','Ref','Date','Time','Program','Name','Email','Cancelled By','Event ID'] }
+};
+
+function getDb_() {
+  var props = PropertiesService.getScriptProperties();
+  var id = props.getProperty(DB_PROP_KEY);
+  var ss = null;
+  if (id) { try { ss = SpreadsheetApp.openById(id); } catch (e) { ss = null; } }
+  if (!ss) { ss = SpreadsheetApp.create(DB_NAME); props.setProperty(DB_PROP_KEY, ss.getId()); }
+  return ss;
+}
+function dbSheet_(key) {
+  var def = DB_SHEETS[key];
+  var ss = getDb_();
+  var sh = ss.getSheetByName(def.name);
+  if (!sh) {
+    sh = ss.insertSheet(def.name);
+    sh.appendRow(def.headers);
+    sh.setFrozenRows(1);
+    var first = ss.getSheets()[0];
+    if (first && first.getName() === 'Sheet1' && first.getLastRow() === 0) { try { ss.deleteSheet(first); } catch (e) {} }
+  }
+  return sh;
+}
+function dbAppend_(key, row) { try { dbSheet_(key).appendRow(row); } catch (e) {} } // never let logging break a booking
+function nowStr_() { return Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd HH:mm:ss'); }
+function concSummary_(body) { var l = concLine_(body); return l ? l.replace(/^\nConcession:\s*/, '') : ''; }
+
+// Record one booked hour in the Bookings tab.
+function dbRecordBooking_(o) {
+  dbAppend_('bookings', [nowStr_(), o.ref, 'booked', o.date, o.time, o.program || '', o.name || '', o.email || '', o.phone || '', o.party, o.amount, o.coach || '', o.concession || '', o.roster || '', o.eventId || '']);
+}
+// Mark a booking row cancelled (by event id, else by ref+date+time).
+function dbMarkCancelled_(eventId, ref, dateStr, time) {
+  try {
+    var sh = dbSheet_('bookings');
+    var data = sh.getDataRange().getValues();
+    var h = data[0];
+    var evCol = h.indexOf('Event ID'), stCol = h.indexOf('Status'), refCol = h.indexOf('Ref'), dCol = h.indexOf('Date'), tCol = h.indexOf('Time');
+    for (var r = 1; r < data.length; r++) {
+      var match = (eventId && data[r][evCol] === eventId) || (!eventId && data[r][refCol] === ref && data[r][dCol] === dateStr && data[r][tCol] === time);
+      if (match) { sh.getRange(r + 1, stCol + 1).setValue('cancelled'); break; }
+    }
+  } catch (e) {}
+}
+// Mirror a pass to the Passes tab (upsert by email + plan id).
+function dbUpsertPass_(email, plan) {
+  try {
+    var sh = dbSheet_('passes');
+    var data = sh.getDataRange().getValues();
+    var h = data[0], emCol = h.indexOf('Email'), tsCol = h.indexOf('Plan ID');
+    var sessions = (plan.sessions || []).map(function (s) { return s.date + ' ' + s.time; }).join('; ');
+    var row = [nowStr_(), email, plan.holder || '', plan.name || '', plan.coach || '', sessions, plan.ts];
+    for (var r = 1; r < data.length; r++) {
+      if (String(data[r][tsCol]) === String(plan.ts) && String(data[r][emCol]).toLowerCase() === email) { sh.getRange(r + 1, 1, 1, row.length).setValues([row]); return; }
+    }
+    sh.appendRow(row);
+  } catch (e) {}
+}
+function dbRemovePass_(email, ts) {
+  try {
+    var sh = dbSheet_('passes');
+    var data = sh.getDataRange().getValues();
+    var h = data[0], emCol = h.indexOf('Email'), tsCol = h.indexOf('Plan ID');
+    for (var r = data.length - 1; r >= 1; r--) {
+      if (String(data[r][tsCol]) === String(ts) && String(data[r][emCol]).toLowerCase() === email) sh.deleteRow(r + 1);
+    }
+  } catch (e) {}
+}
+
+// RUN THIS ONCE from the editor to create the database sheet and print its link.
+function setupDatabase() {
+  var ss = getDb_();
+  dbSheet_('bookings'); dbSheet_('passes'); dbSheet_('cancels');
+  Logger.log('✅ Database ready. Open/bookmark it here:\n' + ss.getUrl());
+}
+// ================================================================
+
 /**
  * RUN THIS ONCE to grant the email permission and send yourself a test receipt.
  * In the Apps Script editor: pick "authorizeAndTestEmail" in the function
@@ -441,12 +529,14 @@ function savePlan_(body) {
   var plan = body.plan;
   if (!email || !plan || plan.ts == null) return json_({ ok: false, reason: 'missing email or plan' });
   PropertiesService.getScriptProperties().setProperty(planKey_(email, plan.ts), JSON.stringify(plan));
+  dbUpsertPass_(email, plan); // mirror to the Passes tab for the owner
   return json_({ ok: true });
 }
 function removePlan_(body) {
   var email = (body.email || '').trim().toLowerCase();
   if (!email || body.ts == null) return json_({ ok: false, reason: 'missing email or ts' });
   PropertiesService.getScriptProperties().deleteProperty(planKey_(email, body.ts));
+  dbRemovePass_(email, body.ts); // remove from the Passes tab too
   return json_({ ok: true });
 }
 // GET ?action=plans            → every pass across all customers (for the admin)
@@ -537,6 +627,11 @@ function book_(body) {
     eventIds.push(ev.getId());
   });
 
+  // Record each booked hour in the database sheet.
+  for (var bi = 0; bi < booked.length; bi++) {
+    dbRecordBooking_({ ref: ref, date: date, time: booked[bi], program: body.program, name: body.name, email: body.email, phone: body.phone, party: party, amount: amount, coach: (body.coachName || body.coach || ''), concession: concSummary_(body), roster: roster.join('; '), eventId: eventIds[bi] || '' });
+  }
+
   // One receipt email for the whole booking.
   var emailed = false;
   try {
@@ -621,6 +716,11 @@ function bookMulti_(body) {
     });
   });
 
+  // Record each booked (date, time) pair in the database sheet.
+  bookedPairs.forEach(function (bp) {
+    dbRecordBooking_({ ref: ref, date: bp.date, time: bp.time, program: body.program, name: body.name, email: body.email, phone: body.phone, party: party, amount: amount, coach: (body.coachName || body.coach || ''), concession: concSummary_(body), roster: roster.join('; '), eventId: bp.eventId || '' });
+  });
+
   var emailed = false;
   try {
     emailed = sendReceipt_({
@@ -673,7 +773,12 @@ function cancel_(body) {
   var time       = body.time || fmtLabel_(parseInt(Utilities.formatDate(ev.getStartTime(), TIMEZONE, 'H'), 10));
   var dateStr    = body.date || Utilities.formatDate(ev.getStartTime(), TIMEZONE, 'yyyy-MM-dd');
 
+  var evId = ev.getId();
   ev.deleteEvent();
+
+  // Record the cancellation (who + when) and mark the booking row cancelled.
+  dbMarkCancelled_(evId, ref, dateStr, time);
+  dbAppend_('cancels', [nowStr_(), ref, dateStr, time, program, body.name || '', custEmail, (body.by || 'customer'), evId]);
 
   var emailed = false;
   if (body.notify !== false && custEmail) {

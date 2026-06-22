@@ -2560,12 +2560,12 @@ class Component extends DCLogic {
   }
 
   // Admin: cancel a booking — delete its calendar event and (optionally) email the customer.
-  cancelBooking(entry, notify) {
+  cancelBooking(entry, notify, by) {
     const ep = this.endpoint();
     if (!ep || !entry || !entry.eventId) return Promise.resolve({ ok: true, local: true });
     return fetch(ep, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'cancel', eventId: entry.eventId, ref: entry.ref || '', date: entry.date || '', time: entry.time || '', name: entry.name || '', email: entry.email || '', notify: notify !== false })
+      body: JSON.stringify({ action: 'cancel', eventId: entry.eventId, ref: entry.ref || '', date: entry.date || '', time: entry.time || '', name: entry.name || '', email: entry.email || '', notify: notify !== false, by: by || 'customer' })
     }).then(r => r.json()).catch(() => ({ ok: false }));
   }
 
@@ -2645,7 +2645,9 @@ class Component extends DCLogic {
         const local = this.localAcctMatches(email, ref);
         // merge remote + any device-only rows (dedupe by eventId/ts/date+time)
         const seen = {}, merged = [];
-        remote.concat(local).forEach(b => { const k = (b.eventId || '') + '|' + (b.date || '') + '|' + (b.time || ''); if (!seen[k]) { seen[k] = 1; merged.push(b); } });
+        // Dedupe by booking reference + slot first (the same booking can appear once
+        // from this device and once from the calendar with a different/blank eventId).
+        remote.concat(local).forEach(b => { const k = (b.ref || b.eventId || '') + '|' + (b.date || '') + '|' + (b.time || ''); if (!seen[k]) { seen[k] = 1; merged.push(b); } });
         finish(merged, (data && data.name));
       })
       .catch(() => finish(this.localAcctMatches(email, ref)));
@@ -2655,14 +2657,14 @@ class Component extends DCLogic {
     // after an edit, rebuild the visible list from device bookings (keeps UI instant)
     const merged = this.localAcctMatches(this.state.acctEmail, this.state.acctRef);
     // preserve any remote-only rows already shown that aren't on this device
-    const have = {}; (this.state.bookings || []).forEach(b => { have[(b.eventId || '') + '|' + b.date + '|' + b.time] = 1; });
-    const remoteOnly = (this.state.acctBookings || []).filter(b => !have[(b.eventId || '') + '|' + b.date + '|' + b.time] && b.__remote);
+    const have = {}; (this.state.bookings || []).forEach(b => { have[(b.ref || b.eventId || '') + '|' + b.date + '|' + b.time] = 1; });
+    const remoteOnly = (this.state.acctBookings || []).filter(b => !have[(b.ref || b.eventId || '') + '|' + b.date + '|' + b.time] && b.__remote);
     this.setState({ acctBookings: merged.concat(remoteOnly) });
   }
   cancelAcctBooking(entry) {
     if (typeof confirm !== 'undefined' && !confirm('Cancel this session? This frees the slot for others.')) return;
     this.setState({ editBusy: true });
-    this.cancelBooking(entry).then(() => {
+    this.cancelBooking(entry, true, 'customer').then(() => {
       const arr = (this.state.bookings || []).filter(x => x.ts !== entry.ts && !(x.eventId && entry.eventId && x.eventId === entry.eventId));
       this.persistBookings(arr);
       const acct = (this.state.acctBookings || []).filter(x => x.ts !== entry.ts && !(x.eventId && entry.eventId && x.eventId === entry.eventId));
@@ -2730,7 +2732,7 @@ class Component extends DCLogic {
     if (!ep) { applyLocal(entry.eventId, entry.ref); return; }
     // Live: cancel the old event (silently — the customer gets one "rescheduled"
     // receipt, not a cancellation notice), then create the new one.
-    this.cancelBooking(entry, false).then(() => {
+    this.cancelBooking(entry, false, 'reschedule').then(() => {
       return fetch(ep, {
         method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action: 'book', name: entry.name, phone: entry.phone, email: entry.email, program: program, date: date, times: [time], time: time, party: party, amount: amount, archers: entry.archers || [], concession: concession, coach: this.needsCoach(program) ? 'any' : '', ref: entry.ref })
@@ -2783,7 +2785,7 @@ class Component extends DCLogic {
     // so removing the pass doesn't leave orphaned events in Google Calendar.
     const plan = this.findPlan(email, ts);
     if (plan && Array.isArray(plan.sessions)) {
-      plan.sessions.forEach(s => { if (s && s.eventId) this.cancelBooking({ eventId: s.eventId, ref: s.ref || '', date: s.date || '', time: s.time || '', email: email }, false); });
+      plan.sessions.forEach(s => { if (s && s.eventId) this.cancelBooking({ eventId: s.eventId, ref: s.ref || '', date: s.date || '', time: s.time || '', email: email }, false, 'plan removed'); });
     }
     const plans = (this.loadAcctPlans(email) || []).filter(p => p.ts !== ts);
     this.saveAcctPlans(email, plans);
@@ -3289,7 +3291,7 @@ class Component extends DCLogic {
           : 'Remove this booking from the list?';
         if (typeof confirm !== 'undefined' && !confirm(msg)) return;
         this.setState({ cancellingTs: entry ? entry.ts : null });
-        this.cancelBooking(entry).then((res) => {
+        this.cancelBooking(entry, true, 'admin').then((res) => {
           // Remove locally whether or not the remote delete reported ok, but warn on failure.
           const arr = (this.state.bookings || []).filter(x => x.ts !== (entry && entry.ts));
           this.persistBookings(arr);
