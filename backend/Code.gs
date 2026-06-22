@@ -395,6 +395,79 @@ function escapeHtml_(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+// ---------- PASS EMAILS ----------
+// Sent once when a customer buys a pass/membership — confirms it with the total.
+function sendPlanReceipt_(o) {
+  if (!o.email) return false;
+  var who = o.holder || 'there';
+  var totalTxt = (o.amount != null && o.amount !== '') ? peso_(o.amount) : (o.price || '');
+  var subject = BUSINESS_NAME + ' — Pass confirmed' + (o.ref ? ' (' + o.ref + ')' : '');
+  var lines = [
+    'Hi ' + who + ',',
+    '',
+    'Thanks for getting a pass with us! Here are the details:',
+    '',
+    (o.ref ? 'Reference : ' + o.ref : ''),
+    'Pass      : ' + (o.plan || ''),
+    'Holder    : ' + (o.holder || ''),
+    (totalTxt ? 'Total     : ' + totalTxt + '  (pay at the range)' : ''),
+    '',
+    'Our team will assign your coach and schedule your sessions — you’ll get a separate email with the dates. You can also see everything anytime in My Bookings on our website.',
+    '',
+    'See you on the range!',
+    BUSINESS_NAME
+  ].filter(function (l) { return l !== ''; });
+  var html = '<div style="font-family:Arial,Helvetica,sans-serif;color:#1b2a1f;max-width:520px;">'
+    + '<h2 style="color:#244232;margin:0 0 4px;">Pass confirmed</h2>'
+    + '<p style="color:#56664f;margin:0 0 18px;">Thanks, ' + escapeHtml_(who) + ' — your pass is ready.</p>'
+    + '<table style="border-collapse:collapse;width:100%;font-size:14px;">'
+    + (o.ref ? receiptRow_('Reference', o.ref) : '')
+    + receiptRow_('Pass', o.plan || '')
+    + receiptRow_('Holder', o.holder || '')
+    + (totalTxt ? ('<tr><td style="padding:10px 0;border-top:2px solid #244232;font-weight:bold;">Total to pay at the range</td><td style="padding:10px 0;border-top:2px solid #244232;font-weight:bold;text-align:right;color:#244232;font-size:18px;">' + escapeHtml_(totalTxt) + '</td></tr>') : '')
+    + '</table>'
+    + '<p style="font-size:13px;color:#56664f;margin:18px 0 4px;">We’ll assign your coach and schedule your sessions, then email you the dates. Track it all in <strong>My Bookings</strong>.</p>'
+    + '<p style="font-size:13px;color:#244232;margin:18px 0 0;font-weight:bold;">' + escapeHtml_(BUSINESS_NAME) + '</p>'
+    + '</div>';
+  MailApp.sendEmail({ to: o.email, subject: subject, body: lines.join('\n'), htmlBody: html, name: BUSINESS_NAME });
+  return true;
+}
+// Sent once after the admin schedules a pass's sessions — lists all the dates.
+function sendPlanSchedule_(o) {
+  if (!o.email) return false;
+  var who = o.holder || 'there';
+  var sess = (o.sessions || []).slice().sort(function (a, b) { return (a.date + a.time).localeCompare(b.date + b.time); });
+  if (!sess.length) return false;
+  var rows = sess.map(function (s) { return '  • ' + prettyDate_(s.date) + ' · ' + s.time; });
+  var subject = BUSINESS_NAME + ' — Your sessions are scheduled' + (o.ref ? ' (' + o.ref + ')' : '');
+  var lines = [
+    'Hi ' + who + ',',
+    '',
+    'Good news — your ' + (o.plan || 'pass') + ' sessions are scheduled:',
+    '',
+  ].concat(rows).concat([
+    '',
+    (o.coachName ? ('Coach: ' + o.coachName) : ''),
+    (o.ref ? ('Reference: ' + o.ref) : ''),
+    '',
+    'Need to change a date? Reply to this email or text/call ' + CONTACT_NUMBER + '.',
+    '',
+    BUSINESS_NAME
+  ]).filter(function (l) { return l !== ''; });
+  var htmlRows = sess.map(function (s) { return '<tr><td style="padding:6px 0;color:#244232;font-weight:bold;">' + escapeHtml_(prettyDate_(s.date)) + '</td><td style="padding:6px 0;text-align:right;">' + escapeHtml_(s.time) + '</td></tr>'; }).join('');
+  var html = '<div style="font-family:Arial,Helvetica,sans-serif;color:#1b2a1f;max-width:520px;">'
+    + '<h2 style="color:#244232;margin:0 0 4px;">Your sessions are scheduled</h2>'
+    + '<p style="color:#56664f;margin:0 0 18px;">Hi ' + escapeHtml_(who) + ', here are your ' + escapeHtml_(o.plan || 'pass') + ' dates:</p>'
+    + '<table style="border-collapse:collapse;width:100%;font-size:14px;">' + htmlRows + '</table>'
+    + (o.coachName ? ('<p style="font-size:13px;color:#56664f;margin:16px 0 0;"><strong>Coach:</strong> ' + escapeHtml_(o.coachName) + '</p>') : '')
+    + (o.ref ? ('<p style="font-size:12.5px;color:#8a9579;margin:6px 0 0;">Reference: ' + escapeHtml_(o.ref) + '</p>') : '')
+    + '<p style="font-size:13px;color:#56664f;margin:16px 0 0;">Need to change a date? Reply here or text/call ' + escapeHtml_(CONTACT_NUMBER) + '.</p>'
+    + '<p style="font-size:13px;color:#244232;margin:18px 0 0;font-weight:bold;">' + escapeHtml_(BUSINESS_NAME) + '</p>'
+    + '</div>';
+  MailApp.sendEmail({ to: o.email, subject: subject, body: lines.join('\n'), htmlBody: html, name: BUSINESS_NAME });
+  return true;
+}
+
 // ---------- AVAILABILITY (GET) ----------
 function doGet(e) {
   try {
@@ -410,9 +483,12 @@ function doGet(e) {
     if (action === 'plans') {
       return listPlans_(e.parameter.email);
     }
+    if (action === 'cancellations') {
+      return listCancellations_();
+    }
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v2', database: true, cancelLog: true });
+      return json_({ version: 'db-v3', database: true, cancelLog: true, planEmails: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -495,6 +571,7 @@ function doPost(e) {
     if (body.action === 'coachLogin')    return coachLogin_(body);
     if (body.action === 'savePlan')      return savePlan_(body);
     if (body.action === 'removePlan')    return removePlan_(body);
+    if (body.action === 'planScheduleEmail') return planScheduleEmail_(body);
     return json_({ ok: false, reason: 'unknown action' });
   } catch (err) {
     return json_({ ok: false, reason: 'error', message: String(err) });
@@ -537,7 +614,39 @@ function savePlan_(body) {
   if (!email || !plan || plan.ts == null) return json_({ ok: false, reason: 'missing email or plan' });
   PropertiesService.getScriptProperties().setProperty(planKey_(email, plan.ts), JSON.stringify(plan));
   dbUpsertPass_(email, plan); // mirror to the Passes tab for the owner
+  // Email the buyer a purchase confirmation with the total (only when the website asks,
+  // i.e. on a brand-new purchase — not on every later edit/coach assignment).
+  if (body.sendReceipt) {
+    try { sendPlanReceipt_({ email: email, holder: plan.holder, plan: plan.name, ref: plan.ref || '', amount: body.amount, price: body.price }); } catch (e) {}
+  }
   return json_({ ok: true });
+}
+// One summary email of a pass's scheduled sessions (sent once, after the admin schedules).
+function planScheduleEmail_(body) {
+  var email = (body.email || '').trim().toLowerCase();
+  if (!email || body.ts == null) return json_({ ok: false, reason: 'missing email or ts' });
+  var raw = PropertiesService.getScriptProperties().getProperty(planKey_(email, body.ts));
+  if (!raw) return json_({ ok: false, reason: 'plan not found' });
+  var plan; try { plan = JSON.parse(raw); } catch (e) { return json_({ ok: false, reason: 'bad plan' }); }
+  var coachName = '';
+  if (plan.coach) { var c = coachById_(plan.coach); coachName = c ? c.name : ''; }
+  var emailed = false;
+  try { emailed = sendPlanSchedule_({ email: email, holder: plan.holder, plan: plan.name, ref: plan.ref || '', sessions: plan.sessions || [], coachName: coachName }); } catch (e) {}
+  return json_({ ok: true, emailed: emailed });
+}
+// Cancellation history for the admin dashboard (newest first).
+function listCancellations_() {
+  try {
+    var sh = dbSheet_('cancels');
+    var data = sh.getDataRange().getValues();
+    var out = [];
+    for (var r = 1; r < data.length; r++) {
+      var row = data[r];
+      out.push({ when: String(row[0] || ''), ref: String(row[1] || ''), date: String(row[2] || ''), time: String(row[3] || ''), program: String(row[4] || ''), name: String(row[5] || ''), email: String(row[6] || ''), by: String(row[7] || '') });
+    }
+    out.reverse();
+    return json_({ cancellations: out });
+  } catch (e) { return json_({ cancellations: [], error: String(e) }); }
 }
 function removePlan_(body) {
   var email = (body.email || '').trim().toLowerCase();

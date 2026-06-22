@@ -1593,6 +1593,7 @@
                 <div style="display:flex;flex-direction:column;gap:3px;min-width:0;">
                   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="color:#4d7327;font-size:15px;">✓</span><span style="font-size:15px;font-weight:700;color:#1b2a1f;">{{ pl.name }}</span><span style="font-size:12px;color:#8a9579;font-family:'Spline Sans Mono',monospace;">added {{ pl.when }}</span></div>
                   <sc-if value="{{ pl.hasHolder }}" hint-placeholder-val="{{ false }}"><div style="padding-left:25px;font-size:13px;color:#46563f;">For <strong>{{ pl.holder }}</strong></div></sc-if>
+                  <sc-if value="{{ pl.hasRef }}" hint-placeholder-val="{{ false }}"><div style="padding-left:25px;font-size:12px;color:#8a9579;font-family:'Spline Sans Mono',monospace;">Ref {{ pl.ref }}</div></sc-if>
                   <div style="display:flex;align-items:center;gap:7px;padding-left:25px;">
                     <span style="width:7px;height:7px;border-radius:50%;background:{{ pl.coachDot }};flex:none;"></span>
                     <span style="font-size:12.5px;color:{{ pl.coachColor }};font-family:'Spline Sans Mono',monospace;">{{ pl.coachLabel }}</span>
@@ -1708,6 +1709,27 @@
               </div>
             </sc-for>
           </div>
+
+          <!-- CANCELLATION HISTORY -->
+          <div style="margin-top:32px;">
+            <h3 style="font-size:16px;font-weight:800;color:#1b2a1f;margin:0 0 4px;">Cancellation history</h3>
+            <p style="font-size:13px;color:#56664f;margin:0 0 14px;">Every cancelled booking and pass — who cancelled it and when (from your database).</p>
+            <sc-if value="{{ noCancels }}" hint-placeholder-val="{{ true }}"><div style="background:#fffdf6;border:1px dashed rgba(36,66,50,0.2);border-radius:12px;padding:24px;text-align:center;color:#8a9579;font-size:14px;">No cancellations recorded yet.</div></sc-if>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <sc-for list="{{ cancelRows }}" as="cx" hint-placeholder-count="0">
+                <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+                  <div style="flex:1;min-width:200px;">
+                    <div style="font-size:14px;font-weight:700;color:#1b2a1f;">{{ cx.what }}<sc-if value="{{ cx.hasName }}" hint-placeholder-val="{{ false }}"> · {{ cx.name }}</sc-if></div>
+                    <div style="font-size:12px;color:#8a9579;font-family:'Spline Sans Mono',monospace;margin-top:3px;"><sc-if value="{{ cx.hasRef }}" hint-placeholder-val="{{ false }}">{{ cx.ref }} · </sc-if>{{ cx.email }}</div>
+                  </div>
+                  <div style="text-align:right;">
+                    <div style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;background:#f3e2e0;color:#b4512f;padding:4px 9px;border-radius:999px;display:inline-block;">by {{ cx.by }}</div>
+                    <div style="font-size:12px;color:#a6b09a;font-family:'Spline Sans Mono',monospace;margin-top:4px;">{{ cx.when }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
         </div>
         </sc-if>
 
@@ -1731,6 +1753,7 @@
                     <sc-if value="{{ pr.hasHolder }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;font-weight:700;color:#244232;margin-top:2px;">{{ pr.holder }}</div></sc-if>
                     <div style="font-size:13px;color:#56664f;font-family:'Spline Sans Mono',monospace;margin-top:3px;">{{ pr.email }}</div>
                     <div style="font-size:12px;color:#a6b09a;font-family:'Spline Sans Mono',monospace;margin-top:3px;">added {{ pr.when }} · {{ pr.countLabel }}</div>
+                    <sc-if value="{{ pr.hasRef }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#3c6b48;font-family:'Spline Sans Mono',monospace;margin-top:2px;">Ref {{ pr.ref }}</div></sc-if>
                   </div>
                   <div style="display:flex;align-items:center;gap:10px;">
                     <label style="font-size:13px;font-weight:700;color:#244232;">Coach</label>
@@ -2063,6 +2086,7 @@ class Component extends DCLogic {
     acctIn: false,
     acctBookingOpen: false,
     remotePlans: [],
+    cancelHistory: [],
     acctLoading: false,
     acctError: '',
     acctName: '',
@@ -2204,6 +2228,7 @@ class Component extends DCLogic {
     if ((this.state.adminPass || '').trim() === 'greenpark2026') {
       this.setState({ authed: true, adminError: false, adminPass: '' });
       this.loadRemotePlans(); // pull every customer's passes from the backend
+      this.loadCancellations(); // pull the cancellation history for the admin
     } else {
       this.setState({ adminError: true });
     }
@@ -2578,9 +2603,27 @@ class Component extends DCLogic {
   loadAcctPlans(email) { try { return JSON.parse(localStorage.getItem(this.acctPlansKey(email)) || '[]'); } catch (e) { return []; } }
   saveAcctPlans(email, plans) { try { localStorage.setItem(this.acctPlansKey(email), JSON.stringify(plans)); } catch (e) {} this.setState({ acctPlans: plans }); }
   // ----- PASS SYNC: mirror every pass to the Google backend so any device + the admin see it -----
-  pushPlan(email, plan) {
+  pushPlan(email, plan, opts) {
     const ep = this.endpoint(); if (!ep || !email || !plan) return;
-    try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'savePlan', email: email, plan: plan }) }); } catch (e) {}
+    opts = opts || {};
+    const payload = { action: 'savePlan', email: email, plan: plan };
+    if (opts.sendReceipt) { payload.sendReceipt = true; payload.price = opts.price || ''; if (opts.amount != null) payload.amount = opts.amount; }
+    try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }); } catch (e) {}
+  }
+  // Ask the backend to email the customer ONE summary of a pass's scheduled sessions.
+  emailPlanSchedule(email, ts) {
+    const ep = this.endpoint(); if (!ep || !email) return;
+    try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'planScheduleEmail', email: email, ts: ts }) }); } catch (e) {}
+  }
+  // Default pass prices (used for the purchase receipt); admin content overrides win.
+  passPrice(name) {
+    const c = this.state.content || {};
+    const pkgs = (c.packages && c.packages.length) ? c.packages : [
+      { name: 'Day Pass', price: '₱600' }, { name: 'Starter Pack', price: '₱2,000' },
+      { name: 'Monthly Member', price: '₱3,500' }, { name: 'Private Coaching', price: '₱1,200' },
+    ];
+    const pk = pkgs.find(p => p.name === name);
+    return pk ? (pk.price || '') : '';
   }
   pushRemovePlan(email, ts, by) {
     const ep = this.endpoint(); if (!ep || !email) return;
@@ -2615,6 +2658,12 @@ class Component extends DCLogic {
     const ep = this.endpoint(); if (!ep) return;
     fetch(ep + '?action=plans').then(r => r.json()).then(res => {
       if (res && res.plans) this.setState({ remotePlans: res.plans });
+    }).catch(() => {});
+  }
+  loadCancellations() {
+    const ep = this.endpoint(); if (!ep) return;
+    fetch(ep + '?action=cancellations').then(r => r.json()).then(res => {
+      if (res && res.cancellations) this.setState({ cancelHistory: res.cancellations });
     }).catch(() => {});
   }
   localAcctMatches(email, ref) {
@@ -2761,10 +2810,11 @@ class Component extends DCLogic {
     const key = this.acctPlansKey(email);
     let arr = [];
     try { arr = JSON.parse(localStorage.getItem(key) || '[]') || []; } catch (e) { arr = []; }
-    const newPlan = { name: pick, ts: Date.now(), holder: name, phone: (this.state.planPhone || '').trim(), updatedAt: Date.now() };
+    const newPlan = { name: pick, ts: Date.now(), holder: name, phone: (this.state.planPhone || '').trim(), ref: this.bookingRef(this.todayStr()), updatedAt: Date.now() };
     arr = arr.concat([newPlan]);
     try { localStorage.setItem(key, JSON.stringify(arr)); } catch (e) {}
-    this.pushPlan(email, newPlan); // sync the pass to the backend (admin + any device)
+    // Sync the pass + email the buyer a confirmation with the total.
+    this.pushPlan(email, newPlan, { sendReceipt: true, price: this.passPrice(pick) });
     const patch = { planPurchased: true, planError: '' };
     if ((this.state.acctEmail || '').trim().toLowerCase() === email.toLowerCase()) patch.acctPlans = arr;
     this.setState(patch);
@@ -2772,7 +2822,7 @@ class Component extends DCLogic {
   }
   addAcctPlan(name) {
     const email = (this.state.acctEmail || '').trim();
-    const newPlan = { name: name, ts: Date.now(), holder: this.state.acctName || '', updatedAt: Date.now() };
+    const newPlan = { name: name, ts: Date.now(), holder: this.state.acctName || '', ref: this.bookingRef(this.todayStr()), updatedAt: Date.now() };
     const plans = (this.loadAcctPlans(email) || []).concat([newPlan]);
     this.saveAcctPlans(email, plans);
     this.pushPlan(email, newPlan);
@@ -2830,7 +2880,7 @@ class Component extends DCLogic {
         try { arr = JSON.parse(localStorage.getItem(key) || '[]') || []; } catch (e) { arr = []; }
         if (!Array.isArray(arr)) continue;
         const email = key.slice('pgac_plans_'.length);
-        arr.forEach(p => { if (p && p.ts != null && p.name != null) out.push({ email: email, name: p.name, holder: p.holder || '', phone: p.phone || '', contacted: !!p.contacted, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [] }); });
+        arr.forEach(p => { if (p && p.ts != null && p.name != null) out.push({ email: email, name: p.name, holder: p.holder || '', phone: p.phone || '', ref: p.ref || '', contacted: !!p.contacted, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [] }); });
       }
     } catch (e) {}
     return out.sort((a, b) => (b.ts || 0) - (a.ts || 0));
@@ -2893,7 +2943,7 @@ class Component extends DCLogic {
       body: JSON.stringify({
         action: 'book', name: name, phone: (known && known.phone) || '', email: email,
         program: plan.name + ' (plan)', date: session.date, times: [session.time], time: session.time,
-        party: 1, amount: 0, coach: coach, coachName: coachName, noEmail: false, // email the booker that a session was scheduled
+        party: 1, amount: 0, coach: coach, coachName: coachName, noEmail: true, // one summary email is sent when the admin finishes scheduling
       }),
     }).then(r => r.json()).then(res => {
       if (res && res.ok) {
@@ -2919,7 +2969,21 @@ class Component extends DCLogic {
     }
   }
   openPlanEditor(key) {
-    this.setState(s => ({ planEditKey: s.planEditKey === key ? '' : key, planEditDate: '' }));
+    const idx = key.lastIndexOf('|');
+    const pEmail = key.slice(0, idx), pTs = Number(key.slice(idx + 1));
+    if (this.state.planEditKey === key) {
+      // Closing the scheduler — if any dates were added while it was open, send the
+      // customer ONE summary email of all their scheduled sessions (not one per date).
+      const plan = this.findPlan(pEmail, pTs);
+      const count = (plan && plan.sessions) ? plan.sessions.length : 0;
+      if (count > (this._planEditBaseCount || 0)) this.emailPlanSchedule(pEmail, pTs);
+      this.setState({ planEditKey: '', planEditDate: '' });
+      return;
+    }
+    // Opening — remember the current session count to detect additions on close.
+    const plan = this.findPlan(pEmail, pTs);
+    this._planEditBaseCount = (plan && plan.sessions) ? plan.sessions.length : 0;
+    this.setState(s => ({ planEditKey: key, planEditDate: '' }));
   }
 
   renderVals() {
@@ -3339,7 +3403,7 @@ class Component extends DCLogic {
     // Merge passes from this device's cache with every pass the backend returned (backend wins).
     const planMap = {};
     this.loadAllPlansLocal().forEach(p => { planMap[(p.email || '').toLowerCase() + '|' + p.ts] = p; });
-    (this.state.remotePlans || []).forEach(p => { planMap[(p.email || '').toLowerCase() + '|' + p.ts] = { email: (p.email || '').toLowerCase(), name: p.name, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [], holder: p.holder || '', phone: p.phone || '', contacted: !!p.contacted }; });
+    (this.state.remotePlans || []).forEach(p => { planMap[(p.email || '').toLowerCase() + '|' + p.ts] = { email: (p.email || '').toLowerCase(), name: p.name, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [], holder: p.holder || '', phone: p.phone || '', ref: p.ref || '', contacted: !!p.contacted }; });
     const allPlans = Object.keys(planMap).map(k => planMap[k]).sort((a, b) => (b.ts || 0) - (a.ts || 0));
     const adminPlanRows = allPlans.map(p => {
       const rowKey = p.email + '|' + p.ts;
@@ -3365,6 +3429,7 @@ class Component extends DCLogic {
       return {
         key: rowKey, email: p.email, name: p.name, holder: p.holder || '', hasHolder: !!(p.holder && String(p.holder).trim()), ts: p.ts, coach: p.coach || '',
         phone: phone, hasPhone: !!phone, callHref: 'tel:' + phone.replace(/[^0-9+]/g, ''),
+        ref: p.ref || '', hasRef: !!p.ref,
         contacted: !!p.contacted, statusLabel: p.contacted ? '✓ Contacted' : 'New',
         statusBg: p.contacted ? '#e6efd6' : '#fff1cf', statusFg: p.contacted ? '#4d7327' : '#8a6a1f',
         markContacted: () => this.markPlanContacted(p.email, p.ts),
@@ -3464,6 +3529,7 @@ class Component extends DCLogic {
       return {
         name: p.name, ts: p.ts,
         holder: p.holder || '', hasHolder: !!(p.holder && p.holder.trim()),
+        ref: p.ref || '', hasRef: !!p.ref,
         when: (() => { try { return new Date(p.ts).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { return ''; } })(),
         coachLabel: c ? ('Coach: ' + c.name) : 'Coach: to be assigned by our team',
         coachColor: c ? '#3c6b48' : '#a08a5a',
@@ -3474,6 +3540,17 @@ class Component extends DCLogic {
       };
     });
     const planChoices = cm.packages.map(pk => ({ name: pk.name, price: pk.price, unit: pk.unit, desc: pk.desc, add: () => this.addAcctPlan(pk.name) }));
+
+    // ---------- ADMIN: cancellation history (from the database) ----------
+    const cancelRows = (this.state.cancelHistory || []).map(c => {
+      const slot = c.date ? (c.date + (c.time ? ' ' + c.time : '')) : '';
+      return {
+        what: c.program || slot || 'Booking',
+        name: c.name || '', hasName: !!(c.name && String(c.name).trim()),
+        ref: c.ref || '', hasRef: !!(c.ref && String(c.ref).trim()),
+        email: c.email || '', by: c.by || 'customer', when: c.when || '',
+      };
+    });
 
     // ---------- COACH PORTAL ----------
     const coachUser = this.coachById(this.state.coachId);
@@ -3725,6 +3802,7 @@ class Component extends DCLogic {
       tabScheduleBg: this.state.adminTab === 'schedule' ? '#244232' : '#fffdf6', tabScheduleFg: this.state.adminTab === 'schedule' ? '#f4efe4' : '#244232',
       adminPlanRows: adminPlanRows, planAdminCount: adminPlanRows.length, noAdminPlans: adminPlanRows.length === 0,
       bookingRows, hasBookings: bookingRows.length > 0, noBookings: bookingRows.length === 0,
+      cancelRows, noCancels: cancelRows.length === 0,
       bookingCount: bookingRows.length,
       clearBookings: () => { if (typeof confirm === 'undefined' || confirm('Clear all bookings on this device?')) this.persistBookings([]); },
       pkgEdits, scheduleEdit,
