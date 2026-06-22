@@ -1616,7 +1616,8 @@
                   </div>
                   </sc-if>
                 </div>
-                <button onClick="{{ pl.remove }}" style="background:none;border:none;cursor:pointer;color:#b4512f;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;">Remove</button>
+                <sc-if value="{{ pl.canRemove }}" hint-placeholder-val="{{ true }}"><button onClick="{{ pl.remove }}" style="background:none;border:none;cursor:pointer;color:#b4512f;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;">Remove</button></sc-if>
+                <sc-if value="{{ pl.hasSessions }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;color:#8a9579;font-family:'Spline Sans Mono',monospace;white-space:nowrap;">Scheduled · contact us to change</span></sc-if>
               </div>
             </sc-for>
           </div>
@@ -2874,7 +2875,7 @@ class Component extends DCLogic {
       body: JSON.stringify({
         action: 'book', name: name, phone: (known && known.phone) || '', email: email,
         program: plan.name + ' (plan)', date: session.date, times: [session.time], time: session.time,
-        party: 1, amount: 0, coach: coach, coachName: coachName, noEmail: true,
+        party: 1, amount: 0, coach: coach, coachName: coachName, noEmail: false, // email the booker that a session was scheduled
       }),
     }).then(r => r.json()).then(res => {
       if (res && res.ok) {
@@ -2895,7 +2896,7 @@ class Component extends DCLogic {
     if (ep && sess && sess.eventId) {
       fetch(ep, {
         method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'cancel', eventId: sess.eventId, ref: sess.ref || '', date: sess.date, time: sess.time, email: email, notify: false }),
+        body: JSON.stringify({ action: 'cancel', eventId: sess.eventId, ref: sess.ref || '', date: sess.date, time: sess.time, email: email, notify: true, by: 'admin' }),
       }).catch(() => {});
     }
   }
@@ -3393,6 +3394,8 @@ class Component extends DCLogic {
     const acctSeen = {};
     const acctMerged = [];
     (this.state.acctBookings || []).concat(deviceForAcct).forEach(b => {
+      // Pass sessions (scheduled by admin) belong under the pass, not as standalone session cards.
+      if (b && /\(plan\)\s*$/i.test(b.program || '')) return;
       const k = (b.ts != null ? 't' + b.ts : '') || (b.eventId ? 'e' + b.eventId : '') || ('r' + (b.ref || '') + '|' + (b.date || '') + '|' + (b.time || ''));
       if (k && acctSeen[k]) return;
       if (k) acctSeen[k] = 1;
@@ -3441,7 +3444,7 @@ class Component extends DCLogic {
         coachLabel: c ? ('Coach: ' + c.name) : 'Coach: to be assigned by our team',
         coachColor: c ? '#3c6b48' : '#a08a5a',
         coachDot: c ? '#7fb43f' : '#caa84a',
-        sessions: sess, hasSessions: sess.length > 0,
+        sessions: sess, hasSessions: sess.length > 0, canRemove: sess.length === 0,
         schedLabel: cap != null ? (sess.length + ' of ' + cap + ' scheduled') : (sess.length + ' scheduled'),
         remove: () => this.removeAcctPlan(p.ts),
       };
