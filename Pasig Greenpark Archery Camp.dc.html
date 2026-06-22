@@ -2625,9 +2625,9 @@ class Component extends DCLogic {
     const pk = pkgs.find(p => p.name === name);
     return pk ? (pk.price || '') : '';
   }
-  pushRemovePlan(email, ts, by) {
+  pushRemovePlan(email, ts, by, notify) {
     const ep = this.endpoint(); if (!ep || !email) return;
-    try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'removePlan', email: email, ts: ts, by: by || 'customer' }) }); } catch (e) {}
+    try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'removePlan', email: email, ts: ts, by: by || 'customer', notify: notify !== false }) }); } catch (e) {}
   }
   // Pull a customer's passes from the backend and merge with the local cache.
   // Merge rule: keep whichever copy was edited most recently (updatedAt, falling back
@@ -2849,11 +2849,11 @@ class Component extends DCLogic {
     if (typeof confirm !== 'undefined' && !confirm('Cancel this pass? Any scheduled sessions will be cancelled and removed from the calendar, and the customer will be emailed.')) return;
     const plan = this.findPlan(email, ts);
     if (plan && Array.isArray(plan.sessions)) {
-      plan.sessions.forEach(s => { if (s && s.eventId) this.cancelBooking({ eventId: s.eventId, ref: s.ref || '', date: s.date || '', time: s.time || '', name: plan.holder || '', email: email }, true, 'admin'); });
+      plan.sessions.forEach(s => { if (s && s.eventId) this.cancelBooking({ eventId: s.eventId, ref: s.ref || '', date: s.date || '', time: s.time || '', name: plan.holder || '', email: email }, false, 'admin'); });
     }
     try { const key = this.acctPlansKey(email); const arr = (JSON.parse(localStorage.getItem(key) || '[]') || []).filter(p => p.ts !== ts); localStorage.setItem(key, JSON.stringify(arr)); } catch (e) {}
     this.addDeletedPlan(email, ts);
-    this.pushRemovePlan(email, ts, 'admin');
+    this.pushRemovePlan(email, ts, 'admin'); // backend sends ONE pass-cancelled email
     this.setState(s => ({
       remotePlans: (s.remotePlans || []).filter(p => !((p.email || '').toLowerCase() === email.toLowerCase() && p.ts === ts)),
       acctPlans: ((this.state.acctEmail || '').trim().toLowerCase() === email.toLowerCase()) ? (s.acctPlans || []).filter(p => p.ts !== ts) : s.acctPlans,
@@ -2964,25 +2964,26 @@ class Component extends DCLogic {
     if (ep && sess && sess.eventId) {
       fetch(ep, {
         method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'cancel', eventId: sess.eventId, ref: sess.ref || '', date: sess.date, time: sess.time, email: email, notify: true, by: 'admin' }),
+        body: JSON.stringify({ action: 'cancel', eventId: sess.eventId, ref: sess.ref || '', date: sess.date, time: sess.time, email: email, notify: false, by: 'admin' }),
       }).catch(() => {});
     }
   }
   openPlanEditor(key) {
     const idx = key.lastIndexOf('|');
     const pEmail = key.slice(0, idx), pTs = Number(key.slice(idx + 1));
+    const sigOf = (plan) => JSON.stringify((((plan && plan.sessions) || []).map(s => s.date + '|' + s.time)).sort());
     if (this.state.planEditKey === key) {
-      // Closing the scheduler — if any dates were added while it was open, send the
-      // customer ONE summary email of all their scheduled sessions (not one per date).
+      // Closing the scheduler — if the dates CHANGED at all (added, removed, or swapped)
+      // and there's still at least one, send the customer ONE updated-schedule email.
       const plan = this.findPlan(pEmail, pTs);
+      const now = sigOf(plan);
       const count = (plan && plan.sessions) ? plan.sessions.length : 0;
-      if (count > (this._planEditBaseCount || 0)) this.emailPlanSchedule(pEmail, pTs);
+      if (now !== (this._planEditSig || '[]') && count > 0) this.emailPlanSchedule(pEmail, pTs);
       this.setState({ planEditKey: '', planEditDate: '' });
       return;
     }
-    // Opening — remember the current session count to detect additions on close.
-    const plan = this.findPlan(pEmail, pTs);
-    this._planEditBaseCount = (plan && plan.sessions) ? plan.sessions.length : 0;
+    // Opening — snapshot the current dates so we can tell if they changed on close.
+    this._planEditSig = sigOf(this.findPlan(pEmail, pTs));
     this.setState(s => ({ planEditKey: key, planEditDate: '' }));
   }
 
