@@ -1221,17 +1221,9 @@
           <h3 style="font-size:24px;font-weight:800;color:#f4efe4;margin:0 0 6px;">Reserve a session</h3>
           <p style="font-size:14.5px;color:#cdd6c5;margin:0 0 22px;">Pick a date to see real-time availability — up to {{ capacity }} archers per hour.</p>
           <div style="display:flex;flex-direction:column;gap:16px;">
-            <div>
-              <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Your name <span style="color:#e8674a;">*</span></label>
-              <input value="{{ fName }}" onInput="{{ setName }}" placeholder="Juan dela Cruz" style="width:100%;background:#1b3325;border:1px solid {{ nameBorder }};border-radius:8px;padding:13px 14px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:#f4efe4;outline:none;" />
-            </div>
-            <div>
-              <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Mobile number <span style="color:#e8674a;">*</span></label>
-              <input value="{{ fPhone }}" onInput="{{ setPhone }}" placeholder="0917 000 0000" style="width:100%;background:#1b3325;border:1px solid {{ phoneBorder }};border-radius:8px;padding:13px 14px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:#f4efe4;outline:none;" />
-            </div>
-            <div>
-              <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Email <span style="color:#e8674a;">*</span> <span style="color:#7fb43f;font-weight:500;">— we'll send your receipt here</span></label>
-              <div style="width:100%;background:#16291d;border:1px solid rgba(244,239,228,0.12);border-radius:8px;padding:13px 14px;font-size:15px;color:#9aa890;">{{ fEmail }}</div>
+            <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.14);border-radius:8px;padding:13px 15px;">
+              <div style="font-size:13px;color:#cdd6c5;">Booking for <strong style="color:#f4efe4;">{{ fName }}</strong></div>
+              <div style="font-size:12.5px;color:#9aa890;margin-top:3px;">{{ fEmail }} · we'll send your receipt here</div>
             </div>
             <div>
               <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Program</label>
@@ -1763,8 +1755,12 @@
                 </div>
                 </sc-if>
 
-                <div style="margin-top:14px;">
+                <div style="margin-top:14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
                   <button onClick="{{ pr.toggleEditor }}" style="background:#244232;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;">{{ pr.editLabel }}</button>
+                  <span style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;background:{{ pr.statusBg }};color:{{ pr.statusFg }};padding:5px 10px;border-radius:999px;">{{ pr.statusLabel }}</span>
+                  <sc-if value="{{ pr.hasPhone }}" hint-placeholder-val="{{ false }}"><a href="{{ pr.callHref }}" style="background:#244232;color:#f4efe4;text-decoration:none;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">Call</a></sc-if>
+                  <button onClick="{{ pr.markContacted }}" style="background:#e6efd6;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#4d7327;padding:9px 15px;border-radius:999px;">Mark</button>
+                  <button onClick="{{ pr.cancelPlan }}" title="Cancel this pass" style="background:none;border:1px solid rgba(180,81,47,0.35);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#b4512f;padding:8px 13px;border-radius:999px;">Cancel</button>
                 </div>
 
                 <!-- scheduling panel -->
@@ -2765,7 +2761,7 @@ class Component extends DCLogic {
     const key = this.acctPlansKey(email);
     let arr = [];
     try { arr = JSON.parse(localStorage.getItem(key) || '[]') || []; } catch (e) { arr = []; }
-    const newPlan = { name: pick, ts: Date.now(), holder: name, updatedAt: Date.now() };
+    const newPlan = { name: pick, ts: Date.now(), holder: name, phone: (this.state.planPhone || '').trim(), updatedAt: Date.now() };
     arr = arr.concat([newPlan]);
     try { localStorage.setItem(key, JSON.stringify(arr)); } catch (e) {}
     this.pushPlan(email, newPlan); // sync the pass to the backend (admin + any device)
@@ -2796,6 +2792,28 @@ class Component extends DCLogic {
     this.pushRemovePlan(email, ts, 'customer');
     this.setState(s => ({ remotePlans: (s.remotePlans || []).filter(p => !((p.email || '').toLowerCase() === email.toLowerCase() && p.ts === ts)) }));
   }
+  // Admin: cancel a customer's pass — cancel its scheduled calendar events (notifying
+  // the customer), remove it from the backend + this device, and log who did it.
+  adminCancelPlan(email, ts) {
+    email = (email || '').trim();
+    if (typeof confirm !== 'undefined' && !confirm('Cancel this pass? Any scheduled sessions will be cancelled and removed from the calendar, and the customer will be emailed.')) return;
+    const plan = this.findPlan(email, ts);
+    if (plan && Array.isArray(plan.sessions)) {
+      plan.sessions.forEach(s => { if (s && s.eventId) this.cancelBooking({ eventId: s.eventId, ref: s.ref || '', date: s.date || '', time: s.time || '', name: plan.holder || '', email: email }, true, 'admin'); });
+    }
+    try { const key = this.acctPlansKey(email); const arr = (JSON.parse(localStorage.getItem(key) || '[]') || []).filter(p => p.ts !== ts); localStorage.setItem(key, JSON.stringify(arr)); } catch (e) {}
+    this.addDeletedPlan(email, ts);
+    this.pushRemovePlan(email, ts, 'admin');
+    this.setState(s => ({
+      remotePlans: (s.remotePlans || []).filter(p => !((p.email || '').toLowerCase() === email.toLowerCase() && p.ts === ts)),
+      acctPlans: ((this.state.acctEmail || '').trim().toLowerCase() === email.toLowerCase()) ? (s.acctPlans || []).filter(p => p.ts !== ts) : s.acctPlans,
+    }));
+    this.forceUpdate();
+  }
+  // Admin: mark a pass holder as contacted (toggles, like the bookings list).
+  markPlanContacted(email, ts) {
+    this.mutatePlan(email, ts, p => ({ ...p, contacted: !p.contacted }));
+  }
   // ---------- ADMIN: plans across this device (coach assignment) ----------
   loadAllPlansLocal() {
     const out = [];
@@ -2812,7 +2830,7 @@ class Component extends DCLogic {
         try { arr = JSON.parse(localStorage.getItem(key) || '[]') || []; } catch (e) { arr = []; }
         if (!Array.isArray(arr)) continue;
         const email = key.slice('pgac_plans_'.length);
-        arr.forEach(p => { if (p && p.ts != null && p.name != null) out.push({ email: email, name: p.name, holder: p.holder || '', ts: p.ts, coach: p.coach || '', sessions: p.sessions || [] }); });
+        arr.forEach(p => { if (p && p.ts != null && p.name != null) out.push({ email: email, name: p.name, holder: p.holder || '', phone: p.phone || '', contacted: !!p.contacted, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [] }); });
       }
     } catch (e) {}
     return out.sort((a, b) => (b.ts || 0) - (a.ts || 0));
@@ -3321,7 +3339,7 @@ class Component extends DCLogic {
     // Merge passes from this device's cache with every pass the backend returned (backend wins).
     const planMap = {};
     this.loadAllPlansLocal().forEach(p => { planMap[(p.email || '').toLowerCase() + '|' + p.ts] = p; });
-    (this.state.remotePlans || []).forEach(p => { planMap[(p.email || '').toLowerCase() + '|' + p.ts] = { email: (p.email || '').toLowerCase(), name: p.name, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [], holder: p.holder || '' }; });
+    (this.state.remotePlans || []).forEach(p => { planMap[(p.email || '').toLowerCase() + '|' + p.ts] = { email: (p.email || '').toLowerCase(), name: p.name, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [], holder: p.holder || '', phone: p.phone || '', contacted: !!p.contacted }; });
     const allPlans = Object.keys(planMap).map(k => planMap[k]).sort((a, b) => (b.ts || 0) - (a.ts || 0));
     const adminPlanRows = allPlans.map(p => {
       const rowKey = p.email + '|' + p.ts;
@@ -3343,8 +3361,14 @@ class Component extends DCLogic {
           .map(t => ({ time: t, add: () => this.addPlanSession(p.email, p.ts, planEditDate, t, cap) }));
         editClosed = editTimes.length === 0;
       }
+      const phone = p.phone || '';
       return {
         key: rowKey, email: p.email, name: p.name, holder: p.holder || '', hasHolder: !!(p.holder && String(p.holder).trim()), ts: p.ts, coach: p.coach || '',
+        phone: phone, hasPhone: !!phone, callHref: 'tel:' + phone.replace(/[^0-9+]/g, ''),
+        contacted: !!p.contacted, statusLabel: p.contacted ? '✓ Contacted' : 'New',
+        statusBg: p.contacted ? '#e6efd6' : '#fff1cf', statusFg: p.contacted ? '#4d7327' : '#8a6a1f',
+        markContacted: () => this.markPlanContacted(p.email, p.ts),
+        cancelPlan: () => this.adminCancelPlan(p.email, p.ts),
         when: (() => { try { return new Date(p.ts).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { return ''; } })(),
         setCoach: (e) => this.assignPlanCoach(p.email, p.ts, e.target.value),
         coachName: coachObj ? coachObj.name : '', hasCoach: !!coachObj,
