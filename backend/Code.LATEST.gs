@@ -539,7 +539,7 @@ function doGet(e) {
     }
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v8', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true });
+      return json_({ version: 'db-v9', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -708,31 +708,81 @@ function asDateStr_(v) {
   if (v instanceof Date) return Utilities.formatDate(v, TIMEZONE, 'yyyy-MM-dd');
   return String(v || '');
 }
-// All bookings (every device, the whole business) for the admin dashboard + bookings tab.
+// All bookings for the admin dashboard + bookings tab. The CALENDAR is the source of
+// truth for live sessions (exactly what My Bookings shows); the sheet overlays status
+// (approved / cancelled) and amount. This keeps the admin list in sync with My Bookings.
 function listBookings_() {
   try {
-    var sh = dbSheet_('bookings');
-    var data = sh.getDataRange().getValues();
-    var h = data[0]; var ix = {}; h.forEach(function (n, i) { ix[n] = i; });
-    var out = [];
-    for (var r = 1; r < data.length; r++) {
-      var row = data[r];
-      out.push({
-        bookedAt: (row[ix['Booked At']] instanceof Date) ? Utilities.formatDate(row[ix['Booked At']], TIMEZONE, 'yyyy-MM-dd HH:mm') : String(row[ix['Booked At']] || ''),
-        ref: String(row[ix['Ref']] || ''),
-        status: String(row[ix['Status']] || 'booked'),
-        date: asDateStr_(row[ix['Date']]),
-        time: String(row[ix['Time']] || ''),
-        program: String(row[ix['Program']] || ''),
-        name: String(row[ix['Name']] || ''),
-        email: String(row[ix['Email']] || ''),
-        phone: String(row[ix['Mobile']] || ''),
-        archers: Number(row[ix['Archers']] || 0) || 0,
-        amount: Number(row[ix['Amount']] || 0) || 0,
-        coach: String(row[ix['Coach']] || ''),
-        eventId: String(row[ix['Event ID']] || '')
+    // 1) Read the sheet (status, amount, cancelled records) and index by event id.
+    var sheetRows = [], sheetByEvent = {};
+    try {
+      var sh = dbSheet_('bookings');
+      var data = sh.getDataRange().getValues();
+      var h = data[0]; var ix = {}; h.forEach(function (n, i) { ix[n] = i; });
+      for (var r = 1; r < data.length; r++) {
+        var row = data[r];
+        var rec = {
+          bookedAt: (row[ix['Booked At']] instanceof Date) ? Utilities.formatDate(row[ix['Booked At']], TIMEZONE, 'yyyy-MM-dd HH:mm') : String(row[ix['Booked At']] || ''),
+          ref: String(row[ix['Ref']] || ''), status: String(row[ix['Status']] || 'booked'),
+          date: asDateStr_(row[ix['Date']]), time: String(row[ix['Time']] || ''),
+          program: String(row[ix['Program']] || ''), name: String(row[ix['Name']] || ''),
+          email: String(row[ix['Email']] || ''), phone: String(row[ix['Mobile']] || ''),
+          archers: Number(row[ix['Archers']] || 0) || 0, amount: Number(row[ix['Amount']] || 0) || 0,
+          coach: String(row[ix['Coach']] || ''), eventId: String(row[ix['Event ID']] || '')
+        };
+        sheetRows.push(rec);
+        if (rec.eventId) sheetByEvent[rec.eventId] = rec;
+      }
+    } catch (e) {}
+
+    var out = [], usedEvent = {};
+    function field(d, key) { var m = new RegExp(key + ':\\s*(.+)', 'i').exec(d); return m ? m[1].trim() : ''; }
+    function isPlan(p) { return /\(plan\)\s*$/i.test(p || ''); }
+
+    // 2) Scan the calendar for every booking event (same window/source as My Bookings).
+    try {
+      var cal = getCalendar_();
+      var from = new Date(); from.setDate(from.getDate() - 180);
+      var to = new Date(); to.setDate(to.getDate() + 365);
+      var events = cal.getEvents(from, to);
+      events.forEach(function (ev) {
+        var d = ev.getDescription() || '';
+        var ref = field(d, 'Ref');
+        if (d.indexOf('Booked via website') === -1 && !ref) return; // ignore non-booking events
+        var id = ev.getId();
+        var srow = sheetByEvent[id];
+        var program = field(d, 'Program') || (srow ? srow.program : '');
+        // Pending plan sessions live in the Plans tab; only surface them here once approved.
+        if (isPlan(program) && !(srow && String(srow.status).toLowerCase() === 'approved')) return;
+        usedEvent[id] = true;
+        var stt = ev.getStartTime();
+        out.push({
+          bookedAt: srow ? srow.bookedAt : '',
+          ref: ref || (srow ? srow.ref : ''),
+          status: srow ? srow.status : 'booked',
+          date: Utilities.formatDate(stt, TIMEZONE, 'yyyy-MM-dd'),
+          time: fmtLabel_(parseInt(Utilities.formatDate(stt, TIMEZONE, 'H'), 10)),
+          program: program,
+          name: field(d, 'Name') || (srow ? srow.name : ''),
+          email: field(d, 'Email') || (srow ? srow.email : ''),
+          phone: field(d, 'Mobile') || (srow ? srow.phone : ''),
+          archers: parseInt(field(d, 'Archers') || '1', 10) || 1,
+          amount: srow ? srow.amount : (parseInt(field(d, 'Amount') || '0', 10) || 0),
+          coach: field(d, 'Coach') || (srow ? srow.coach : ''),
+          eventId: id
+        });
       });
-    }
+    } catch (e) {}
+
+    // 3) Add sheet rows that aren't on the live calendar (cancelled events were deleted;
+    // plus any approved/upserted rows without an event), skipping pending plan sessions.
+    sheetRows.forEach(function (rec) {
+      if (rec.eventId && usedEvent[rec.eventId]) return;
+      var stl = String(rec.status).toLowerCase();
+      if (isPlan(rec.program) && stl !== 'approved' && stl !== 'cancelled') return;
+      out.push(rec);
+    });
+
     return json_({ bookings: out });
   } catch (e) { return json_({ bookings: [], error: String(e) }); }
 }
