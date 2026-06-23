@@ -146,6 +146,17 @@ function setupDatabase() {
   dbSheet_('bookings'); dbSheet_('passes'); dbSheet_('cancels');
   Logger.log('✅ Database ready. Open/bookmark it here:\n' + ss.getUrl());
 }
+
+// RUN FROM THE EDITOR to wipe Bookings + Cancellations history (keeps Passes/plans).
+// Pick "clearBookingHistory" in the function dropdown → Run. Headers are preserved.
+function clearBookingHistory() {
+  ['bookings', 'cancels'].forEach(function (key) {
+    var sh = dbSheet_(key);
+    var last = sh.getLastRow();
+    if (last > 1) sh.getRange(2, 1, last - 1, sh.getLastColumn()).clearContent();
+  });
+  Logger.log('✅ Cleared all Bookings + Cancellations history (Passes/plans kept).');
+}
 // ================================================================
 
 /**
@@ -528,7 +539,7 @@ function doGet(e) {
     }
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v6', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true });
+      return json_({ version: 'db-v7', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {

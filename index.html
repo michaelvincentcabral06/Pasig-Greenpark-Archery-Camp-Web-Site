@@ -1816,7 +1816,7 @@
                 <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
                   <sc-if value="{{ b.isPending }}" hint-placeholder-val="{{ true }}"><button onClick="{{ b.approve }}" style="background:#4d7327;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">Approve</button></sc-if>
                   <sc-if value="{{ b.hasPhone }}" hint-placeholder-val="{{ true }}"><a href="{{ b.callHref }}" style="background:#244232;color:#f4efe4;text-decoration:none;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">Call</a></sc-if>
-                  <button onClick="{{ b.retrieve }}" title="Add this customer to Plans &amp; Sessions" style="background:#e6efd6;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#4d7327;padding:9px 15px;border-radius:999px;">→ Plans</button>
+                  <button onClick="{{ b.retrieve }}" title="Add this customer to Plans &amp; Sessions" style="background:#e6efd6;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#4d7327;padding:9px 15px;border-radius:999px;">{{ b.retrieveLabel }}</button>
                   <sc-if value="{{ b.notCancelled }}" hint-placeholder-val="{{ true }}"><button onClick="{{ b.cancel }}" aria-label="Cancel booking" title="Cancel &amp; remove from calendar" style="background:none;border:1px solid rgba(180,81,47,0.35);cursor:pointer;font-size:13px;font-weight:700;color:#b4512f;padding:8px 13px;border-radius:999px;"><sc-if value="{{ b.cancelling }}" hint-placeholder-val="{{ false }}">…</sc-if><sc-if value="{{ b.notCancelling }}" hint-placeholder-val="{{ true }}">Cancel</sc-if></button></sc-if>
                 </div>
               </div>
@@ -1831,27 +1831,6 @@
             <sc-if value="{{ bkHasNext }}" hint-placeholder-val="{{ true }}"><button onClick="{{ bkNext }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">Next →</button></sc-if>
           </div>
           </sc-if>
-
-          <!-- CANCELLATION HISTORY -->
-          <div style="margin-top:32px;">
-            <h3 style="font-size:16px;font-weight:800;color:#1b2a1f;margin:0 0 4px;">Cancellation history</h3>
-            <p style="font-size:13px;color:#56664f;margin:0 0 14px;">Every cancelled booking and pass — who cancelled it and when (from your database).</p>
-            <sc-if value="{{ noCancels }}" hint-placeholder-val="{{ true }}"><div style="background:#fffdf6;border:1px dashed rgba(36,66,50,0.2);border-radius:12px;padding:24px;text-align:center;color:#8a9579;font-size:14px;">No cancellations recorded yet.</div></sc-if>
-            <div style="display:flex;flex-direction:column;gap:8px;">
-              <sc-for list="{{ cancelRows }}" as="cx" hint-placeholder-count="0">
-                <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-                  <div style="flex:1;min-width:200px;">
-                    <div style="font-size:14px;font-weight:700;color:#1b2a1f;">{{ cx.what }}<sc-if value="{{ cx.hasName }}" hint-placeholder-val="{{ false }}"> · {{ cx.name }}</sc-if></div>
-                    <div style="font-size:12px;color:#8a9579;font-family:'Spline Sans Mono',monospace;margin-top:3px;"><sc-if value="{{ cx.hasRef }}" hint-placeholder-val="{{ false }}">{{ cx.ref }} · </sc-if>{{ cx.email }}</div>
-                  </div>
-                  <div style="text-align:right;">
-                    <div style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;background:#f3e2e0;color:#b4512f;padding:4px 9px;border-radius:999px;display:inline-block;">by {{ cx.by }}</div>
-                    <div style="font-size:12px;color:#a6b09a;font-family:'Spline Sans Mono',monospace;margin-top:4px;">{{ cx.when }}</div>
-                  </div>
-                </div>
-              </sc-for>
-            </div>
-          </div>
         </div>
         </sc-if>
 
@@ -1870,6 +1849,7 @@
                   <div style="min-width:200px;">
                     <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">
                       <span style="font-size:16px;font-weight:800;color:#1b2a1f;">{{ pr.name }}</span>
+                      <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;background:{{ pr.apprBg }};color:{{ pr.apprFg }};padding:4px 10px;border-radius:999px;">{{ pr.apprLabel }}</span>
                       <sc-if value="{{ pr.hasPrice }}" hint-placeholder-val="{{ false }}"><span style="font-size:14px;font-weight:700;color:#244232;">{{ pr.price }}</span></sc-if>
                       <sc-if value="{{ pr.complete }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:#4d7327;background:#e6efd6;padding:3px 8px;border-radius:999px;">Scheduled</span></sc-if>
                     </div>
@@ -1901,11 +1881,13 @@
                 </div>
                 </sc-if>
 
-                <div style="margin-top:14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
-                  <button onClick="{{ pr.toggleEditor }}" style="background:#244232;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;">{{ pr.editLabel }}</button>
-                  <span style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;background:{{ pr.statusBg }};color:{{ pr.statusFg }};padding:5px 10px;border-radius:999px;">{{ pr.statusLabel }}</span>
-                  <sc-if value="{{ pr.hasPhone }}" hint-placeholder-val="{{ false }}"><a href="{{ pr.callHref }}" style="background:#244232;color:#f4efe4;text-decoration:none;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">Call</a></sc-if>
+                <div style="font-size:11.5px;color:#8a9579;font-family:'Spline Sans Mono',monospace;margin-top:14px;">Process: ① Call &amp; mark contacted → ② Schedule dates → ③ Approve (or Cancel)</div>
+                <div style="margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+                  <sc-if value="{{ pr.hasPhone }}" hint-placeholder-val="{{ false }}"><a href="{{ pr.callHref }}" style="background:#244232;color:#f4efe4;text-decoration:none;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">① Call</a></sc-if>
                   <button onClick="{{ pr.markContacted }}" style="background:#e6efd6;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#4d7327;padding:9px 15px;border-radius:999px;">Mark</button>
+                  <span style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;background:{{ pr.statusBg }};color:{{ pr.statusFg }};padding:5px 10px;border-radius:999px;">{{ pr.statusLabel }}</span>
+                  <button onClick="{{ pr.toggleEditor }}" style="background:#244232;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;">② {{ pr.editLabel }}</button>
+                  <sc-if value="{{ pr.notApproved }}" hint-placeholder-val="{{ true }}"><button onClick="{{ pr.approvePlan }}" title="Approve — records the scheduled sessions to Bookings as approved" style="background:#4d7327;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;">③ Approve</button></sc-if>
                   <button onClick="{{ pr.cancelPlan }}" title="Cancel this pass" style="background:none;border:1px solid rgba(180,81,47,0.35);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#b4512f;padding:8px 13px;border-radius:999px;">Cancel</button>
                 </div>
 
@@ -2989,14 +2971,17 @@ class Component extends DCLogic {
     const email = (b.email || '').trim().toLowerCase();
     if (!email) { if (typeof alert !== 'undefined') alert('This booking has no email on file, so it cannot be added to Plans.'); return; }
     const price = b.amount ? ('₱' + Number(b.amount).toLocaleString('en-PH')) : this.passPrice(b.program);
+    // A cancelled booking's calendar event is gone, so don't carry its (dead) session —
+    // start the plan fresh so the admin can reschedule.
+    const cancelled = String(b.status || '').toLowerCase() === 'cancelled';
     const plan = {
       name: b.program || 'Custom plan', ts: Date.now(), holder: b.name || '', phone: b.phone || '',
-      price: price, ref: b.ref || this.bookingRef(this.todayStr()), updatedAt: Date.now(), coach: '',
-      sessions: (b.date && b.time) ? [{ date: b.date, time: b.time, eventId: b.eventId || '', ref: b.ref || '' }] : [],
+      price: price, ref: b.ref || this.bookingRef(this.todayStr()), updatedAt: Date.now(), coach: '', status: 'pending',
+      sessions: (!cancelled && b.date && b.time) ? [{ date: b.date, time: b.time, eventId: b.eventId || '', ref: b.ref || '' }] : [],
     };
     this.pushPlan(email, plan);
     this.setState(s => ({ remotePlans: [{ ...plan, email: email }, ...(s.remotePlans || [])], adminTab: 'plans' }));
-    if (typeof alert !== 'undefined') alert('Added to Plans & Sessions for ' + (b.name || email) + '. Assign a coach and schedule more sessions in the Plans tab.');
+    if (typeof alert !== 'undefined') alert('Added to Plans & Sessions for ' + (b.name || email) + '. Assign a coach and schedule sessions in the Plans tab.');
   }
   localAcctMatches(email, ref) {
     const e = (email || '').trim().toLowerCase(), r = (ref || '').trim().toUpperCase();
@@ -3196,6 +3181,27 @@ class Component extends DCLogic {
   markPlanContacted(email, ts) {
     this.mutatePlan(email, ts, p => ({ ...p, contacted: !p.contacted }));
   }
+  // Admin: approve a plan. Standard process is Call → Schedule → Approve, so a plan
+  // must have at least one scheduled session; approving records those sessions to the
+  // Bookings sheet with status "approved".
+  approvePlan(email, ts) {
+    const plan = this.findPlan(email, ts);
+    const sessions = (plan && plan.sessions) || [];
+    if (!sessions.length) { if (typeof alert !== 'undefined') alert('Please schedule at least one session before approving (Call → Schedule → Approve).'); return; }
+    this.mutatePlan(email, ts, p => ({ ...p, status: 'approved' }));
+    const ep = this.endpoint();
+    if (ep) {
+      sessions.forEach(s => {
+        try {
+          fetch(ep, {
+            method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'setBookingStatus', eventId: s.eventId || '', ref: s.ref || '', date: s.date || '', time: s.time || '', status: 'approved' }),
+          }).catch(() => {});
+        } catch (e) {}
+      });
+      setTimeout(() => this.loadAllBookings(), 1000);
+    }
+  }
   // ---------- ADMIN: plans across this device (coach assignment) ----------
   loadAllPlansLocal() {
     const out = [];
@@ -3212,7 +3218,7 @@ class Component extends DCLogic {
         try { arr = JSON.parse(localStorage.getItem(key) || '[]') || []; } catch (e) { arr = []; }
         if (!Array.isArray(arr)) continue;
         const email = key.slice('pgac_plans_'.length);
-        arr.forEach(p => { if (p && p.ts != null && p.name != null) out.push({ email: email, name: p.name, holder: p.holder || '', phone: p.phone || '', ref: p.ref || '', price: p.price || '', contacted: !!p.contacted, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [] }); });
+        arr.forEach(p => { if (p && p.ts != null && p.name != null) out.push({ email: email, name: p.name, holder: p.holder || '', phone: p.phone || '', ref: p.ref || '', price: p.price || '', contacted: !!p.contacted, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [], status: p.status || 'pending' }); });
       }
     } catch (e) {}
     return out.sort((a, b) => (b.ts || 0) - (a.ts || 0));
@@ -3230,7 +3236,7 @@ class Component extends DCLogic {
     // Seed from the backend copy if this device hasn't cached the plan (admin on another machine).
     if (!arr.some(p => p.ts === ts)) {
       const rem = (this.state.remotePlans || []).find(p => (p.email || '').toLowerCase() === (email || '').toLowerCase() && p.ts === ts);
-      if (rem) arr = arr.concat([{ name: rem.name, ts: rem.ts, holder: rem.holder, coach: rem.coach || '', sessions: rem.sessions || [] }]);
+      if (rem) arr = arr.concat([{ name: rem.name, ts: rem.ts, holder: rem.holder, coach: rem.coach || '', sessions: rem.sessions || [], status: rem.status || 'pending', phone: rem.phone || '', ref: rem.ref || '', price: rem.price || '', contacted: !!rem.contacted }]);
     }
     let updated = null;
     arr = arr.map(p => { if (p.ts === ts) { updated = { ...fn({ ...p }), updatedAt: Date.now() }; return updated; } return p; });
@@ -3736,7 +3742,7 @@ class Component extends DCLogic {
     // Merge passes from this device's cache with every pass the backend returned (backend wins).
     const planMap = {};
     this.loadAllPlansLocal().forEach(p => { planMap[(p.email || '').toLowerCase() + '|' + p.ts] = p; });
-    (this.state.remotePlans || []).forEach(p => { planMap[(p.email || '').toLowerCase() + '|' + p.ts] = { email: (p.email || '').toLowerCase(), name: p.name, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [], holder: p.holder || '', phone: p.phone || '', ref: p.ref || '', price: p.price || '', contacted: !!p.contacted }; });
+    (this.state.remotePlans || []).forEach(p => { planMap[(p.email || '').toLowerCase() + '|' + p.ts] = { email: (p.email || '').toLowerCase(), name: p.name, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [], holder: p.holder || '', phone: p.phone || '', ref: p.ref || '', price: p.price || '', contacted: !!p.contacted, status: p.status || 'pending' }; });
     const allPlans = Object.keys(planMap).map(k => planMap[k]).sort((a, b) => (b.ts || 0) - (a.ts || 0));
     const adminPlanRows = allPlans.map(p => {
       const rowKey = p.email + '|' + p.ts;
@@ -3766,6 +3772,12 @@ class Component extends DCLogic {
         price: p.price || this.passPrice(p.name), hasPrice: !!(p.price || this.passPrice(p.name)),
         contacted: !!p.contacted, statusLabel: p.contacted ? '✓ Contacted' : 'New',
         statusBg: p.contacted ? '#e6efd6' : '#fff1cf', statusFg: p.contacted ? '#4d7327' : '#8a6a1f',
+        approved: (p.status === 'approved'),
+        notApproved: (p.status !== 'approved'),
+        apprLabel: (p.status === 'approved') ? 'Approved' : 'Pending',
+        apprBg: (p.status === 'approved') ? '#e6efd6' : '#fff1cf',
+        apprFg: (p.status === 'approved') ? '#4d7327' : '#8a6a1f',
+        approvePlan: () => this.approvePlan(p.email, p.ts),
         markContacted: () => this.markPlanContacted(p.email, p.ts),
         cancelPlan: () => this.adminCancelPlan(p.email, p.ts),
         when: (() => { try { return new Date(p.ts).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { return ''; } })(),
@@ -4008,6 +4020,7 @@ class Component extends DCLogic {
         callHref: 'tel:' + (b.phone || '').replace(/[^0-9+]/g, ''),
         isPending: st !== 'approved' && st !== 'cancelled',
         notCancelled: st !== 'cancelled',
+        retrieveLabel: (st === 'cancelled') ? '↩ Move to Plans' : '→ Plans',
         cancelling: (this.state.cancellingTs === (b.eventId || b.ref)),
         approve: () => this.approveBooking(b),
         cancel: () => this.adminCancelDbBooking(b),
