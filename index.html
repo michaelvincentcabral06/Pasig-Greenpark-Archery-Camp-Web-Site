@@ -1667,11 +1667,118 @@
         </div>
 
         <div style="display:flex;gap:8px;margin:22px 0 24px;flex-wrap:wrap;">
+          <button onClick="{{ goTabDashboard }}" style="background:{{ tabDashboardBg }};color:{{ tabDashboardFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Dashboard</button>
           <button onClick="{{ goTabBookings }}" style="background:{{ tabBookingsBg }};color:{{ tabBookingsFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Bookings</button>
           <button onClick="{{ goTabPlans }}" style="background:{{ tabPlansBg }};color:{{ tabPlansFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Plans &amp; coaches</button>
           <button onClick="{{ goTabPricing }}" style="background:{{ tabPricingBg }};color:{{ tabPricingFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Pricing</button>
           <button onClick="{{ goTabSchedule }}" style="background:{{ tabScheduleBg }};color:{{ tabScheduleFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Schedule</button>
         </div>
+
+        <!-- DASHBOARD TAB -->
+        <sc-if value="{{ tabDashboard }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <!-- BOOKING COUNTS -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px;">
+            <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;">
+              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;font-family:'Spline Sans Mono',monospace;">Approved</div>
+              <div style="font-size:30px;font-weight:800;color:#244232;line-height:1.1;margin-top:4px;">{{ dashApproved }}</div>
+            </div>
+            <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;">
+              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;font-family:'Spline Sans Mono',monospace;">Pending confirmation</div>
+              <div style="font-size:30px;font-weight:800;color:#8a6a1f;line-height:1.1;margin-top:4px;">{{ dashPending }}</div>
+            </div>
+            <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;">
+              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;font-family:'Spline Sans Mono',monospace;">Cancelled</div>
+              <div style="font-size:30px;font-weight:800;color:#b4512f;line-height:1.1;margin-top:4px;">{{ dashCancelled }}</div>
+            </div>
+            <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;">
+              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;font-family:'Spline Sans Mono',monospace;">Coaches</div>
+              <div style="font-size:30px;font-weight:800;color:#244232;line-height:1.1;margin-top:4px;">{{ coachCount }}</div>
+            </div>
+          </div>
+
+          <!-- EARNINGS -->
+          <h3 style="font-size:16px;font-weight:800;color:#1b2a1f;margin:24px 0 4px;">Earnings</h3>
+          <p style="font-size:13px;color:#56664f;margin:0 0 14px;">From confirmed &amp; pending bookings (cancelled excluded), by the session date.</p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">
+            <div style="background:#244232;border-radius:12px;padding:16px 18px;color:#f4efe4;">
+              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.75;font-family:'Spline Sans Mono',monospace;">This week</div>
+              <div style="font-size:26px;font-weight:800;line-height:1.1;margin-top:4px;">{{ earnWeekLabel }}</div>
+            </div>
+            <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;">
+              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;font-family:'Spline Sans Mono',monospace;">This month</div>
+              <div style="font-size:26px;font-weight:800;color:#244232;line-height:1.1;margin-top:4px;">{{ earnMonthLabel }}</div>
+            </div>
+            <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;">
+              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;font-family:'Spline Sans Mono',monospace;">This year</div>
+              <div style="font-size:26px;font-weight:800;color:#244232;line-height:1.1;margin-top:4px;">{{ earnYearLabel }}</div>
+            </div>
+            <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;">
+              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;font-family:'Spline Sans Mono',monospace;">All time</div>
+              <div style="font-size:26px;font-weight:800;color:#244232;line-height:1.1;margin-top:4px;">{{ earnTotalLabel }}</div>
+            </div>
+          </div>
+
+          <!-- EARNINGS SPLIT -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:12px;">
+            <div style="background:#eef4e4;border-radius:12px;padding:16px 18px;">
+              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#4d7327;font-family:'Spline Sans Mono',monospace;">Coach payments (total)</div>
+              <div style="font-size:24px;font-weight:800;color:#244232;line-height:1.1;margin-top:4px;">{{ coachTotalLabel }}</div>
+            </div>
+            <div style="background:#fff1cf;border-radius:12px;padding:16px 18px;">
+              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a6a1f;font-family:'Spline Sans Mono',monospace;">Equipment rental</div>
+              <div style="font-size:24px;font-weight:800;color:#8a6a1f;line-height:1.1;margin-top:4px;">{{ equipTotalLabel }}</div>
+            </div>
+            <div style="background:#e3eef0;border-radius:12px;padding:16px 18px;">
+              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#2f6b73;font-family:'Spline Sans Mono',monospace;">Range fee</div>
+              <div style="font-size:24px;font-weight:800;color:#2f6b73;line-height:1.1;margin-top:4px;">{{ rangeTotalLabel }}</div>
+            </div>
+          </div>
+
+          <!-- PER-COACH PAYMENTS + SPLIT EDITOR -->
+          <h3 style="font-size:16px;font-weight:800;color:#1b2a1f;margin:28px 0 4px;">Coach payments &amp; split</h3>
+          <p style="font-size:13px;color:#56664f;margin:0 0 14px;">Each coach earns a share of every booking they take. Adjust the split per coach — coach % + equipment % + range % should total 100%.</p>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <sc-for list="{{ coachPayRows }}" as="cp" hint-placeholder-count="0">
+              <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
+                <div style="flex:1;min-width:160px;">
+                  <div style="font-size:16px;font-weight:800;color:#1b2a1f;">{{ cp.name }}</div>
+                  <div style="font-size:12.5px;color:#8a9579;">{{ cp.role }}</div>
+                  <div style="font-size:13px;font-weight:700;color:#4d7327;margin-top:4px;">Earned: {{ cp.pay }}</div>
+                </div>
+                <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;">
+                  <label style="font-size:11px;color:#56664f;font-family:'Spline Sans Mono',monospace;">Coach %<br><input type="number" min="0" max="100" value="{{ cp.coachPct }}" onInput="{{ cp.setCoachPct }}" style="width:64px;margin-top:3px;padding:7px 9px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:14px;"></label>
+                  <label style="font-size:11px;color:#56664f;font-family:'Spline Sans Mono',monospace;">Equip %<br><input type="number" min="0" max="100" value="{{ cp.equipPct }}" onInput="{{ cp.setEquipPct }}" style="width:64px;margin-top:3px;padding:7px 9px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:14px;"></label>
+                  <label style="font-size:11px;color:#56664f;font-family:'Spline Sans Mono',monospace;">Range %<br><input type="number" min="0" max="100" value="{{ cp.rangePct }}" onInput="{{ cp.setRangePct }}" style="width:64px;margin-top:3px;padding:7px 9px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:14px;"></label>
+                  <button onClick="{{ cp.saveSplit }}" style="background:#244232;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;">Save</button>
+                </div>
+                <sc-if value="{{ cp.sumBad }}" hint-placeholder-val="{{ false }}"><div style="width:100%;font-size:12px;color:#b4512f;font-family:'Spline Sans Mono',monospace;">⚠ Totals {{ cp.sumLabel }} — should be 100% before saving.</div></sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ hasUnassignedPay }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#8a9579;margin-top:10px;">Unassigned-coach share (bookings with no coach yet, at the default split): <strong>{{ coachUnassignedLabel }}</strong></div></sc-if>
+
+          <!-- UPCOMING SCHEDULE -->
+          <h3 style="font-size:16px;font-weight:800;color:#1b2a1f;margin:28px 0 4px;">Upcoming schedule</h3>
+          <p style="font-size:13px;color:#56664f;margin:0 0 14px;">The next sessions across all coaches.</p>
+          <sc-if value="{{ noUpcoming }}" hint-placeholder-val="{{ true }}"><div style="background:#fffdf6;border:1px dashed rgba(36,66,50,0.2);border-radius:12px;padding:24px;text-align:center;color:#8a9579;font-size:14px;">No upcoming sessions.</div></sc-if>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <sc-for list="{{ upcoming }}" as="u" hint-placeholder-count="0">
+              <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+                <div style="min-width:130px;">
+                  <div style="font-size:14px;font-weight:800;color:#1b2a1f;">{{ u.date }}</div>
+                  <div style="font-size:12.5px;color:#56664f;font-family:'Spline Sans Mono',monospace;">{{ u.time }}</div>
+                </div>
+                <div style="flex:1;min-width:160px;">
+                  <div style="font-size:14px;font-weight:700;color:#1b2a1f;">{{ u.who }}</div>
+                  <div style="font-size:12.5px;color:#56664f;">{{ u.program }} · {{ u.coach }}</div>
+                </div>
+                <sc-if value="{{ u.amount }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;font-weight:700;color:#4d7327;font-family:'Spline Sans Mono',monospace;">{{ u.amount }}</div></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
 
         <!-- BOOKINGS TAB -->
         <sc-if value="{{ tabBookings }}" hint-placeholder-val="{{ true }}">
@@ -2057,7 +2164,7 @@ class Component extends DCLogic {
     isMobile: false,
     navOpen: false,
     authed: false,
-    adminTab: 'bookings',
+    adminTab: 'dashboard',
     adminPass: '',
     adminError: false,
     bookings: [],
@@ -2088,6 +2195,10 @@ class Component extends DCLogic {
     acctBookingOpen: false,
     remotePlans: [],
     cancelHistory: [],
+    allBookings: [],
+    coachSplits: {},
+    splitDefault: { coach: 80, equip: 10, range: 10 },
+    splitDraft: {},
     acctLoading: false,
     acctError: '',
     acctName: '',
@@ -2230,6 +2341,8 @@ class Component extends DCLogic {
       this.setState({ authed: true, adminError: false, adminPass: '' });
       this.loadRemotePlans(); // pull every customer's passes from the backend
       this.loadCancellations(); // pull the cancellation history for the admin
+      this.loadAllBookings(); // every booking across the business (dashboard + bookings tab)
+      this.loadSettings(); // per-coach payment splits + coach list
     } else {
       this.setState({ adminError: true });
     }
@@ -2666,6 +2779,43 @@ class Component extends DCLogic {
     fetch(ep + '?action=cancellations').then(r => r.json()).then(res => {
       if (res && res.cancellations) this.setState({ cancelHistory: res.cancellations });
     }).catch(() => {});
+  }
+  // Pull EVERY booking across the business (admin dashboard + bookings tab).
+  loadAllBookings() {
+    const ep = this.endpoint(); if (!ep) return;
+    fetch(ep + '?action=bookings').then(r => r.json()).then(res => {
+      if (res && res.bookings) this.setState({ allBookings: res.bookings });
+    }).catch(() => {});
+  }
+  // Pull settings: per-coach payment split (coach % / equipment % / range %) + coach list.
+  loadSettings() {
+    const ep = this.endpoint(); if (!ep) return;
+    fetch(ep + '?action=settings').then(r => r.json()).then(res => {
+      if (res && res.splits) this.setState({
+        coachSplits: res.splits,
+        splitDefault: res.defaultSplit || this.state.splitDefault,
+        splitDraft: JSON.parse(JSON.stringify(res.splits)),
+      });
+    }).catch(() => {});
+  }
+  // Admin edits one number in a coach's split (kept in a draft until "Save").
+  setSplitField(coachId, field, value) {
+    const v = Math.max(0, Math.min(100, parseInt(value, 10) || 0));
+    this.setState(s => {
+      const draft = JSON.parse(JSON.stringify(s.splitDraft || {}));
+      draft[coachId] = draft[coachId] || { ...(s.splitDefault || { coach: 80, equip: 10, range: 10 }) };
+      draft[coachId][field] = v;
+      return { splitDraft: draft };
+    });
+  }
+  // Save a coach's split to the backend, then re-pull settings to confirm.
+  saveCoachSplit(coachId) {
+    const ep = this.endpoint(); if (!ep) return;
+    const d = (this.state.splitDraft || {})[coachId] || this.state.splitDefault;
+    fetch(ep, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'setSplit', coach: coachId, coachPct: d.coach, equipPct: d.equip, rangePct: d.range }),
+    }).then(r => r.json()).then(() => { this.loadSettings(); if (typeof alert !== 'undefined') alert('Saved split for this coach.'); }).catch(() => {});
   }
   localAcctMatches(email, ref) {
     const e = (email || '').trim().toLowerCase(), r = (ref || '').trim().toUpperCase();
@@ -3389,7 +3539,7 @@ class Component extends DCLogic {
         });
       },
     }));
-    const adminSetTab = (t) => () => { this.setState({ adminTab: t }); if (t === 'plans') this.loadRemotePlans(); };
+    const adminSetTab = (t) => () => { this.setState({ adminTab: t }); if (t === 'plans') this.loadRemotePlans(); if (t === 'dashboard') { this.loadAllBookings(); this.loadSettings(); } };
     // Per-plan schedule limit: "N sessions/classes" → N; monthly/unlimited → no cap; otherwise 1 (Day Pass, hourly, single).
     const capFor = (name) => {
       const pk = cm.packages.find(p => p.name === name);
@@ -3555,6 +3705,80 @@ class Component extends DCLogic {
         email: c.email || '', by: c.by || 'customer', when: c.when || '',
       };
     });
+
+    // ---------- ADMIN: DASHBOARD ----------
+    const pesoRound = (n) => '₱' + Math.round(Number(n) || 0).toLocaleString('en-PH');
+    const fmtYmd = (d) => { const y = d.getFullYear(), m = ('0' + (d.getMonth() + 1)).slice(-2), da = ('0' + d.getDate()).slice(-2); return y + '-' + m + '-' + da; };
+    const dashBookings = this.state.allBookings || [];
+    const dashCoaches = this.coaches() || [];
+    const splits = this.state.coachSplits || {};
+    const splitDef = this.state.splitDefault || { coach: 80, equip: 10, range: 10 };
+    const splitDraft = this.state.splitDraft || {};
+    const matchCoach = (coachVal) => {
+      const cv = String(coachVal || '').trim().toLowerCase();
+      if (!cv || cv === 'any') return null;
+      return dashCoaches.find(c => c.id.toLowerCase() === cv || (c.name || '').toLowerCase() === cv) || null;
+    };
+    const splitForCoach = (coachVal) => { const c = matchCoach(coachVal); return (c && splits[c.id]) ? splits[c.id] : splitDef; };
+    // Period boundaries from Manila "today".
+    const tParts = todayStr.split('-');
+    const periodYear = tParts[0];                 // 'YYYY'
+    const periodMonth = tParts[0] + '-' + tParts[1]; // 'YYYY-MM'
+    const dThis = new Date(todayStr + 'T00:00:00');
+    const dowMon = (dThis.getDay() + 6) % 7;       // 0 = Monday
+    const weekStart = new Date(dThis); weekStart.setDate(dThis.getDate() - dowMon);
+    const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
+    const weekStartStr = fmtYmd(weekStart), weekEndStr = fmtYmd(weekEnd);
+    let cApproved = 0, cPending = 0, cCancelled = 0;
+    let earnWeek = 0, earnMonth = 0, earnYear = 0, earnTotal = 0;
+    let equipTotal = 0, rangeTotal = 0, coachTotal = 0, coachUnassigned = 0;
+    const coachPay = {}; dashCoaches.forEach(c => { coachPay[c.id] = 0; });
+    dashBookings.forEach(b => {
+      const st = String(b.status || 'booked').toLowerCase();
+      if (st === 'cancelled') { cCancelled++; return; }
+      if (st === 'approved') cApproved++; else cPending++;
+      const amt = Number(b.amount) || 0; if (!amt) return;
+      const ds = b.date || '';
+      earnTotal += amt;
+      if (ds.slice(0, 4) === periodYear) earnYear += amt;
+      if (ds.slice(0, 7) === periodMonth) earnMonth += amt;
+      if (ds >= weekStartStr && ds <= weekEndStr) earnWeek += amt;
+      const sp = splitForCoach(b.coach), c = matchCoach(b.coach);
+      const cShare = amt * (Number(sp.coach) || 0) / 100;
+      equipTotal += amt * (Number(sp.equip) || 0) / 100;
+      rangeTotal += amt * (Number(sp.range) || 0) / 100;
+      coachTotal += cShare;
+      if (c) coachPay[c.id] += cShare; else coachUnassigned += cShare;
+    });
+    const draftFor = (id) => splitDraft[id] || splits[id] || splitDef;
+    const coachPayRows = dashCoaches.map(c => {
+      const d = draftFor(c.id);
+      const sum = (Number(d.coach) || 0) + (Number(d.equip) || 0) + (Number(d.range) || 0);
+      return {
+        id: c.id, name: c.name, role: c.role || '',
+        pay: pesoRound(coachPay[c.id] || 0),
+        coachPct: d.coach, equipPct: d.equip, rangePct: d.range,
+        setCoachPct: (e) => this.setSplitField(c.id, 'coach', e.target.value),
+        setEquipPct: (e) => this.setSplitField(c.id, 'equip', e.target.value),
+        setRangePct: (e) => this.setSplitField(c.id, 'range', e.target.value),
+        saveSplit: () => this.saveCoachSplit(c.id),
+        sumOk: sum === 100, sumBad: sum !== 100, sumLabel: sum + '%',
+      };
+    });
+    const upcoming = dashBookings
+      .filter(b => String(b.status || '').toLowerCase() !== 'cancelled' && b.date && b.date >= todayStr)
+      .sort((a, b) => ((a.date || '') + (a.time || '')).localeCompare((b.date || '') + (b.time || '')))
+      .slice(0, 14)
+      .map(b => {
+        const c = matchCoach(b.coach);
+        return {
+          date: fmtSessionDate(b.date), time: b.time || '',
+          who: b.name || 'Guest', program: b.program || '',
+          coach: c ? c.name : 'Any coach',
+          amount: b.amount ? pesoRound(b.amount) : '',
+          status: String(b.status || 'booked').toLowerCase(),
+        };
+      });
 
     // ---------- COACH PORTAL ----------
     const coachUser = this.coachById(this.state.coachId);
@@ -3795,12 +4019,23 @@ class Component extends DCLogic {
       tryLogin: () => this.tryLogin(),
       adminLogout: () => this.setState({ authed: false, page: 'home' }),
       adminTab: this.state.adminTab,
+      tabDashboard: this.state.adminTab === 'dashboard',
       tabBookings: this.state.adminTab === 'bookings',
       tabPlans: this.state.adminTab === 'plans',
       tabPricing: this.state.adminTab === 'pricing',
       tabSchedule: this.state.adminTab === 'schedule',
-      goTabBookings: adminSetTab('bookings'), goTabPlans: adminSetTab('plans'), goTabPricing: adminSetTab('pricing'), goTabSchedule: adminSetTab('schedule'),
+      goTabDashboard: adminSetTab('dashboard'), goTabBookings: adminSetTab('bookings'), goTabPlans: adminSetTab('plans'), goTabPricing: adminSetTab('pricing'), goTabSchedule: adminSetTab('schedule'),
+      tabDashboardBg: this.state.adminTab === 'dashboard' ? '#244232' : '#fffdf6', tabDashboardFg: this.state.adminTab === 'dashboard' ? '#f4efe4' : '#244232',
       tabBookingsBg: this.state.adminTab === 'bookings' ? '#244232' : '#fffdf6', tabBookingsFg: this.state.adminTab === 'bookings' ? '#f4efe4' : '#244232',
+      // ----- DASHBOARD values -----
+      dashApproved: cApproved, dashPending: cPending, dashCancelled: cCancelled,
+      dashTotal: cApproved + cPending + cCancelled,
+      earnWeekLabel: pesoRound(earnWeek), earnMonthLabel: pesoRound(earnMonth), earnYearLabel: pesoRound(earnYear), earnTotalLabel: pesoRound(earnTotal),
+      coachTotalLabel: pesoRound(coachTotal), equipTotalLabel: pesoRound(equipTotal), rangeTotalLabel: pesoRound(rangeTotal),
+      coachUnassignedLabel: pesoRound(coachUnassigned), hasUnassignedPay: coachUnassigned > 0,
+      coachCount: dashCoaches.length,
+      coachPayRows: coachPayRows,
+      upcoming: upcoming, hasUpcoming: upcoming.length > 0, noUpcoming: upcoming.length === 0,
       tabPlansBg: this.state.adminTab === 'plans' ? '#244232' : '#fffdf6', tabPlansFg: this.state.adminTab === 'plans' ? '#f4efe4' : '#244232',
       tabPricingBg: this.state.adminTab === 'pricing' ? '#244232' : '#fffdf6', tabPricingFg: this.state.adminTab === 'pricing' ? '#f4efe4' : '#244232',
       tabScheduleBg: this.state.adminTab === 'schedule' ? '#244232' : '#fffdf6', tabScheduleFg: this.state.adminTab === 'schedule' ? '#f4efe4' : '#244232',
