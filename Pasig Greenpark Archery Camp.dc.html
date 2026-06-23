@@ -2296,6 +2296,7 @@ class Component extends DCLogic {
     slotDate: '',
     slotTimes: [],
     party: 1,
+    sessionTarget: 1,
     eligPac: false,
     eligLocal: false,
     eligPasig: false,
@@ -3715,7 +3716,7 @@ class Component extends DCLogic {
         bookingSms: sms,
       });
     };
-    const resetForm = () => this.setState({ submitted: false, formError: false, form: { name: '', phone: '', email: '', program: 'Adult Beginners (18+)', date: '' }, slotDate: '', slotTimes: [], party: 1, archers: [{ name: '', dob: '' }], eligPac: false, eligLocal: false, eligPasig: false, wapId: '', localProof: '', pasigProof: '', selectedDates: [], multiSlots: {}, multiTimes: {}, multiLoading: {}, calMonth: '', slots: [], bookingStatus: '', bookingAlts: [] });
+    const resetForm = () => this.setState({ submitted: false, formError: false, form: { name: '', phone: '', email: '', program: 'Adult Beginners (18+)', date: '' }, slotDate: '', slotTimes: [], party: 1, sessionTarget: 1, archers: [{ name: '', dob: '' }], eligPac: false, eligLocal: false, eligPasig: false, wapId: '', localProof: '', pasigProof: '', selectedDates: [], multiSlots: {}, multiTimes: {}, multiLoading: {}, calMonth: '', slots: [], bookingStatus: '', bookingAlts: [] });
 
     // ---------- BOOKING ENGINE (view) ----------
     const cap = this.capacity();
@@ -3915,6 +3916,14 @@ class Component extends DCLogic {
     const peso = (n) => '\u20B1' + Number(n || 0).toLocaleString('en-PH');
     const rrate = this.rateFor(this.state.form.program || '');
     const slotCount = multiDateMode ? multiPairCount : chosenTimes.length;
+    const bumpSession = (delta) => () => {
+      const cur = Math.max(1, st.sessionTarget || 1);
+      const floor = Math.max(1, slotCount); // can't drop below slots already chosen
+      let next = Math.min(20, Math.max(floor, cur + delta));
+      if (next === cur) { if (delta < 0 && cur <= floor) this.setState({ bookingStatus: 'sessionFloor' }); return; }
+      this.setState({ sessionTarget: next, bookingStatus: '' });
+    };
+    const setSession = (n) => () => this.setState({ sessionTarget: Math.min(20, Math.max(Math.max(1, slotCount), n)), bookingStatus: '' });
     const dayCount = multiDateMode ? selDates.filter(d => (multiTimesState[d] || []).length > 0).length : (chosenTimes.length > 0 ? 1 : 0);
     const unlimitedSlots = this.bothConcessions(this.state.form.program || '');
     const billableSessions = unlimitedSlots ? dayCount : slotCount;
@@ -4502,6 +4511,13 @@ class Component extends DCLogic {
       capacity: cap, demoMode: !this.endpoint(),
       party, partyLabel: party + (party === 1 ? ' archer' : ' archers'),
       incParty: bumpParty(1), decParty: bumpParty(-1),
+      sessionTarget: Math.max(1, st.sessionTarget || 1),
+      sessionTargetLabel: String(Math.max(1, st.sessionTarget || 1)) + (Math.max(1, st.sessionTarget||1) === 1 ? ' session' : ' sessions'),
+      incSession: bumpSession(1), decSession: bumpSession(-1),
+      setSession1: setSession(1), setSession3: setSession(3), setSession5: setSession(5), setSession10: setSession(10),
+      slotCountVal: slotCount,
+      sessionsChosenLabel: slotCount + ' / ' + Math.max(1, st.sessionTarget || 1) + ' slot' + (Math.max(1, st.sessionTarget||1) === 1 ? '' : 's') + ' chosen',
+      sessionTargetReached: slotCount === Math.max(1, st.sessionTarget || 1),
       canInc: party < cap, canDec: party > 1, isGroup: party > 1,
       eligPac: this.state.eligPac, eligLocal: this.state.eligLocal, eligPasig: this.state.eligPasig,
       isOpenRange: /Open Range/i.test(this.state.form.program || ''),
