@@ -517,9 +517,15 @@ function doGet(e) {
     if (action === 'cancellations') {
       return listCancellations_();
     }
+    if (action === 'bookings') {
+      return listBookings_();
+    }
+    if (action === 'settings') {
+      return getSettings_();
+    }
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v4', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true });
+      return json_({ version: 'db-v5', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -603,6 +609,8 @@ function doPost(e) {
     if (body.action === 'savePlan')      return savePlan_(body);
     if (body.action === 'removePlan')    return removePlan_(body);
     if (body.action === 'planScheduleEmail') return planScheduleEmail_(body);
+    if (body.action === 'setSplit')          return setSplit_(body);
+    if (body.action === 'setBookingStatus')  return setBookingStatus_(body);
     return json_({ ok: false, reason: 'unknown action' });
   } catch (err) {
     return json_({ ok: false, reason: 'error', message: String(err) });
@@ -678,6 +686,79 @@ function listCancellations_() {
     out.reverse();
     return json_({ cancellations: out });
   } catch (e) { return json_({ cancellations: [], error: String(e) }); }
+}
+
+// Coerce a sheet cell that may be a Date back to 'yyyy-MM-dd'.
+function asDateStr_(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, TIMEZONE, 'yyyy-MM-dd');
+  return String(v || '');
+}
+// All bookings (every device, the whole business) for the admin dashboard + bookings tab.
+function listBookings_() {
+  try {
+    var sh = dbSheet_('bookings');
+    var data = sh.getDataRange().getValues();
+    var h = data[0]; var ix = {}; h.forEach(function (n, i) { ix[n] = i; });
+    var out = [];
+    for (var r = 1; r < data.length; r++) {
+      var row = data[r];
+      out.push({
+        bookedAt: (row[ix['Booked At']] instanceof Date) ? Utilities.formatDate(row[ix['Booked At']], TIMEZONE, 'yyyy-MM-dd HH:mm') : String(row[ix['Booked At']] || ''),
+        ref: String(row[ix['Ref']] || ''),
+        status: String(row[ix['Status']] || 'booked'),
+        date: asDateStr_(row[ix['Date']]),
+        time: String(row[ix['Time']] || ''),
+        program: String(row[ix['Program']] || ''),
+        name: String(row[ix['Name']] || ''),
+        email: String(row[ix['Email']] || ''),
+        phone: String(row[ix['Mobile']] || ''),
+        archers: Number(row[ix['Archers']] || 0) || 0,
+        amount: Number(row[ix['Amount']] || 0) || 0,
+        coach: String(row[ix['Coach']] || ''),
+        eventId: String(row[ix['Event ID']] || '')
+      });
+    }
+    return json_({ bookings: out });
+  } catch (e) { return json_({ bookings: [], error: String(e) }); }
+}
+
+// ---------- SETTINGS: per-coach payment split (coach % / equipment % / range %) ----------
+var DEFAULT_SPLIT = { coach: 80, equip: 10, range: 10 };
+function splitKey_(id) { return 'split:' + id; }
+function getSettings_() {
+  var props = PropertiesService.getScriptProperties();
+  var splits = {};
+  COACHES.forEach(function (c) {
+    var raw = props.getProperty(splitKey_(c.id));
+    var s = null; if (raw) { try { s = JSON.parse(raw); } catch (e) {} }
+    splits[c.id] = s || { coach: DEFAULT_SPLIT.coach, equip: DEFAULT_SPLIT.equip, range: DEFAULT_SPLIT.range };
+  });
+  return json_({ splits: splits, defaultSplit: DEFAULT_SPLIT, coaches: COACHES.map(function (c) { return { id: c.id, name: c.name }; }) });
+}
+function setSplit_(body) {
+  var c = coachById_(body.coach);
+  if (!c) return json_({ ok: false, reason: 'unknown coach' });
+  var s = { coach: Number(body.coachPct) || 0, equip: Number(body.equipPct) || 0, range: Number(body.rangePct) || 0 };
+  PropertiesService.getScriptProperties().setProperty(splitKey_(c.id), JSON.stringify(s));
+  return json_({ ok: true, coach: c.id, split: s });
+}
+
+// Set a booking's status (e.g. 'approved') in the Bookings tab. Match by event id, else ref+date+time.
+function setBookingStatus_(body) {
+  try {
+    var sh = dbSheet_('bookings');
+    var data = sh.getDataRange().getValues();
+    var h = data[0];
+    var evCol = h.indexOf('Event ID'), stCol = h.indexOf('Status'), refCol = h.indexOf('Ref'), dCol = h.indexOf('Date'), tCol = h.indexOf('Time');
+    var status = body.status || 'approved';
+    var n = 0;
+    for (var r = 1; r < data.length; r++) {
+      var match = (body.eventId && String(data[r][evCol]) === String(body.eventId)) ||
+        (!body.eventId && String(data[r][refCol]) === String(body.ref || '') && (!body.date || asDateStr_(data[r][dCol]) === body.date) && (!body.time || String(data[r][tCol]) === String(body.time)));
+      if (match) { sh.getRange(r + 1, stCol + 1).setValue(status); n++; if (body.eventId) break; }
+    }
+    return json_({ ok: true, updated: n });
+  } catch (e) { return json_({ ok: false, error: String(e) }); }
 }
 function removePlan_(body) {
   var email = (body.email || '').trim().toLowerCase();
