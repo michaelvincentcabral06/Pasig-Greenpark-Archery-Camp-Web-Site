@@ -1781,54 +1781,43 @@
         </div>
         </sc-if>
 
-        <!-- BOOKINGS TAB -->
+        <!-- BOOKINGS TAB = ACTIVITY LOG -->
         <sc-if value="{{ tabBookings }}" hint-placeholder-val="{{ true }}">
         <div>
+          <h3 style="font-size:16px;font-weight:800;color:#1b2a1f;margin:0 0 4px;">Activity log</h3>
+          <p style="font-size:13px;color:#56664f;margin:0 0 14px;">Every action on a plan or session — approved, cancelled, coach changed, scheduled — with its reference and time. All managing is done in the Plans &amp; Sessions tab.</p>
           <!-- FILTERS -->
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-            <input type="text" value="{{ bkSearch }}" onInput="{{ setBkSearch }}" placeholder="Search name, email, reference…" style="flex:1;min-width:200px;padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;">
-            <select value="{{ bkFilter }}" onChange="{{ setBkFilter }}" style="padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;background:#fffdf6;">
-              <sc-for list="{{ bkStatusOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o.id }}">{{ o.name }}</option></sc-for>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+            <input type="text" value="{{ actSearch }}" onInput="{{ setActSearch }}" placeholder="Search reference, name, action…" style="flex:1;min-width:200px;padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;">
+            <select value="{{ actFilter }}" onChange="{{ setActFilter }}" style="padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;background:#fffdf6;">
+              <sc-for list="{{ actFilterOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o.id }}">{{ o.name }}</option></sc-for>
             </select>
-            <select value="{{ bkCoach }}" onChange="{{ setBkCoach }}" style="padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;background:#fffdf6;">
-              <sc-for list="{{ bkCoachOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o.id }}">{{ o.name }}</option></sc-for>
-            </select>
-            <button onClick="{{ refreshBookings }}" title="Refresh from database" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:10px 14px;border-radius:10px;">↻ Refresh</button>
+            <button onClick="{{ refreshActivity }}" title="Refresh" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:10px 14px;border-radius:10px;">↻ Refresh</button>
           </div>
-          <div style="font-size:14px;color:#56664f;margin-bottom:14px;">{{ bookingCount }} booking(s) match · <button onClick="{{ clearBkFilters }}" style="background:none;border:none;cursor:pointer;color:#4d7327;font-weight:700;font-size:14px;font-family:'Hanken Grotesk',sans-serif;text-decoration:underline;padding:0;">clear filters</button></div>
+          <div style="font-size:14px;color:#56664f;margin-bottom:14px;">{{ actCount }} entr(ies) · <button onClick="{{ clearActFilters }}" style="background:none;border:none;cursor:pointer;color:#4d7327;font-weight:700;font-size:14px;font-family:'Hanken Grotesk',sans-serif;text-decoration:underline;padding:0;">clear filters</button></div>
 
-          <sc-if value="{{ noBookings }}" hint-placeholder-val="{{ true }}">
-            <div style="background:#fffdf6;border:1px dashed rgba(36,66,50,0.2);border-radius:12px;padding:48px 24px;text-align:center;color:#8a9579;font-size:15px;">No bookings match. New bookings are recorded to your database automatically and will appear here.</div>
+          <sc-if value="{{ actNone }}" hint-placeholder-val="{{ true }}">
+            <div style="background:#fffdf6;border:1px dashed rgba(36,66,50,0.2);border-radius:12px;padding:48px 24px;text-align:center;color:#8a9579;font-size:15px;">No activity yet. Approving, cancelling, or scheduling in Plans &amp; Sessions will be logged here.</div>
           </sc-if>
-          <div style="display:flex;flex-direction:column;gap:12px;">
-            <sc-for list="{{ bookingRows }}" as="b" hint-placeholder-count="0">
-              <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:18px 20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
-                <div style="flex:1;min-width:200px;">
-                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-                    <span style="font-size:17px;font-weight:800;color:#1b2a1f;">{{ b.name }}</span>
-                    <span style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;background:{{ b.statusBg }};color:{{ b.statusFg }};padding:4px 9px;border-radius:999px;">{{ b.statusLabel }}</span>
-                  </div>
-                  <div style="font-size:14px;color:#56664f;">{{ b.program }} · {{ b.coachLabel }}</div>
-                  <div style="font-size:13px;font-weight:700;color:#244232;margin-top:3px;">{{ b.slotInfo }}<sc-if value="{{ b.amountLabel }}" hint-placeholder-val="{{ false }}"> · {{ b.amountLabel }}</sc-if></div>
-                  <div style="font-size:13px;color:#8a9579;font-family:'Spline Sans Mono',monospace;margin-top:4px;">{{ b.phone }}<sc-if value="{{ b.hasEmail }}" hint-placeholder-val="{{ false }}"> · {{ b.email }}</sc-if></div>
-                  <div style="font-size:12px;color:#a6b09a;font-family:'Spline Sans Mono',monospace;margin-top:3px;"><sc-if value="{{ b.hasRef }}" hint-placeholder-val="{{ false }}">{{ b.ref }} · </sc-if>booked {{ b.bookedAt }}</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <sc-for list="{{ activityRows }}" as="a" hint-placeholder-count="0">
+              <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+                <span style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;background:{{ a.actBg }};color:{{ a.actFg }};padding:5px 11px;border-radius:999px;">{{ a.action }}</span>
+                <div style="flex:1;min-width:180px;">
+                  <div style="font-size:14px;font-weight:700;color:#1b2a1f;"><sc-if value="{{ a.hasRef }}" hint-placeholder-val="{{ true }}">{{ a.ref }}</sc-if><sc-if value="{{ a.hasName }}" hint-placeholder-val="{{ false }}"> · {{ a.name }}</sc-if></div>
+                  <sc-if value="{{ a.hasDetail }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#56664f;font-family:'Spline Sans Mono',monospace;margin-top:2px;">{{ a.detail }}</div></sc-if>
                 </div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
-                  <sc-if value="{{ b.isPending }}" hint-placeholder-val="{{ true }}"><button onClick="{{ b.approve }}" style="background:#4d7327;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">Approve</button></sc-if>
-                  <sc-if value="{{ b.hasPhone }}" hint-placeholder-val="{{ true }}"><a href="{{ b.callHref }}" style="background:#244232;color:#f4efe4;text-decoration:none;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">Call</a></sc-if>
-                  <button onClick="{{ b.retrieve }}" title="Add this customer to Plans &amp; Sessions" style="background:#e6efd6;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#4d7327;padding:9px 15px;border-radius:999px;">{{ b.retrieveLabel }}</button>
-                  <sc-if value="{{ b.notCancelled }}" hint-placeholder-val="{{ true }}"><button onClick="{{ b.cancel }}" aria-label="Cancel booking" title="Cancel &amp; remove from calendar" style="background:none;border:1px solid rgba(180,81,47,0.35);cursor:pointer;font-size:13px;font-weight:700;color:#b4512f;padding:8px 13px;border-radius:999px;"><sc-if value="{{ b.cancelling }}" hint-placeholder-val="{{ false }}">…</sc-if><sc-if value="{{ b.notCancelling }}" hint-placeholder-val="{{ true }}">Cancel</sc-if></button></sc-if>
-                </div>
+                <div style="font-size:12px;color:#a6b09a;font-family:'Spline Sans Mono',monospace;">{{ a.at }}</div>
               </div>
             </sc-for>
           </div>
 
           <!-- PAGINATION -->
-          <sc-if value="{{ bkMultiPage }}" hint-placeholder-val="{{ false }}">
+          <sc-if value="{{ actMultiPage }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px;">
-            <sc-if value="{{ bkHasPrev }}" hint-placeholder-val="{{ true }}"><button onClick="{{ bkPrev }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">← Prev</button></sc-if>
-            <span style="font-size:13px;color:#56664f;font-family:'Spline Sans Mono',monospace;">{{ bkPageLabel }}</span>
-            <sc-if value="{{ bkHasNext }}" hint-placeholder-val="{{ true }}"><button onClick="{{ bkNext }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">Next →</button></sc-if>
+            <sc-if value="{{ actHasPrev }}" hint-placeholder-val="{{ true }}"><button onClick="{{ actPrev }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">← Prev</button></sc-if>
+            <span style="font-size:13px;color:#56664f;font-family:'Spline Sans Mono',monospace;">{{ actPageLabel }}</span>
+            <sc-if value="{{ actHasNext }}" hint-placeholder-val="{{ true }}"><button onClick="{{ actNext }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">Next →</button></sc-if>
           </div>
           </sc-if>
         </div>
@@ -1837,10 +1826,17 @@
         <!-- PLANS & COACHES TAB -->
         <sc-if value="{{ tabPlans }}" hint-placeholder-val="{{ false }}">
         <div>
-          <p style="font-size:14px;line-height:1.55;color:#56664f;margin:0 0 6px;">Every customer's pass, synced from the booking calendar. <strong>Assign each plan a coach</strong> — customers can't choose; they only see who you assign — then schedule its sessions.</p>
-          <p style="font-size:12.5px;color:#8a9579;font-family:'Spline Sans Mono',monospace;margin:0 0 18px;">{{ planAdminCount }} plan(s)</p>
+          <p style="font-size:14px;line-height:1.55;color:#56664f;margin:0 0 12px;">Every customer's pass. <strong>Process: ① Call → ② assign Coach + Schedule → ③ Approve (or Cancel).</strong> Approved &amp; cancelled passes stay here; every action is logged in the Bookings tab.</p>
+          <!-- FILTERS -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+            <input type="text" value="{{ plSearch }}" onInput="{{ setPlSearch }}" placeholder="Search name, email, reference…" style="flex:1;min-width:200px;padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;">
+            <select value="{{ plFilter }}" onChange="{{ setPlFilter }}" style="padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;background:#fffdf6;">
+              <sc-for list="{{ plStatusOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o.id }}">{{ o.name }}</option></sc-for>
+            </select>
+          </div>
+          <div style="font-size:12.5px;color:#8a9579;font-family:'Spline Sans Mono',monospace;margin:0 0 16px;">{{ planAdminCount }} plan(s) · <button onClick="{{ clearPlFilters }}" style="background:none;border:none;cursor:pointer;color:#4d7327;font-weight:700;font-size:12.5px;font-family:'Spline Sans Mono',monospace;text-decoration:underline;padding:0;">clear filters</button></div>
           <sc-if value="{{ noAdminPlans }}" hint-placeholder-val="{{ true }}">
-            <div style="background:#fffdf6;border:1px dashed rgba(36,66,50,0.2);border-radius:12px;padding:48px 24px;text-align:center;color:#8a9579;font-size:15px;">No plans yet. When a customer adds a plan in My Bookings, it shows here for coach assignment.</div>
+            <div style="background:#fffdf6;border:1px dashed rgba(36,66,50,0.2);border-radius:12px;padding:48px 24px;text-align:center;color:#8a9579;font-size:15px;">No plans match. When a customer adds a plan in My Bookings, it shows here.</div>
           </sc-if>
           <div style="display:flex;flex-direction:column;gap:12px;">
             <sc-for list="{{ adminPlanRows }}" as="pr" hint-placeholder-count="0">
@@ -1873,7 +1869,8 @@
                 </div>
                 </sc-if>
 
-                <div style="font-size:11.5px;color:#8a9579;font-family:'Spline Sans Mono',monospace;margin-top:14px;">Process: ① Call &amp; mark contacted → ② Schedule dates → ③ Approve (or Cancel)</div>
+                <sc-if value="{{ pr.active }}" hint-placeholder-val="{{ true }}">
+                <div style="font-size:11.5px;color:#8a9579;font-family:'Spline Sans Mono',monospace;margin-top:14px;">Process: ① Call &amp; mark contacted → ② assign Coach + Schedule dates → ③ Approve (or Cancel)</div>
                 <div style="margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
                   <sc-if value="{{ pr.hasPhone }}" hint-placeholder-val="{{ false }}"><a href="{{ pr.callHref }}" style="background:#244232;color:#f4efe4;text-decoration:none;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">① Call</a></sc-if>
                   <button onClick="{{ pr.markContacted }}" style="background:#e6efd6;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#4d7327;padding:9px 15px;border-radius:999px;">Mark</button>
@@ -1918,9 +1915,19 @@
                   </sc-if>
                 </div>
                 </sc-if>
+                </sc-if>
               </div>
             </sc-for>
           </div>
+
+          <!-- PAGINATION -->
+          <sc-if value="{{ plMultiPage }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px;">
+            <sc-if value="{{ plHasPrev }}" hint-placeholder-val="{{ true }}"><button onClick="{{ plPrev }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">← Prev</button></sc-if>
+            <span style="font-size:13px;color:#56664f;font-family:'Spline Sans Mono',monospace;">{{ plPageLabel }}</span>
+            <sc-if value="{{ plHasNext }}" hint-placeholder-val="{{ true }}"><button onClick="{{ plNext }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">Next →</button></sc-if>
+          </div>
+          </sc-if>
         </div>
         </sc-if>
 
@@ -2279,6 +2286,7 @@ class Component extends DCLogic {
     remotePlans: [],
     cancelHistory: [],
     allBookings: [],
+    activity: [],
     coachSplits: {},
     splitDefault: { coach: 80, equip: 10, range: 10 },
     splitDraft: {},
@@ -2286,6 +2294,9 @@ class Component extends DCLogic {
     bkCoach: 'all',
     bkSearch: '',
     bkPage: 0,
+    plFilter: 'all',
+    plSearch: '',
+    plPage: 0,
     acctLoading: false,
     acctError: '',
     acctName: '',
@@ -2431,7 +2442,8 @@ class Component extends DCLogic {
       this.setState({ authed: true, adminError: false, adminPass: '' });
       this.loadRemotePlans(); // pull every customer's passes from the backend
       this.loadCancellations(); // pull the cancellation history for the admin
-      this.loadAllBookings(); // every booking across the business (dashboard + bookings tab)
+      this.loadAllBookings(); // every booking across the business (dashboard stats)
+      this.loadActivity(); // the activity log shown in the Bookings tab
       this.loadSettings(); // per-coach payment splits + coach list
       return;
     }
@@ -2968,6 +2980,20 @@ class Component extends DCLogic {
     if (!cv || cv === 'any' || /any available/i.test(cv)) return false;
     return this.coaches().some(c => c.id.toLowerCase() === cv || (c.name || '').toLowerCase() === cv);
   }
+  // Record an admin action to the Activity log (shown in the Bookings tab).
+  logAction(ref, label, detail, name, email) {
+    const ep = this.endpoint(); if (!ep) return;
+    try {
+      fetch(ep, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'logAction', ref: ref || '', label: label || '', detail: detail || '', name: name || '', email: email || '' }),
+      }).then(() => setTimeout(() => this.loadActivity(), 600)).catch(() => {});
+    } catch (e) {}
+  }
+  loadActivity() {
+    const ep = this.endpoint(); if (!ep) return;
+    fetch(ep + '?action=activity').then(r => r.json()).then(res => { if (res && res.activity) this.setState({ activity: res.activity }); }).catch(() => {});
+  }
   // Assign / change the coach on a booking (updates the calendar event + Bookings sheet).
   assignBookingCoach(b, coachId) {
     const ep = this.endpoint(); if (!ep || !b) return;
@@ -3179,22 +3205,29 @@ class Component extends DCLogic {
     this.pushRemovePlan(email, ts, 'customer');
     this.setState(s => ({ remotePlans: (s.remotePlans || []).filter(p => !((p.email || '').toLowerCase() === email.toLowerCase() && p.ts === ts)) }));
   }
-  // Admin: cancel a customer's pass — cancel its scheduled calendar events (notifying
-  // the customer), remove it from the backend + this device, and log who did it.
+  // Admin: cancel a customer's pass. The plan now STAYS in Plans & Sessions (marked
+  // "Cancelled"); its scheduled calendar events are removed silently, the customer is
+  // emailed once, and the action is logged to the Bookings activity feed.
   adminCancelPlan(email, ts) {
     email = (email || '').trim();
-    if (typeof confirm !== 'undefined' && !confirm('Cancel this pass? Any scheduled sessions will be cancelled and removed from the calendar, and the customer will be emailed.')) return;
+    if (typeof confirm !== 'undefined' && !confirm('Cancel this pass? Any scheduled sessions will be cancelled and removed from the calendar, and the customer will be emailed. The pass stays in the list marked Cancelled.')) return;
     const plan = this.findPlan(email, ts);
     if (plan && Array.isArray(plan.sessions)) {
+      // Remove the calendar events silently (one summary email is sent below, not one per date).
       plan.sessions.forEach(s => { if (s && s.eventId) this.cancelBooking({ eventId: s.eventId, ref: s.ref || '', date: s.date || '', time: s.time || '', name: plan.holder || '', email: email }, false, 'admin'); });
     }
-    try { const key = this.acctPlansKey(email); const arr = (JSON.parse(localStorage.getItem(key) || '[]') || []).filter(p => p.ts !== ts); localStorage.setItem(key, JSON.stringify(arr)); } catch (e) {}
-    this.addDeletedPlan(email, ts);
-    this.pushRemovePlan(email, ts, 'admin'); // backend sends ONE pass-cancelled email
-    this.setState(s => ({
-      remotePlans: (s.remotePlans || []).filter(p => !((p.email || '').toLowerCase() === email.toLowerCase() && p.ts === ts)),
-      acctPlans: ((this.state.acctEmail || '').trim().toLowerCase() === email.toLowerCase()) ? (s.acctPlans || []).filter(p => p.ts !== ts) : s.acctPlans,
-    }));
+    // Keep the plan, mark it cancelled (and clear its sessions since the events are gone).
+    this.mutatePlan(email, ts, p => ({ ...p, status: 'cancelled', sessions: [] }));
+    const ep = this.endpoint();
+    if (ep) {
+      try {
+        fetch(ep, {
+          method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'planCancelEmail', email: email, ts: ts }),
+        }).catch(() => {});
+      } catch (e) {}
+    }
+    this.logAction((plan && plan.ref) || '', 'Cancelled', (plan && plan.name) || 'Pass', (plan && plan.holder) || email, email);
     this.forceUpdate();
   }
   // Admin: mark a pass holder as contacted (toggles, like the bookings list).
@@ -3228,6 +3261,7 @@ class Component extends DCLogic {
           }).catch(() => {});
         } catch (e) {}
       });
+      this.logAction(plan.ref || '', 'Approved', (plan.name || 'Plan'), plan.holder || email, email);
       setTimeout(() => this.loadAllBookings(), 1400);
     }
   }
@@ -3282,6 +3316,9 @@ class Component extends DCLogic {
   }
   assignPlanCoach(email, ts, coachId) {
     this.mutatePlan(email, ts, p => ({ ...p, coach: coachId || '' }));
+    const plan = this.findPlan(email, ts);
+    const coachName = coachId ? ((this.coachById(coachId) || {}).name || coachId) : 'Unassigned';
+    this.logAction((plan && plan.ref) || '', 'Coach changed', coachName, (plan && plan.holder) || email, email);
   }
   addPlanSession(email, ts, date, time, cap) {
     if (!date || !time) return;
@@ -3296,6 +3333,7 @@ class Component extends DCLogic {
     }));
     this.setState({ planEditDate: '' });
     this.syncPlanSessionToCalendar(email, ts, session);
+    this.logAction((existing && existing.ref) || '', 'Session scheduled', date + ' · ' + time, (existing && existing.holder) || email, email);
   }
   // Push a scheduled plan session to the Google Calendar (best-effort; no-op offline).
   syncPlanSessionToCalendar(email, ts, session) {
@@ -3334,6 +3372,7 @@ class Component extends DCLogic {
         body: JSON.stringify({ action: 'cancel', eventId: sess.eventId, ref: sess.ref || '', date: sess.date, time: sess.time, email: email, notify: false, by: 'admin' }),
       }).catch(() => {});
     }
+    if (sess) this.logAction((plan && plan.ref) || '', 'Session removed', sess.date + ' · ' + sess.time, (plan && plan.holder) || email, email);
   }
   openPlanEditor(key) {
     const idx = key.lastIndexOf('|');
@@ -3755,7 +3794,7 @@ class Component extends DCLogic {
         });
       },
     }));
-    const adminSetTab = (t) => () => { this.setState({ adminTab: t }); if (t === 'plans') this.loadRemotePlans(); if (t === 'dashboard') { this.loadAllBookings(); this.loadSettings(); } if (t === 'bookings') { this.loadAllBookings(); this.loadSettings(); } };
+    const adminSetTab = (t) => () => { this.setState({ adminTab: t }); if (t === 'plans') this.loadRemotePlans(); if (t === 'dashboard') { this.loadAllBookings(); this.loadSettings(); } if (t === 'bookings') { this.loadActivity(); this.loadSettings(); } };
     // Per-plan schedule limit: "N sessions/classes" → N; monthly/unlimited → no cap; otherwise 1 (Day Pass, hourly, single).
     const capFor = (name) => {
       const pk = cm.packages.find(p => p.name === name);
@@ -3772,9 +3811,24 @@ class Component extends DCLogic {
     const planMap = {};
     this.loadAllPlansLocal().forEach(p => { planMap[(p.email || '').toLowerCase() + '|' + p.ts] = p; });
     (this.state.remotePlans || []).forEach(p => { planMap[(p.email || '').toLowerCase() + '|' + p.ts] = { email: (p.email || '').toLowerCase(), name: p.name, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [], holder: p.holder || '', phone: p.phone || '', ref: p.ref || '', price: p.price || '', contacted: !!p.contacted, status: p.status || 'pending' }; });
-    // Approved plans move to the Bookings list (their sessions are now confirmed bookings),
-    // so they drop off the Plans & Sessions tab. The pass still shows in the customer's My Bookings.
-    const allPlans = Object.keys(planMap).map(k => planMap[k]).filter(p => p.status !== 'approved').sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    // All passes stay in Plans & Sessions (pending, approved, or cancelled) with filters + pagination.
+    const allPlansFull = Object.keys(planMap).map(k => planMap[k]).sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    const plFilter = this.state.plFilter || 'all';
+    const plSearch = (this.state.plSearch || '').trim().toLowerCase();
+    const plFiltered = allPlansFull.filter(p => {
+      const pst = String(p.status || 'pending').toLowerCase();
+      if (plFilter !== 'all' && pst !== plFilter) return false;
+      if (plSearch) {
+        const hay = ((p.name || '') + ' ' + (p.holder || '') + ' ' + (p.email || '') + ' ' + (p.ref || '')).toLowerCase();
+        if (hay.indexOf(plSearch) === -1) return false;
+      }
+      return true;
+    });
+    const PL_PAGE = 8;
+    const plTotal = plFiltered.length;
+    const plPageCount = Math.max(1, Math.ceil(plTotal / PL_PAGE));
+    const plPage = Math.min(Math.max(0, this.state.plPage || 0), plPageCount - 1);
+    const allPlans = plFiltered.slice(plPage * PL_PAGE, plPage * PL_PAGE + PL_PAGE);
     const adminPlanRows = allPlans.map(p => {
       const rowKey = p.email + '|' + p.ts;
       const isEditing = rowKey === planEditKey;
@@ -3804,10 +3858,11 @@ class Component extends DCLogic {
         contacted: !!p.contacted, statusLabel: p.contacted ? '✓ Contacted' : 'New',
         statusBg: p.contacted ? '#e6efd6' : '#fff1cf', statusFg: p.contacted ? '#4d7327' : '#8a6a1f',
         approved: (p.status === 'approved'),
-        notApproved: (p.status !== 'approved'),
-        apprLabel: (p.status === 'approved') ? 'Approved' : 'Pending',
-        apprBg: (p.status === 'approved') ? '#e6efd6' : '#fff1cf',
-        apprFg: (p.status === 'approved') ? '#4d7327' : '#8a6a1f',
+        notApproved: (p.status !== 'approved' && p.status !== 'cancelled'),
+        active: (p.status !== 'cancelled'),
+        apprLabel: (p.status === 'approved') ? 'Approved' : (p.status === 'cancelled' ? 'Cancelled' : 'Pending'),
+        apprBg: (p.status === 'approved') ? '#e6efd6' : (p.status === 'cancelled' ? '#f3e2e0' : '#fff1cf'),
+        apprFg: (p.status === 'approved') ? '#4d7327' : (p.status === 'cancelled' ? '#b4512f' : '#8a6a1f'),
         approvePlan: () => this.approvePlan(p.email, p.ts),
         markContacted: () => this.markPlanContacted(p.email, p.ts),
         cancelPlan: () => this.adminCancelPlan(p.email, p.ts),
@@ -3862,7 +3917,12 @@ class Component extends DCLogic {
     (this.state.acctBookings || []).concat(deviceForAcct).forEach(b => {
       // Pass sessions (scheduled by admin) belong under the pass, not as standalone session cards.
       if (b && /\(plan\)\s*$/i.test(b.program || '')) return;
-      const k = (b.ts != null ? 't' + b.ts : '') || (b.eventId ? 'e' + b.eventId : '') || ('r' + (b.ref || '') + '|' + (b.date || '') + '|' + (b.time || ''));
+      // Dedupe by the actual slot (date + time + program). The same session can arrive twice —
+      // once from this device and once from the calendar — with different timestamps/references;
+      // keying on the slot collapses those into one card.
+      const k = (b.date && b.time)
+        ? ('s|' + b.date + '|' + b.time + '|' + (b.program || ''))
+        : (b.eventId ? 'e' + b.eventId : (b.ref ? 'r' + b.ref : 't' + b.ts));
       if (k && acctSeen[k]) return;
       if (k) acctSeen[k] = 1;
       acctMerged.push(b);
@@ -4067,6 +4127,44 @@ class Component extends DCLogic {
       { id: 'booked', name: 'Pending', sel: bkFilter === 'booked' },
       { id: 'approved', name: 'Approved', sel: bkFilter === 'approved' },
       { id: 'cancelled', name: 'Cancelled', sel: bkFilter === 'cancelled' },
+    ];
+
+    // ---------- ADMIN: BOOKINGS TAB = ACTIVITY LOG ----------
+    const ACT_PAGE = 12;
+    const actFilter = this.state.bkFilter || 'all';   // reuse the bookings filter/search/page state
+    const actSearch = (this.state.bkSearch || '').trim().toLowerCase();
+    const actFiltered = (this.state.activity || []).filter(a => {
+      const act = String(a.action || '').toLowerCase();
+      if (actFilter === 'approved' && act.indexOf('approv') === -1) return false;
+      if (actFilter === 'cancelled' && act.indexOf('cancel') === -1) return false;
+      if (actFilter === 'coach' && act.indexOf('coach') === -1) return false;
+      if (actFilter === 'scheduled' && act.indexOf('schedul') === -1 && act.indexOf('session') === -1) return false;
+      if (actSearch) {
+        const hay = ((a.ref || '') + ' ' + (a.name || '') + ' ' + (a.action || '') + ' ' + (a.detail || '') + ' ' + (a.email || '')).toLowerCase();
+        if (hay.indexOf(actSearch) === -1) return false;
+      }
+      return true;
+    });
+    const actTotal = actFiltered.length;
+    const actPageCount = Math.max(1, Math.ceil(actTotal / ACT_PAGE));
+    const actPage = Math.min(Math.max(0, this.state.bkPage || 0), actPageCount - 1);
+    const activityRows = actFiltered.slice(actPage * ACT_PAGE, actPage * ACT_PAGE + ACT_PAGE).map(a => {
+      const act = String(a.action || '').toLowerCase();
+      let bg = '#eef1ea', fg = '#56664f';
+      if (act.indexOf('approv') !== -1) { bg = '#e6efd6'; fg = '#4d7327'; }
+      else if (act.indexOf('cancel') !== -1) { bg = '#f3e2e0'; fg = '#b4512f'; }
+      else if (act.indexOf('coach') !== -1) { bg = '#e3eef0'; fg = '#2f6b73'; }
+      else if (act.indexOf('schedul') !== -1 || act.indexOf('session') !== -1) { bg = '#fff1cf'; fg = '#8a6a1f'; }
+      return {
+        at: a.at || '', ref: a.ref || '', hasRef: !!(a.ref && String(a.ref).trim()),
+        action: a.action || '', detail: a.detail || '', hasDetail: !!(a.detail && String(a.detail).trim()),
+        name: a.name || '', hasName: !!(a.name && String(a.name).trim()),
+        actBg: bg, actFg: fg,
+      };
+    });
+    const actFilterOpts = [
+      { id: 'all', name: 'All actions' }, { id: 'approved', name: 'Approved' },
+      { id: 'cancelled', name: 'Cancelled' }, { id: 'coach', name: 'Coach changes' }, { id: 'scheduled', name: 'Scheduling' },
     ];
 
     // ---------- ADMIN: COACHES TAB ----------
@@ -4353,23 +4451,31 @@ class Component extends DCLogic {
       tabPlansBg: this.state.adminTab === 'plans' ? '#244232' : '#fffdf6', tabPlansFg: this.state.adminTab === 'plans' ? '#f4efe4' : '#244232',
       tabPricingBg: this.state.adminTab === 'pricing' ? '#244232' : '#fffdf6', tabPricingFg: this.state.adminTab === 'pricing' ? '#f4efe4' : '#244232',
       tabScheduleBg: this.state.adminTab === 'schedule' ? '#244232' : '#fffdf6', tabScheduleFg: this.state.adminTab === 'schedule' ? '#f4efe4' : '#244232',
-      adminPlanRows: adminPlanRows, planAdminCount: adminPlanRows.length, noAdminPlans: adminPlanRows.length === 0,
-      bookingRows: dbBookingRows, hasBookings: dbBookingRows.length > 0, noBookings: bkTotal === 0,
-      cancelRows, noCancels: cancelRows.length === 0,
-      bookingCount: bkTotal,
-      // Bookings filters
-      bkFilter, bkCoach, bkSearch: this.state.bkSearch || '',
-      bkStatusOpts, bkCoachOpts,
-      setBkFilter: (e) => this.setState({ bkFilter: e.target.value, bkPage: 0 }),
-      setBkCoach: (e) => this.setState({ bkCoach: e.target.value, bkPage: 0 }),
-      setBkSearch: (e) => this.setState({ bkSearch: e.target.value, bkPage: 0 }),
-      clearBkFilters: () => this.setState({ bkFilter: 'all', bkCoach: 'all', bkSearch: '', bkPage: 0 }),
-      refreshBookings: () => { this.loadAllBookings(); this.loadSettings(); },
-      // Bookings pagination
-      bkPageLabel: 'Page ' + (bkPage + 1) + ' of ' + bkPageCount,
-      bkHasPrev: bkPage > 0, bkHasNext: bkPage < bkPageCount - 1, bkMultiPage: bkPageCount > 1,
-      bkPrev: () => this.setState(s => ({ bkPage: Math.max(0, (s.bkPage || 0) - 1) })),
-      bkNext: () => this.setState(s => ({ bkPage: (s.bkPage || 0) + 1 })),
+      adminPlanRows: adminPlanRows, planAdminCount: plTotal, noAdminPlans: plTotal === 0,
+      // Plans & Sessions filters + pagination
+      plFilter, plSearch: this.state.plSearch || '',
+      plStatusOpts: [
+        { id: 'all', name: 'All' }, { id: 'pending', name: 'Pending' },
+        { id: 'approved', name: 'Approved' }, { id: 'cancelled', name: 'Cancelled' },
+      ],
+      setPlFilter: (e) => this.setState({ plFilter: e.target.value, plPage: 0 }),
+      setPlSearch: (e) => this.setState({ plSearch: e.target.value, plPage: 0 }),
+      clearPlFilters: () => this.setState({ plFilter: 'all', plSearch: '', plPage: 0 }),
+      plPageLabel: 'Page ' + (plPage + 1) + ' of ' + plPageCount,
+      plHasPrev: plPage > 0, plHasNext: plPage < plPageCount - 1, plMultiPage: plPageCount > 1,
+      plPrev: () => this.setState(s => ({ plPage: Math.max(0, (s.plPage || 0) - 1) })),
+      plNext: () => this.setState(s => ({ plPage: (s.plPage || 0) + 1 })),
+      // Bookings tab = ACTIVITY LOG
+      activityRows: activityRows, actCount: actTotal, actNone: actTotal === 0,
+      actFilter: actFilter, actFilterOpts: actFilterOpts, actSearch: this.state.bkSearch || '',
+      setActFilter: (e) => this.setState({ bkFilter: e.target.value, bkPage: 0 }),
+      setActSearch: (e) => this.setState({ bkSearch: e.target.value, bkPage: 0 }),
+      clearActFilters: () => this.setState({ bkFilter: 'all', bkSearch: '', bkPage: 0 }),
+      refreshActivity: () => this.loadActivity(),
+      actPageLabel: 'Page ' + (actPage + 1) + ' of ' + actPageCount,
+      actHasPrev: actPage > 0, actHasNext: actPage < actPageCount - 1, actMultiPage: actPageCount > 1,
+      actPrev: () => this.setState(s => ({ bkPage: Math.max(0, (s.bkPage || 0) - 1) })),
+      actNext: () => this.setState(s => ({ bkPage: (s.bkPage || 0) + 1 })),
       pkgEdits, scheduleEdit,
       funShootEdit: cm.funShoot,
       setFunShoot: (e) => saveCM({ funShoot: e.target.value }),

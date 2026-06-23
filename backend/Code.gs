@@ -70,7 +70,8 @@ var DB_NAME = 'Greenpark Archery — Database';
 var DB_SHEETS = {
   bookings: { name: 'Bookings',      headers: ['Booked At','Ref','Status','Date','Time','Program','Name','Email','Mobile','Archers','Amount','Coach','Concession','Roster','Event ID'] },
   passes:   { name: 'Passes',        headers: ['Saved At','Email','Holder','Pass','Coach','Sessions','Plan ID'] },
-  cancels:  { name: 'Cancellations', headers: ['Cancelled At','Ref','Date','Time','Program','Name','Email','Cancelled By','Event ID'] }
+  cancels:  { name: 'Cancellations', headers: ['Cancelled At','Ref','Date','Time','Program','Name','Email','Cancelled By','Event ID'] },
+  activity: { name: 'Activity',      headers: ['At','Ref','Action','Detail','Name','Email'] }
 };
 
 function getDb_() {
@@ -95,6 +96,8 @@ function dbSheet_(key) {
   return sh;
 }
 function dbAppend_(key, row) { try { dbSheet_(key).appendRow(row); } catch (e) {} } // never let logging break a booking
+// Append one entry to the Activity log (the admin Bookings tab shows this).
+function dbLog_(ref, action, detail, name, email) { dbAppend_('activity', [nowStr_(), ref || '', action || '', detail || '', name || '', email || '']); }
 function nowStr_() { return Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd HH:mm:ss'); }
 function concSummary_(body) { var l = concLine_(body); return l ? l.replace(/^\nConcession:\s*/, '') : ''; }
 
@@ -537,9 +540,12 @@ function doGet(e) {
     if (action === 'coachavail') {
       return listCoachAvail_(e.parameter.coach);
     }
+    if (action === 'activity') {
+      return listActivity_();
+    }
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v10', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true });
+      return json_({ version: 'db-v11', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -627,6 +633,8 @@ function doPost(e) {
     if (body.action === 'setBookingStatus')  return setBookingStatus_(body);
     if (body.action === 'approveSession')    return approveSession_(body);
     if (body.action === 'setBookingCoach')   return setBookingCoach_(body);
+    if (body.action === 'logAction')         return logAction_(body);
+    if (body.action === 'planCancelEmail')   return planCancelEmail_(body);
     return json_({ ok: false, reason: 'unknown action' });
   } catch (err) {
     return json_({ ok: false, reason: 'error', message: String(err) });
@@ -702,6 +710,37 @@ function listCancellations_() {
     out.reverse();
     return json_({ cancellations: out });
   } catch (e) { return json_({ cancellations: [], error: String(e) }); }
+}
+
+// Activity log for the admin Bookings tab (newest first): every approve/cancel/coach change.
+function listActivity_() {
+  try {
+    var sh = dbSheet_('activity');
+    var data = sh.getDataRange().getValues();
+    var out = [];
+    for (var r = 1; r < data.length; r++) {
+      var row = data[r];
+      out.push({ at: String(row[0] || ''), ref: String(row[1] || ''), action: String(row[2] || ''), detail: String(row[3] || ''), name: String(row[4] || ''), email: String(row[5] || '') });
+    }
+    out.reverse();
+    return json_({ activity: out });
+  } catch (e) { return json_({ activity: [], error: String(e) }); }
+}
+// Record an admin action (approve / cancel / coach change / schedule) from the website.
+function logAction_(body) {
+  dbLog_(body.ref || '', body.label || '', body.detail || '', body.name || '', body.email || '');
+  return json_({ ok: true });
+}
+// Email a pass-cancelled notice WITHOUT deleting the plan (the plan stays, marked cancelled).
+function planCancelEmail_(body) {
+  var email = (body.email || '').trim().toLowerCase();
+  if (!email || body.ts == null) return json_({ ok: false });
+  var raw = PropertiesService.getScriptProperties().getProperty(planKey_(email, body.ts));
+  var plan = null; if (raw) { try { plan = JSON.parse(raw); } catch (e) {} }
+  if (!plan) return json_({ ok: false, reason: 'not found' });
+  var emailed = false;
+  try { emailed = sendPlanCancellation_({ email: email, holder: plan.holder, plan: plan.name, ref: plan.ref || '', sessions: plan.sessions || [] }); } catch (e) {}
+  return json_({ ok: true, emailed: emailed });
 }
 
 // Coerce a sheet cell that may be a Date back to 'yyyy-MM-dd'.
@@ -1157,6 +1196,8 @@ function cancel_(body) {
   // Record the cancellation (who + when) and mark the booking row cancelled.
   dbMarkCancelled_(evId, ref, dateStr, time);
   dbAppend_('cancels', [nowStr_(), ref, dateStr, time, program, body.name || '', custEmail, (body.by || 'customer'), evId]);
+  // Log real cancellations to the activity feed (skip silent plan-session swaps where notify===false).
+  if (body.notify !== false) dbLog_(ref, 'Cancelled', (program || '') + (dateStr ? (' · ' + dateStr + (time ? ' ' + time : '')) : ''), body.name || '', custEmail);
 
   var emailed = false;
   if (body.notify !== false && custEmail) {
