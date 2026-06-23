@@ -3881,7 +3881,7 @@ class Component extends DCLogic {
       const noSlot = openRange ? (mPairs === 0) : (chosenTimes.length === 0);
       const sc = openRange ? mPairs : (this.state.slotTimes || []).length;
       const target = Math.max(1, this.state.sessionTarget || 1);
-      if (sc !== target) { this.setState({ bookingStatus: 'sessionMismatch' }); return; }
+      if (this.state.page === 'contact' && sc !== target) { this.setState({ bookingStatus: 'sessionMismatch' }); return; }
       if (!f.name.trim() || !f.phone.trim() || !validEmail(f.email) || noSlot || archersBlock || proofBlock) { this.setState({ formError: true }); return; }
       this.setState({ formError: false });
       this.bookSlot(f, resolvedArchers);
@@ -3974,10 +3974,11 @@ class Component extends DCLogic {
     const setSession = (n) => () => this.setState({ sessionTarget: Math.min(20, Math.max(Math.max(1, slotCount), n)), bookingStatus: '' });
     const dayCount = multiDateMode ? selDates.filter(d => (multiTimesState[d] || []).length > 0).length : (chosenTimes.length > 0 ? 1 : 0);
     const unlimitedSlots = this.bothConcessions(this.state.form.program || '');
-    const billableSessions = unlimitedSlots ? dayCount : slotCount;
+    const effSessions = Math.max(slotCount, Math.max(1, st.sessionTarget || 1));
+    const billableSessions = unlimitedSlots ? dayCount : effSessions;
     const costSubtotal = rrate * party * billableSessions;
     const discountRate = this.discountFor(party);
-    const costTotal = this.priceFor(this.state.form.program || '', party, Math.max(slotCount, Math.max(1, st.sessionTarget||1)), dayCount);
+    const costTotal = this.priceFor(this.state.form.program || '', party, effSessions, dayCount);
     const groupDiscountAmount = Math.round(costSubtotal * discountRate);
     const eligPer = this.eligPerArcher();
     const eligDiscountAmount = eligPer * party * billableSessions;
@@ -3996,7 +3997,7 @@ class Component extends DCLogic {
     const acrossDays = (multiDateMode && dayCount > 1) ? (' across ' + dayCount + ' days') : '';
     const costBreakdown = unlimitedActive
       ? (peso(rrate) + ' \u00D7 ' + party + (party === 1 ? ' archer' : ' archers') + ' \u00B7 flat per day \u00D7 ' + dayCount + (dayCount === 1 ? ' day' : ' days'))
-      : (peso(rrate) + ' \u00D7 ' + party + (party === 1 ? ' archer' : ' archers') + ' \u00D7 ' + slotCount + (slotCount === 1 ? ' session' : ' sessions') + acrossDays);
+      : (peso(rrate) + ' \u00D7 ' + party + (party === 1 ? ' archer' : ' archers') + ' \u00D7 ' + effSessions + (effSessions === 1 ? ' session' : ' sessions') + acrossDays);
     const costSubtotalLabel = peso(costSubtotal);
     const groupDiscountAmountLabel = '\u2212' + peso(groupDiscountAmount);
     const discountAmountLabel = '\u2212' + peso(discountAmount);
