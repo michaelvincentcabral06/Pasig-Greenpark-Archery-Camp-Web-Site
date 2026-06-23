@@ -54,10 +54,23 @@ var OPEN_HOURS = {
 // site (the `coaches()` list in the front-end). Open Range is drop-in (no coach);
 // every other program is coach-led and shows only hours the chosen coach opened.
 var COACHES = [
-  { id: 'michael', name: 'Michael Cabral', pass: 'michael2026' },
-  { id: 'james',   name: 'James Victoria', pass: 'james2026' },
-  { id: 'rotsen',  name: 'Rotsen Vinluan', pass: 'rotsen2026' }
+  { id: 'michael', name: 'Michael Cabral', first: 'Michael', role: 'Head Coach',          pass: 'michael2026' },
+  { id: 'james',   name: 'James Victoria', first: 'James',   role: 'Youth Program Lead',   pass: 'james2026' },
+  { id: 'rotsen',  name: 'Rotsen Vinluan', first: 'Rotsen',  role: 'Range Coach',          pass: 'rotsen2026' }
 ];
+
+// The live coach roster is stored in Script Properties so the admin can add/edit/remove
+// coaches from the website (Coaches tab). It seeds from the COACHES constant above the
+// first time it's read. Every coach lookup below goes through getCoaches_().
+var COACHES_PROP_KEY = 'COACHES_JSON';
+function getCoaches_() {
+  var raw = PropertiesService.getScriptProperties().getProperty(COACHES_PROP_KEY);
+  if (raw) { try { var arr = JSON.parse(raw); if (arr && arr.length) return arr; } catch (e) {} }
+  return COACHES;
+}
+function saveCoaches_(list) {
+  PropertiesService.getScriptProperties().setProperty(COACHES_PROP_KEY, JSON.stringify(list || []));
+}
 // ================================================================
 
 // ====================== DATABASE (Google Sheet) ======================
@@ -245,7 +258,8 @@ function countByHour_(dateStr) {
 // means the coach keeps the standard hours for that weekday.
 function coachKey_(coachId, dateStr) { return 'avail:' + coachId + ':' + dateStr; }
 function coachById_(id) {
-  for (var i = 0; i < COACHES.length; i++) if (COACHES[i].id === id) return COACHES[i];
+  var list = getCoaches_();
+  for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
   return null;
 }
 function coachHoursFor_(coachId, dateStr, dow) {
@@ -261,7 +275,7 @@ function hoursForRequest_(dateStr, dow, coachId) {
   if (coachId && coachById_(coachId)) return coachHoursFor_(coachId, dateStr, dow);
   if (coachId === 'any') {
     var set = {};
-    COACHES.forEach(function (c) {
+    getCoaches_().forEach(function (c) {
       coachHoursFor_(c.id, dateStr, dow).forEach(function (h) { set[h] = true; });
     });
     return Object.keys(set).map(function (h) { return parseInt(h, 10); }).sort(function (a, b) { return a - b; });
@@ -452,12 +466,15 @@ function sendPlanSchedule_(o) {
   var who = o.holder || 'there';
   var sess = (o.sessions || []).slice().sort(function (a, b) { return (a.date + a.time).localeCompare(b.date + b.time); });
   if (!sess.length) return false;
+  var upd = !!o.updated;
   var rows = sess.map(function (s) { return '  • ' + prettyDate_(s.date) + ' · ' + s.time; });
-  var subject = BUSINESS_NAME + ' — Your sessions are scheduled' + (o.ref ? ' (' + o.ref + ')' : '');
+  var subject = BUSINESS_NAME + (upd ? ' — Your sessions have been rescheduled' : ' — Your sessions are scheduled') + (o.ref ? ' (' + o.ref + ')' : '');
   var lines = [
     'Hi ' + who + ',',
     '',
-    'Good news — your ' + (o.plan || 'pass') + ' sessions are scheduled:',
+    (upd
+      ? ('Your ' + (o.plan || 'pass') + ' booking has been updated. Here is your current schedule:')
+      : ('Good news — your ' + (o.plan || 'pass') + ' sessions are scheduled:')),
     '',
   ].concat(rows).concat([
     '',
@@ -470,8 +487,8 @@ function sendPlanSchedule_(o) {
   ]).filter(function (l) { return l !== ''; });
   var htmlRows = sess.map(function (s) { return '<tr><td style="padding:6px 0;color:#244232;font-weight:bold;">' + escapeHtml_(prettyDate_(s.date)) + '</td><td style="padding:6px 0;text-align:right;">' + escapeHtml_(s.time) + '</td></tr>'; }).join('');
   var html = '<div style="font-family:Arial,Helvetica,sans-serif;color:#1b2a1f;max-width:520px;">'
-    + '<h2 style="color:#244232;margin:0 0 4px;">Your sessions are scheduled</h2>'
-    + '<p style="color:#56664f;margin:0 0 18px;">Hi ' + escapeHtml_(who) + ', here are your ' + escapeHtml_(o.plan || 'pass') + ' dates:</p>'
+    + '<h2 style="color:#244232;margin:0 0 4px;">' + (upd ? 'Your sessions have been rescheduled' : 'Your sessions are scheduled') + '</h2>'
+    + '<p style="color:#56664f;margin:0 0 18px;">Hi ' + escapeHtml_(who) + ', here ' + (upd ? 'is your updated' : 'are your') + ' ' + escapeHtml_(o.plan || 'pass') + ' ' + (upd ? 'schedule' : 'dates') + ':</p>'
     + '<table style="border-collapse:collapse;width:100%;font-size:14px;">' + htmlRows + '</table>'
     + (o.coachName ? ('<p style="font-size:13px;color:#56664f;margin:16px 0 0;"><strong>Coach:</strong> ' + escapeHtml_(o.coachName) + '</p>') : '')
     + (o.ref ? ('<p style="font-size:12.5px;color:#8a9579;margin:6px 0 0;">Reference: ' + escapeHtml_(o.ref) + '</p>') : '')
@@ -543,9 +560,12 @@ function doGet(e) {
     if (action === 'activity') {
       return listActivity_();
     }
+    if (action === 'coaches') {
+      return listCoaches_();
+    }
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v11', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true });
+      return json_({ version: 'db-v12', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -635,6 +655,10 @@ function doPost(e) {
     if (body.action === 'setBookingCoach')   return setBookingCoach_(body);
     if (body.action === 'logAction')         return logAction_(body);
     if (body.action === 'planCancelEmail')   return planCancelEmail_(body);
+    if (body.action === 'addCoach')          return addCoach_(body);
+    if (body.action === 'updateCoach')       return updateCoach_(body);
+    if (body.action === 'deleteCoach')       return deleteCoach_(body);
+    if (body.action === 'clearAll')          return clearAll_(body);
     return json_({ ok: false, reason: 'unknown action' });
   } catch (err) {
     return json_({ ok: false, reason: 'error', message: String(err) });
@@ -694,7 +718,7 @@ function planScheduleEmail_(body) {
   var coachName = '';
   if (plan.coach) { var c = coachById_(plan.coach); coachName = c ? c.name : ''; }
   var emailed = false;
-  try { emailed = sendPlanSchedule_({ email: email, holder: plan.holder, plan: plan.name, ref: plan.ref || '', sessions: plan.sessions || [], coachName: coachName }); } catch (e) {}
+  try { emailed = sendPlanSchedule_({ email: email, holder: plan.holder, plan: plan.name, ref: plan.ref || '', sessions: plan.sessions || [], coachName: coachName, updated: !!body.updated }); } catch (e) {}
   return json_({ ok: true, emailed: emailed });
 }
 // Cancellation history for the admin dashboard (newest first).
@@ -833,12 +857,13 @@ function splitKey_(id) { return 'split:' + id; }
 function getSettings_() {
   var props = PropertiesService.getScriptProperties();
   var splits = {};
-  COACHES.forEach(function (c) {
+  var coaches = getCoaches_();
+  coaches.forEach(function (c) {
     var raw = props.getProperty(splitKey_(c.id));
     var s = null; if (raw) { try { s = JSON.parse(raw); } catch (e) {} }
     splits[c.id] = s || { coach: DEFAULT_SPLIT.coach, equip: DEFAULT_SPLIT.equip, range: DEFAULT_SPLIT.range };
   });
-  return json_({ splits: splits, defaultSplit: DEFAULT_SPLIT, coaches: COACHES.map(function (c) { return { id: c.id, name: c.name }; }) });
+  return json_({ splits: splits, defaultSplit: DEFAULT_SPLIT, coaches: coaches.map(function (c) { return { id: c.id, name: c.name }; }) });
 }
 // Every saved availability override for one coach, so the admin (or the coach on a
 // new device) sees their real custom hours, not just the standard weekday template.
@@ -862,6 +887,91 @@ function setSplit_(body) {
   var s = { coach: Number(body.coachPct) || 0, equip: Number(body.equipPct) || 0, range: Number(body.rangePct) || 0 };
   PropertiesService.getScriptProperties().setProperty(splitKey_(c.id), JSON.stringify(s));
   return json_({ ok: true, coach: c.id, split: s });
+}
+
+// ---------- COACHES: admin add / edit / remove (stored in Script Properties) ----------
+// The list (incl. passcodes) is returned so the website behaves the same on any device —
+// this matches the existing model where coach passcodes already live in the public site.
+function listCoaches_() {
+  return json_({ coaches: getCoaches_() });
+}
+function slugifyCoachId_(name) {
+  var base = String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'coach';
+  var list = getCoaches_(); var id = base, n = 2;
+  while (list.some(function (c) { return c.id === id; })) { id = base + '-' + n; n++; }
+  return id;
+}
+function addCoach_(body) {
+  var name = (body.name || '').trim();
+  if (!name) return json_({ ok: false, reason: 'missing name' });
+  var list = getCoaches_().slice();
+  var id = (body.id && String(body.id).trim()) ? String(body.id).trim() : slugifyCoachId_(name);
+  if (list.some(function (c) { return c.id === id; })) return json_({ ok: false, reason: 'duplicate id' });
+  var coach = {
+    id: id, name: name, first: name.split(' ')[0],
+    role: (body.role || '').trim() || 'Coach',
+    pass: (body.pass || '').trim() || (id + '2026')
+  };
+  list.push(coach);
+  saveCoaches_(list);
+  dbLog_('', 'Coach added', coach.name + (coach.role ? (' · ' + coach.role) : ''), coach.name, '');
+  return json_({ ok: true, coach: coach, coaches: list });
+}
+function updateCoach_(body) {
+  var id = (body.id || '').trim();
+  var list = getCoaches_().slice();
+  var i = -1; for (var k = 0; k < list.length; k++) if (list[k].id === id) { i = k; break; }
+  if (i < 0) return json_({ ok: false, reason: 'not found' });
+  var c = list[i];
+  if (body.name != null && String(body.name).trim()) { c.name = String(body.name).trim(); c.first = c.name.split(' ')[0]; }
+  if (body.role != null) c.role = String(body.role).trim();
+  if (body.pass != null && String(body.pass).trim()) c.pass = String(body.pass).trim();
+  list[i] = c;
+  saveCoaches_(list);
+  dbLog_('', 'Coach updated', c.name + (c.role ? (' · ' + c.role) : ''), c.name, '');
+  return json_({ ok: true, coach: c, coaches: list });
+}
+function deleteCoach_(body) {
+  var id = (body.id || '').trim();
+  var list = getCoaches_().slice();
+  var removed = null;
+  var next = list.filter(function (c) { if (c.id === id) { removed = c; return false; } return true; });
+  if (!removed) return json_({ ok: false, reason: 'not found' });
+  saveCoaches_(next);
+  dbLog_('', 'Coach removed', removed.name, removed.name, '');
+  return json_({ ok: true, coaches: next });
+}
+
+// ---------- RESET: wipe every booking so the owner can test from scratch ----------
+// Deletes all website-created calendar events, clears the data sheets (keeps headers),
+// and removes all stored plans. Coaches, payment splits, and coach availability are kept.
+function clearAll_(body) {
+  var deletedEvents = 0;
+  try {
+    var cal = getCalendar_();
+    var from = new Date(); from.setDate(from.getDate() - 400);
+    var to = new Date(); to.setDate(to.getDate() + 540);
+    var events = cal.getEvents(from, to);
+    events.forEach(function (ev) {
+      var d = ev.getDescription() || '';
+      if (d.indexOf('Booked via website') !== -1 || /Ref:\s*PGA-/i.test(d)) {
+        try { ev.deleteEvent(); deletedEvents++; } catch (e) {}
+      }
+    });
+  } catch (e) {}
+  ['bookings', 'cancels', 'activity', 'passes'].forEach(function (key) {
+    try {
+      var sh = dbSheet_(key);
+      var last = sh.getLastRow();
+      if (last > 1) sh.getRange(2, 1, last - 1, sh.getLastColumn()).clearContent();
+    } catch (e) {}
+  });
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var all = props.getProperties();
+    for (var pk in all) { if (pk.indexOf('plan:') === 0) props.deleteProperty(pk); }
+  } catch (e) {}
+  return json_({ ok: true, deletedEvents: deletedEvents });
 }
 
 // Approve one plan session: flip its Bookings row to "approved" (and set the amount),

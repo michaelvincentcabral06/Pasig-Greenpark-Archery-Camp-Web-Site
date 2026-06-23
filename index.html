@@ -1806,6 +1806,7 @@
                 <div style="flex:1;min-width:180px;">
                   <div style="font-size:14px;font-weight:700;color:#1b2a1f;"><sc-if value="{{ a.hasRef }}" hint-placeholder-val="{{ true }}">{{ a.ref }}</sc-if><sc-if value="{{ a.hasName }}" hint-placeholder-val="{{ false }}"> · {{ a.name }}</sc-if></div>
                   <sc-if value="{{ a.hasDetail }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#56664f;font-family:'Spline Sans Mono',monospace;margin-top:2px;">{{ a.detail }}</div></sc-if>
+                  <sc-if value="{{ a.hasPhone }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#3c6b48;font-family:'Spline Sans Mono',monospace;margin-top:2px;">📞 <a href="{{ a.callHref }}" style="color:#3c6b48;text-decoration:none;font-weight:700;">{{ a.phone }}</a></div></sc-if>
                 </div>
                 <div style="font-size:12px;color:#a6b09a;font-family:'Spline Sans Mono',monospace;">{{ a.at }}</div>
               </div>
@@ -1851,6 +1852,7 @@
                     </div>
                     <sc-if value="{{ pr.hasHolder }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;font-weight:700;color:#244232;margin-top:2px;">{{ pr.holder }}</div></sc-if>
                     <div style="font-size:13px;color:#56664f;font-family:'Spline Sans Mono',monospace;margin-top:3px;">{{ pr.email }}</div>
+                    <sc-if value="{{ pr.hasPhone }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:#3c6b48;font-family:'Spline Sans Mono',monospace;margin-top:3px;">📞 <a href="{{ pr.callHref }}" style="color:#3c6b48;text-decoration:none;font-weight:700;">{{ pr.phone }}</a></div></sc-if>
                     <div style="font-size:12px;color:#a6b09a;font-family:'Spline Sans Mono',monospace;margin-top:3px;">added {{ pr.when }} · {{ pr.countLabel }}</div>
                     <sc-if value="{{ pr.hasRef }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#3c6b48;font-family:'Spline Sans Mono',monospace;margin-top:2px;">Ref {{ pr.ref }}</div></sc-if>
                   </div>
@@ -1880,9 +1882,7 @@
                     <label style="font-size:13px;font-weight:700;color:#244232;">Coach</label>
                     <select value="{{ pr.coach }}" onChange="{{ pr.setCoach }}" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.18);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;min-width:160px;">
                       <option value="">Unassigned</option>
-                      <option value="michael">Michael Cabral</option>
-                      <option value="james">James Victoria</option>
-                      <option value="rotsen">Rotsen Vinluan</option>
+                      <sc-for list="{{ coachSelectOpts }}" as="co" hint-placeholder-count="3"><option value="{{ co.id }}">{{ co.name }}</option></sc-for>
                     </select>
                   </div>
                 </div>
@@ -1932,16 +1932,45 @@
         <!-- COACHES TAB -->
         <sc-if value="{{ tabCoaches }}" hint-placeholder-val="{{ false }}">
         <div>
-          <p style="font-size:14px;line-height:1.55;color:#56664f;margin:0 0 6px;">Your coaching team. Pick a coach to <strong>view and edit which hours they're available</strong>, date by date — the same schedule customers book against. Set each coach's payment split on the <strong>Dashboard</strong>.</p>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:18px 0 26px;">
+          <p style="font-size:14px;line-height:1.55;color:#56664f;margin:0 0 6px;">Your coaching team. <strong>Add, edit, or remove coaches</strong> below — each gets a portal passcode to set their own hours. Pick a coach to <strong>view and edit which hours they're available</strong>. Set each coach's payment split on the <strong>Dashboard</strong>.</p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:18px 0 18px;">
             <sc-for list="{{ adminCoachCards }}" as="cc" hint-placeholder-count="3">
               <div style="background:{{ cc.bg }};border:1px solid rgba(36,66,50,0.12);border-radius:14px;padding:18px 20px;">
-                <div style="font-size:17px;font-weight:800;color:{{ cc.fg }};">{{ cc.name }}</div>
-                <div style="font-size:13px;color:{{ cc.sub }};margin-top:2px;">{{ cc.role }}</div>
-                <div style="font-size:12.5px;color:{{ cc.sub }};font-family:'Spline Sans Mono',monospace;margin-top:6px;">{{ cc.upcomingLabel }}</div>
-                <button onClick="{{ cc.pick }}" style="margin-top:14px;background:#7fb43f;color:#1b2a1f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;">{{ cc.btnLabel }}</button>
+                <sc-if value="{{ cc.notEditing }}" hint-placeholder-val="{{ true }}">
+                  <div style="font-size:17px;font-weight:800;color:{{ cc.fg }};">{{ cc.name }}</div>
+                  <div style="font-size:13px;color:{{ cc.sub }};margin-top:2px;">{{ cc.role }}</div>
+                  <div style="font-size:12.5px;color:{{ cc.sub }};font-family:'Spline Sans Mono',monospace;margin-top:6px;">{{ cc.upcomingLabel }}</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">
+                    <button onClick="{{ cc.pick }}" style="background:#7fb43f;color:#1b2a1f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 14px;border-radius:999px;">{{ cc.btnLabel }}</button>
+                    <button onClick="{{ cc.startEdit }}" style="background:#f4efe4;color:#244232;border:1px solid rgba(36,66,50,0.18);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 14px;border-radius:999px;">Edit</button>
+                    <button onClick="{{ cc.remove }}" style="background:#f3e2e0;color:#b4512f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 14px;border-radius:999px;">Remove</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ cc.editing }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:8px;">
+                    <label style="font-size:11.5px;font-weight:700;color:#244232;">Name<input value="{{ cc.editName }}" onInput="{{ cc.setEditName }}" style="display:block;width:100%;box-sizing:border-box;margin-top:3px;padding:9px 11px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:13.5px;font-family:'Hanken Grotesk',sans-serif;"></label>
+                    <label style="font-size:11.5px;font-weight:700;color:#244232;">Role<input value="{{ cc.editRole }}" onInput="{{ cc.setEditRole }}" style="display:block;width:100%;box-sizing:border-box;margin-top:3px;padding:9px 11px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:13.5px;font-family:'Hanken Grotesk',sans-serif;"></label>
+                    <label style="font-size:11.5px;font-weight:700;color:#244232;">Portal passcode<input value="{{ cc.editPass }}" onInput="{{ cc.setEditPass }}" style="display:block;width:100%;box-sizing:border-box;margin-top:3px;padding:9px 11px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:13.5px;font-family:'Spline Sans Mono',monospace;"></label>
+                    <div style="display:flex;gap:8px;margin-top:4px;">
+                      <button onClick="{{ cc.saveEdit }}" style="background:#4d7327;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 14px;border-radius:999px;">Save</button>
+                      <button onClick="{{ cc.cancelEdit }}" style="background:#eef1ea;color:#56664f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 14px;border-radius:999px;">Cancel</button>
+                    </div>
+                  </div>
+                </sc-if>
               </div>
             </sc-for>
+          </div>
+
+          <!-- ADD A COACH -->
+          <div style="background:#fffdf6;border:1px dashed rgba(36,66,50,0.22);border-radius:14px;padding:18px 20px;margin:0 0 28px;">
+            <div style="font-size:14px;font-weight:800;color:#244232;margin-bottom:12px;">Add a coach</div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
+              <label style="font-size:11.5px;font-weight:700;color:#244232;flex:1;min-width:150px;">Name<input value="{{ newCoachName }}" onInput="{{ setNewCoachName }}" placeholder="e.g. Maria Santos" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:10px 12px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;"></label>
+              <label style="font-size:11.5px;font-weight:700;color:#244232;flex:1;min-width:150px;">Role<input value="{{ newCoachRole }}" onInput="{{ setNewCoachRole }}" placeholder="e.g. Range Coach" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:10px 12px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;"></label>
+              <label style="font-size:11.5px;font-weight:700;color:#244232;flex:1;min-width:150px;">Portal passcode<input value="{{ newCoachPass }}" onInput="{{ setNewCoachPass }}" placeholder="auto if blank" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:10px 12px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:14px;font-family:'Spline Sans Mono',monospace;"></label>
+              <button onClick="{{ addCoach }}" style="background:#244232;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;padding:11px 20px;border-radius:999px;">+ Add coach</button>
+            </div>
+            <div style="font-size:12px;color:#8a9579;font-family:'Spline Sans Mono',monospace;margin-top:10px;">The passcode lets the coach sign in to set their own hours. Leave blank to auto-generate one. Adds/edits/removals are recorded in the Bookings activity log.</div>
           </div>
 
           <sc-if value="{{ adminCoachPicked }}" hint-placeholder-val="{{ true }}">
@@ -2012,6 +2041,13 @@
           </div>
           </sc-if>
           <sc-if value="{{ adminCoachPicked }}" hint-placeholder-val="{{ false }}"></sc-if>
+
+          <!-- DANGER ZONE: reset everything for fresh testing -->
+          <div style="background:#fcefec;border:1px solid rgba(180,81,47,0.3);border-radius:14px;padding:18px 20px;margin-top:30px;">
+            <div style="font-size:14px;font-weight:800;color:#b4512f;margin-bottom:4px;">Danger zone — reset all bookings</div>
+            <p style="font-size:13px;line-height:1.5;color:#8a5a48;margin:0 0 12px;">Deletes every website booking and plan: removes the calendar events the site created, clears the Bookings, Cancellations, and Activity history, and removes all customer plans. <strong>Coaches and payment splits are kept.</strong> Use this to start testing from a clean slate. This cannot be undone.</p>
+            <button onClick="{{ resetAllBookings }}" style="background:#b4512f;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;font-weight:700;padding:11px 20px;border-radius:999px;opacity:{{ resetOpacity }};">{{ resetLabel }}</button>
+          </div>
         </div>
         </sc-if>
 
@@ -2329,18 +2365,113 @@ class Component extends DCLogic {
     coachAvail: {},         // { coachId: { 'YYYY-MM-DD': [9,10,..] } }
     coachCalMonth: '',
     coachEditDate: '',
+    // ----- COACH ROSTER (admin add/edit/remove; backend-stored) -----
+    coachList: null,        // null until loaded; falls back to the built-in defaults
+    newCoachName: '', newCoachRole: '', newCoachPass: '',
+    coachEditId: '',        // which coach is being edited inline
+    coachEditName: '', coachEditRole: '', coachEditPass: '',
+    coachBusy: false,
+    resetting: false,
   };
 
   // ===== COACHES =====
   // Each coach has their own portal passcode and sets their own per-date hours.
-  coaches() {
+  coachesDefault() {
     return [
       { id: 'michael', name: 'Michael Cabral', first: 'Michael', role: 'Head Coach', pass: 'michael2026' },
       { id: 'james',   name: 'James Victoria', first: 'James',   role: 'Youth Program Lead', pass: 'james2026' },
       { id: 'rotsen',  name: 'Rotsen Vinluan', first: 'Rotsen',  role: 'Range Coach', pass: 'rotsen2026' },
     ];
   }
+  // The live roster: backend-managed list when available (cached in state/localStorage),
+  // otherwise the built-in defaults so the site works before the first load resolves.
+  coaches() {
+    const list = this.state.coachList;
+    return (list && list.length) ? list : this.coachesDefault();
+  }
   coachById(id) { return this.coaches().find(c => c.id === id) || null; }
+  // Pull the coach roster from the backend (cross-device) and cache it.
+  loadCoaches() {
+    const ep = this.endpoint(); if (!ep) return;
+    fetch(ep + '?action=coaches').then(r => r.json()).then(res => {
+      if (res && res.coaches && res.coaches.length) this.applyCoaches(res.coaches);
+    }).catch(() => {});
+  }
+  applyCoaches(raw) {
+    const list = (raw || []).map(c => ({
+      id: c.id, name: c.name, first: c.first || (c.name || '').split(' ')[0],
+      role: c.role || 'Coach', pass: c.pass || '',
+    }));
+    try { localStorage.setItem('pgac_coaches', JSON.stringify(list)); } catch (e) {}
+    this.setState({ coachList: list });
+  }
+  // Admin: add a coach (backend-stored, with a portal passcode). Logged to Activity.
+  addCoach() {
+    const name = (this.state.newCoachName || '').trim();
+    const role = (this.state.newCoachRole || '').trim();
+    const pass = (this.state.newCoachPass || '').trim();
+    if (!name) { if (typeof alert !== 'undefined') alert('Enter the coach’s name.'); return; }
+    const ep = this.endpoint();
+    if (!ep) { if (typeof alert !== 'undefined') alert('Connect the booking backend to manage coaches.'); return; }
+    this.setState({ coachBusy: true });
+    fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'addCoach', name: name, role: role, pass: pass }) })
+      .then(r => r.json()).then(res => {
+        if (res && res.ok && res.coaches) { this.applyCoaches(res.coaches); this.setState({ newCoachName: '', newCoachRole: '', newCoachPass: '' }); }
+        else if (typeof alert !== 'undefined') alert('Could not add coach' + (res && res.reason ? (': ' + res.reason) : '') + '.');
+        this.setState({ coachBusy: false });
+        setTimeout(() => this.loadActivity(), 700);
+      }).catch(() => { this.setState({ coachBusy: false }); if (typeof alert !== 'undefined') alert('Could not add coach — check the connection.'); });
+  }
+  startEditCoach(id) {
+    const c = this.coachById(id) || {};
+    this.setState({ coachEditId: id, coachEditName: c.name || '', coachEditRole: c.role || '', coachEditPass: c.pass || '' });
+  }
+  cancelEditCoach() { this.setState({ coachEditId: '', coachEditName: '', coachEditRole: '', coachEditPass: '' }); }
+  saveEditCoach(id) {
+    const ep = this.endpoint(); if (!ep) { if (typeof alert !== 'undefined') alert('Connect the backend first.'); return; }
+    this.setState({ coachBusy: true });
+    fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'updateCoach', id: id, name: (this.state.coachEditName || '').trim(), role: (this.state.coachEditRole || '').trim(), pass: (this.state.coachEditPass || '').trim() }) })
+      .then(r => r.json()).then(res => {
+        if (res && res.ok && res.coaches) this.applyCoaches(res.coaches);
+        else if (typeof alert !== 'undefined') alert('Could not save coach' + (res && res.reason ? (': ' + res.reason) : '') + '.');
+        this.setState({ coachBusy: false, coachEditId: '' });
+        setTimeout(() => this.loadActivity(), 700);
+      }).catch(() => { this.setState({ coachBusy: false }); if (typeof alert !== 'undefined') alert('Could not save coach — check the connection.'); });
+  }
+  deleteCoach(id) {
+    const c = this.coachById(id) || {};
+    if (typeof confirm !== 'undefined' && !confirm('Remove coach ' + (c.name || id) + '? Existing bookings keep their recorded coach; this just takes them off the roster.')) return;
+    const ep = this.endpoint(); if (!ep) { if (typeof alert !== 'undefined') alert('Connect the backend first.'); return; }
+    this.setState({ coachBusy: true });
+    fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'deleteCoach', id: id }) })
+      .then(r => r.json()).then(res => {
+        if (res && res.ok && res.coaches) this.applyCoaches(res.coaches);
+        else if (typeof alert !== 'undefined') alert('Could not remove coach' + (res && res.reason ? (': ' + res.reason) : '') + '.');
+        this.setState({ coachBusy: false, coachEditId: this.state.coachEditId === id ? '' : this.state.coachEditId, coachId: this.state.coachId === id ? '' : this.state.coachId });
+        setTimeout(() => this.loadActivity(), 700);
+      }).catch(() => { this.setState({ coachBusy: false }); if (typeof alert !== 'undefined') alert('Could not remove coach — check the connection.'); });
+  }
+  // Admin: wipe every booking/plan so the owner can test from scratch.
+  resetAllBookings() {
+    if (typeof confirm !== 'undefined' && !confirm('Delete ALL bookings, plans, and history? This removes the website’s calendar events and the database records. This cannot be undone.')) return;
+    if (typeof confirm !== 'undefined' && !confirm('Are you absolutely sure? Coaches and payment splits are kept; everything else is cleared.')) return;
+    const ep = this.endpoint();
+    if (!ep) { if (typeof alert !== 'undefined') alert('Connect the booking backend to reset.'); return; }
+    this.setState({ resetting: true });
+    fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'clearAll' }) })
+      .then(r => r.json()).then(res => {
+        try {
+          const keys = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k) keys.push(k); }
+          keys.forEach(k => { if (k.indexOf('pgac_plans_') === 0 || k === 'pgac_bookings') localStorage.removeItem(k); });
+        } catch (e) {}
+        this.setState({ resetting: false, bookings: [], remotePlans: [], activity: [], cancelHistory: [], allBookings: [], acctBookings: [], acctPlans: [] });
+        if (typeof alert !== 'undefined') alert('Done — deleted ' + ((res && res.deletedEvents) || 0) + ' calendar event(s) and cleared all records.');
+        this.loadAllBookings(); this.loadActivity(); this.loadRemotePlans(); this.loadCancellations();
+      }).catch(() => { this.setState({ resetting: false }); if (typeof alert !== 'undefined') alert('Reset failed — check the connection and try again.'); });
+  }
   // Open Range is drop-in (no coach). Every other program is coach-led.
   needsCoach(program) { return !/Open Range/i.test(program || ''); }
   // Coach-led programs must only offer hours where ≥1 coach is free, so the
@@ -2391,10 +2522,12 @@ class Component extends DCLogic {
     this._onResize();
     window.addEventListener('resize', this._onResize);
     // Load admin-managed content + bookings from this browser
-    let content = null, bookings = [];
+    let content = null, bookings = [], coachList = null;
     try { const c = localStorage.getItem('pgac_content'); if (c) content = JSON.parse(c); } catch (e) {}
     try { const b = localStorage.getItem('pgac_bookings'); if (b) bookings = JSON.parse(b); } catch (e) {}
-    this.setState({ content, bookings, coachAvail: this.loadAllCoachAvail() });
+    try { const cl = localStorage.getItem('pgac_coaches'); if (cl) { const a = JSON.parse(cl); if (a && a.length) coachList = a; } } catch (e) {}
+    this.setState({ content, bookings, coachList, coachAvail: this.loadAllCoachAvail() });
+    this.loadCoaches(); // refresh the roster from the backend (cross-device)
   }
 
   persistContent(content) {
@@ -2443,6 +2576,7 @@ class Component extends DCLogic {
       this.loadAllBookings(); // every booking across the business (dashboard stats)
       this.loadActivity(); // the activity log shown in the Bookings tab
       this.loadSettings(); // per-coach payment splits + coach list
+      this.loadCoaches(); // refresh the editable coach roster
       return;
     }
     const coach = this.coaches().find(c => c.pass === pass);
@@ -2865,9 +2999,9 @@ class Component extends DCLogic {
     try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }); } catch (e) {}
   }
   // Ask the backend to email the customer ONE summary of a pass's scheduled sessions.
-  emailPlanSchedule(email, ts) {
+  emailPlanSchedule(email, ts, updated) {
     const ep = this.endpoint(); if (!ep || !email) return;
-    try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'planScheduleEmail', email: email, ts: ts }) }); } catch (e) {}
+    try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'planScheduleEmail', email: email, ts: ts, updated: !!updated }) }); } catch (e) {}
   }
   // Default pass prices (used for the purchase receipt); admin content overrides win.
   passPrice(name) {
@@ -3062,9 +3196,15 @@ class Component extends DCLogic {
         const local = this.localAcctMatches(email, ref);
         // merge remote + any device-only rows (dedupe by eventId/ts/date+time)
         const seen = {}, merged = [];
-        // Dedupe by booking reference + slot first (the same booking can appear once
-        // from this device and once from the calendar with a different/blank eventId).
-        remote.concat(local).forEach(b => { const k = (b.ref || b.eventId || '') + '|' + (b.date || '') + '|' + (b.time || ''); if (!seen[k]) { seen[k] = 1; merged.push(b); } });
+        // Dedupe by the slot itself (date + time). The same booking can arrive once from
+        // this device and once from the calendar with a different/blank eventId, ref, or a
+        // slightly different program string — keying on the slot collapses those into one.
+        // (One person can't hold two different sessions in the same hour.) Remote rows come
+        // first so the calendar copy (with its eventId) wins.
+        remote.concat(local).forEach(b => {
+          const k = (b.date && b.time) ? (b.date + '|' + b.time) : ('x|' + (b.eventId || b.ref || b.ts || ''));
+          if (!seen[k]) { seen[k] = 1; merged.push(b); }
+        });
         finish(merged, (data && data.name));
       })
       .catch(() => finish(this.localAcctMatches(email, ref)));
@@ -3329,8 +3469,23 @@ class Component extends DCLogic {
     const coachName = coachId ? ((this.coachById(coachId) || {}).name || coachId) : 'Unassigned';
     const planRef = this.ensurePlanRef(email, ts);
     this.logAction(planRef, 'Coach changed', coachName + ' · ' + ((plan && plan.holder) || ''), (plan && plan.holder) || email, email);
-    // Email the client the (updated) coach + schedule, if any sessions are set.
-    if (coachId && plan && (plan.sessions || []).length) this.emailPlanSchedule(email, ts);
+    // Update the coach on every already-scheduled calendar event so the calendar (and the
+    // customer's My Bookings) reflects the new coach, not just future-created events.
+    const ep = this.endpoint();
+    const sessions = (plan && plan.sessions) || [];
+    if (ep && sessions.length) {
+      sessions.forEach(s => {
+        if (!s) return;
+        try {
+          fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'setBookingCoach', eventId: s.eventId || '', ref: s.ref || '', date: s.date || '', time: s.time || '', coach: coachId || '' }) }).catch(() => {});
+        } catch (e) {}
+      });
+    }
+    // Email the client the updated coach + schedule (reschedule notice), if sessions are set.
+    // Small delay so the plan's new coach is persisted on the backend before the email
+    // reads it back (the schedule email pulls the coach name from the stored plan).
+    if (coachId && sessions.length) setTimeout(() => this.emailPlanSchedule(email, ts, true), 700);
   }
   addPlanSession(email, ts, date, time, cap) {
     if (!date || !time) return;
@@ -3397,7 +3552,7 @@ class Component extends DCLogic {
       const plan = this.findPlan(pEmail, pTs);
       const now = sigOf(plan);
       const count = (plan && plan.sessions) ? plan.sessions.length : 0;
-      if (now !== (this._planEditSig || '[]') && count > 0) this.emailPlanSchedule(pEmail, pTs);
+      if (now !== (this._planEditSig || '[]') && count > 0) this.emailPlanSchedule(pEmail, pTs, true);
       this.setState({ planEditKey: '', planEditDate: '' });
       return;
     }
@@ -3932,11 +4087,12 @@ class Component extends DCLogic {
     (this.state.acctBookings || []).concat(deviceForAcct).forEach(b => {
       // Pass sessions (scheduled by admin) belong under the pass, not as standalone session cards.
       if (b && /\(plan\)\s*$/i.test(b.program || '')) return;
-      // Dedupe by the actual slot (date + time + program). The same session can arrive twice —
-      // once from this device and once from the calendar — with different timestamps/references;
-      // keying on the slot collapses those into one card.
+      // Dedupe by the actual slot (date + time). The same session can arrive twice — once
+      // from this device and once from the calendar — with different timestamps, references,
+      // or a slightly different program string; keying on the slot alone collapses those into
+      // one card. (A customer can't hold two different sessions in the same hour.)
       const k = (b.date && b.time)
-        ? ('s|' + b.date + '|' + b.time + '|' + (b.program || ''))
+        ? ('s|' + b.date + '|' + b.time)
         : (b.eventId ? 'e' + b.eventId : (b.ref ? 'r' + b.ref : 't' + b.ts));
       if (k && acctSeen[k]) return;
       if (k) acctSeen[k] = 1;
@@ -4163,6 +4319,11 @@ class Component extends DCLogic {
     const actTotal = actFiltered.length;
     const actPageCount = Math.max(1, Math.ceil(actTotal / ACT_PAGE));
     const actPage = Math.min(Math.max(0, this.state.bkPage || 0), actPageCount - 1);
+    // Client contact numbers, looked up by email from plans + bookings (the Activity
+    // sheet doesn't store phone, so we join it here for display).
+    const phoneByEmail = {};
+    (this.state.remotePlans || []).forEach(p => { const em = (p.email || '').toLowerCase(); if (em && p.phone && !phoneByEmail[em]) phoneByEmail[em] = p.phone; });
+    (this.state.allBookings || []).forEach(b => { const em = (b.email || '').toLowerCase(); if (em && b.phone && !phoneByEmail[em]) phoneByEmail[em] = b.phone; });
     const activityRows = actFiltered.slice(actPage * ACT_PAGE, actPage * ACT_PAGE + ACT_PAGE).map(a => {
       const act = String(a.action || '').toLowerCase();
       let bg = '#eef1ea', fg = '#56664f';
@@ -4170,10 +4331,13 @@ class Component extends DCLogic {
       else if (act.indexOf('cancel') !== -1) { bg = '#f3e2e0'; fg = '#b4512f'; }
       else if (act.indexOf('coach') !== -1) { bg = '#e3eef0'; fg = '#2f6b73'; }
       else if (act.indexOf('schedul') !== -1 || act.indexOf('session') !== -1) { bg = '#fff1cf'; fg = '#8a6a1f'; }
+      const phone = (a.email && phoneByEmail[(a.email || '').toLowerCase()]) || '';
       return {
         at: a.at || '', ref: a.ref || '', hasRef: !!(a.ref && String(a.ref).trim()),
         action: a.action || '', detail: a.detail || '', hasDetail: !!(a.detail && String(a.detail).trim()),
         name: a.name || '', hasName: !!(a.name && String(a.name).trim()),
+        email: a.email || '', hasEmail: !!(a.email && String(a.email).trim()),
+        phone: phone, hasPhone: !!phone, callHref: 'tel:' + phone.replace(/[^0-9+]/g, ''),
         actBg: bg, actFg: fg,
       };
     });
@@ -4191,6 +4355,7 @@ class Component extends DCLogic {
       if (!b.date || b.date < todayStr) return;
       const c = matchCoach(b.coach); if (c) coachUpcomingCount[c.id]++;
     });
+    const coachEditId = this.state.coachEditId || '';
     const adminCoachCards = dashCoaches.map(c => ({
       id: c.id, name: c.name, role: c.role || '', first: c.first || '',
       selected: this.state.coachId === c.id,
@@ -4200,6 +4365,16 @@ class Component extends DCLogic {
       upcomingLabel: (coachUpcomingCount[c.id] || 0) + ' upcoming',
       btnLabel: this.state.coachId === c.id ? 'Editing ✓' : 'Edit schedule',
       pick: () => this.adminPickCoach(c.id),
+      // ---- roster edit/delete ----
+      editing: coachEditId === c.id, notEditing: coachEditId !== c.id,
+      startEdit: () => this.startEditCoach(c.id),
+      remove: () => this.deleteCoach(c.id),
+      editName: this.state.coachEditName || '', editRole: this.state.coachEditRole || '', editPass: this.state.coachEditPass || '',
+      setEditName: (e) => this.setState({ coachEditName: e.target.value }),
+      setEditRole: (e) => this.setState({ coachEditRole: e.target.value }),
+      setEditPass: (e) => this.setState({ coachEditPass: e.target.value }),
+      saveEdit: () => this.saveEditCoach(c.id),
+      cancelEdit: () => this.cancelEditCoach(),
     }));
     const adminCoachPicked = !!this.state.coachId;
     const adminCoachName = (this.coachById(this.state.coachId) || {}).name || '';
@@ -4453,6 +4628,17 @@ class Component extends DCLogic {
       tabDashboardBg: this.state.adminTab === 'dashboard' ? '#244232' : '#fffdf6', tabDashboardFg: this.state.adminTab === 'dashboard' ? '#f4efe4' : '#244232',
       tabCoachesBg: this.state.adminTab === 'coaches' ? '#244232' : '#fffdf6', tabCoachesFg: this.state.adminTab === 'coaches' ? '#f4efe4' : '#244232',
       adminCoachCards: adminCoachCards, adminCoachPicked: adminCoachPicked, adminCoachName: adminCoachName,
+      // Coach roster management (Coaches tab) + dynamic coach <option>s for Plans.
+      coachSelectOpts: this.coaches().map(c => ({ id: c.id, name: c.name })),
+      newCoachName: this.state.newCoachName || '', newCoachRole: this.state.newCoachRole || '', newCoachPass: this.state.newCoachPass || '',
+      setNewCoachName: (e) => this.setState({ newCoachName: e.target.value }),
+      setNewCoachRole: (e) => this.setState({ newCoachRole: e.target.value }),
+      setNewCoachPass: (e) => this.setState({ newCoachPass: e.target.value }),
+      addCoach: () => this.addCoach(), coachBusy: !!this.state.coachBusy,
+      // Reset-all (danger zone)
+      resetAllBookings: () => this.resetAllBookings(), resetting: !!this.state.resetting,
+      resetLabel: this.state.resetting ? 'Clearing…' : 'Reset all bookings',
+      resetOpacity: this.state.resetting ? '0.6' : '1',
       tabBookingsBg: this.state.adminTab === 'bookings' ? '#244232' : '#fffdf6', tabBookingsFg: this.state.adminTab === 'bookings' ? '#f4efe4' : '#244232',
       // ----- DASHBOARD values -----
       dashApproved: cApproved, dashPending: cPending, dashCancelled: cCancelled,
