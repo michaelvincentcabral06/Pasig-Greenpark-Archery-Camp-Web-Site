@@ -2998,10 +2998,24 @@ class Component extends DCLogic {
     if (opts.sendReceipt) { payload.sendReceipt = true; payload.price = opts.price || ''; if (opts.amount != null) payload.amount = opts.amount; }
     try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }); } catch (e) {}
   }
-  // Ask the backend to email the customer ONE summary of a pass's scheduled sessions.
-  emailPlanSchedule(email, ts, updated) {
+  // Ask the backend to email the customer about their pass schedule and/or coach.
+  // opts: { mode:'scheduled'|'rescheduled'|'coachAssigned'|'coachChanged',
+  //         coachName, prevCoachName, sessions:[{date,time}] }
+  // We pass the FULL session list from our live copy so the email always lists every
+  // session (reading it back from the stored plan can race a just-saved change).
+  emailPlanSchedule(email, ts, opts) {
     const ep = this.endpoint(); if (!ep || !email) return;
-    try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'planScheduleEmail', email: email, ts: ts, updated: !!updated }) }); } catch (e) {}
+    opts = opts || {};
+    const plan = this.findPlan(email, ts) || {};
+    const sessions = (opts.sessions || (plan.sessions || [])).map(s => ({ date: s.date, time: s.time }));
+    let coachName = opts.coachName;
+    if (coachName == null) coachName = plan.coach ? ((this.coachById(plan.coach) || {}).name || '') : '';
+    const payload = {
+      action: 'planScheduleEmail', email: email, ts: ts,
+      mode: opts.mode || 'scheduled', sessions: sessions, coachName: coachName || '',
+    };
+    if (opts.prevCoachName != null) payload.prevCoachName = opts.prevCoachName;
+    try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }); } catch (e) {}
   }
   // Default pass prices (used for the purchase receipt); admin content overrides win.
   passPrice(name) {
@@ -3409,7 +3423,8 @@ class Component extends DCLogic {
           }).catch(() => {});
         } catch (e) {}
       });
-      this.emailPlanSchedule(email, ts); // email the client their confirmed sessions + coach
+      // Email the client their confirmed sessions (+ coach) — full list, "scheduled" wording.
+      this.emailPlanSchedule(email, ts, { mode: 'scheduled', sessions: sessions.map(s => ({ date: s.date, time: s.time })) });
       this.logAction(planRef, 'Approved', (plan.name || 'Plan') + ' · ' + (plan.holder || ''), plan.holder || email, email);
       setTimeout(() => this.loadAllBookings(), 1400);
     }
@@ -3464,28 +3479,48 @@ class Component extends DCLogic {
     this.forceUpdate();
   }
   assignPlanCoach(email, ts, coachId) {
-    this.mutatePlan(email, ts, p => ({ ...p, coach: coachId || '' }));
+    coachId = coachId || '';
+    const prevPlan = this.findPlan(email, ts) || {};
+    const prevCoachId = prevPlan.coach || '';
+    if (prevCoachId === coachId) return; // no real change
+    const newName = coachId ? ((this.coachById(coachId) || {}).name || coachId) : '';
+    const prevName = prevCoachId ? ((this.coachById(prevCoachId) || {}).name || prevCoachId) : '';
+    const holder = prevPlan.holder || email;
+    const sessions = (prevPlan.sessions || []);
+    const sessCount = sessions.length;
+    const sessClause = sessCount ? (' and the coach on ' + sessCount + ' scheduled session' + (sessCount === 1 ? '' : 's') + ' will be updated.') : '.';
+    // Confirmation pop-up explaining exactly what will happen.
+    let msg;
+    if (!coachId) msg = 'Remove the assigned coach' + (prevName ? (' (' + prevName + ')') : '') + ' from ' + holder + '’s pass?\n\nThe client will NOT be emailed.';
+    else if (!prevCoachId) msg = 'Assign ' + newName + ' as the coach for ' + holder + '?\n\nThe client will be emailed that their assigned coach is ' + newName + sessClause;
+    else msg = 'Change coach from ' + prevName + ' to ' + newName + ' for ' + holder + '?\n\nThe client will be emailed about their new coach' + sessClause;
+    if (typeof confirm !== 'undefined' && !confirm(msg)) { this.forceUpdate(); return; } // cancelled → revert the dropdown
+
+    this.mutatePlan(email, ts, p => ({ ...p, coach: coachId }));
     const plan = this.findPlan(email, ts);
-    const coachName = coachId ? ((this.coachById(coachId) || {}).name || coachId) : 'Unassigned';
     const planRef = this.ensurePlanRef(email, ts);
-    this.logAction(planRef, 'Coach changed', coachName + ' · ' + ((plan && plan.holder) || ''), (plan && plan.holder) || email, email);
+    this.logAction(planRef, 'Coach changed', (newName || 'Unassigned') + ' · ' + ((plan && plan.holder) || ''), (plan && plan.holder) || email, email);
     // Update the coach on every already-scheduled calendar event so the calendar (and the
     // customer's My Bookings) reflects the new coach, not just future-created events.
     const ep = this.endpoint();
-    const sessions = (plan && plan.sessions) || [];
-    if (ep && sessions.length) {
+    if (ep && coachId && sessCount) {
       sessions.forEach(s => {
         if (!s) return;
         try {
           fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'setBookingCoach', eventId: s.eventId || '', ref: s.ref || '', date: s.date || '', time: s.time || '', coach: coachId || '' }) }).catch(() => {});
+            body: JSON.stringify({ action: 'setBookingCoach', eventId: s.eventId || '', ref: s.ref || '', date: s.date || '', time: s.time || '', coach: coachId }) }).catch(() => {});
         } catch (e) {}
       });
     }
-    // Email the client the updated coach + schedule (reschedule notice), if sessions are set.
-    // Small delay so the plan's new coach is persisted on the backend before the email
-    // reads it back (the schedule email pulls the coach name from the stored plan).
-    if (coachId && sessions.length) setTimeout(() => this.emailPlanSchedule(email, ts, true), 700);
+    // Email the client about the coach (assigned vs changed) — NOT a reschedule notice.
+    // Only when a coach is set (removing a coach is silent). Includes the full session list.
+    if (coachId) {
+      this.emailPlanSchedule(email, ts, {
+        mode: prevCoachId ? 'coachChanged' : 'coachAssigned',
+        coachName: newName, prevCoachName: prevName,
+        sessions: sessions.map(s => ({ date: s.date, time: s.time })),
+      });
+    }
   }
   addPlanSession(email, ts, date, time, cap) {
     if (!date || !time) return;
@@ -3547,12 +3582,22 @@ class Component extends DCLogic {
     const pEmail = key.slice(0, idx), pTs = Number(key.slice(idx + 1));
     const sigOf = (plan) => JSON.stringify((((plan && plan.sessions) || []).map(s => s.date + '|' + s.time)).sort());
     if (this.state.planEditKey === key) {
-      // Closing the scheduler — if the dates CHANGED at all (added, removed, or swapped)
-      // and there's still at least one, send the customer ONE updated-schedule email.
+      // Done — the customer is emailed ONCE here (never on each individual date change),
+      // and only if the dates actually changed. A confirmation pop-up says what will happen.
       const plan = this.findPlan(pEmail, pTs);
       const now = sigOf(plan);
       const count = (plan && plan.sessions) ? plan.sessions.length : 0;
-      if (now !== (this._planEditSig || '[]') && count > 0) this.emailPlanSchedule(pEmail, pTs, true);
+      const changed = now !== (this._planEditSig || '[]');
+      const wasEmpty = (this._planEditSig || '[]') === '[]';
+      if (changed && count > 0) {
+        const holder = (plan && plan.holder) || pEmail;
+        const mode = wasEmpty ? 'scheduled' : 'rescheduled';
+        const verb = wasEmpty ? 'their schedule' : 'their updated schedule';
+        const ok = (typeof confirm === 'undefined') || confirm('Done scheduling for ' + holder + '.\n\nThis will email ' + holder + ' ' + verb + ' (' + count + ' session' + (count === 1 ? '' : 's') + ') now. Send it?');
+        if (ok) this.emailPlanSchedule(pEmail, pTs, { mode: mode, sessions: (plan.sessions || []).map(s => ({ date: s.date, time: s.time })) });
+      } else if (changed && count === 0 && typeof alert !== 'undefined') {
+        alert('All session dates were removed. No schedule email was sent — assign new dates when ready.');
+      }
       this.setState({ planEditKey: '', planEditDate: '' });
       return;
     }

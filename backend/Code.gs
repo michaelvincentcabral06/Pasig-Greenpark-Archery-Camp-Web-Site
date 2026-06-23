@@ -460,39 +460,67 @@ function sendPlanReceipt_(o) {
   MailApp.sendEmail({ to: o.email, subject: subject, body: lines.join('\n'), htmlBody: html, name: BUSINESS_NAME });
   return true;
 }
-// Sent once after the admin schedules a pass's sessions — lists all the dates.
+// Notify the customer about their pass's schedule and/or assigned coach.
+// o.mode controls the wording:
+//   'scheduled'    → first-time schedule confirmation (lists all dates)
+//   'rescheduled'  → schedule changed (lists the full updated set of dates)
+//   'coachAssigned'→ a coach was assigned (no coach before): "Your assigned coach is X"
+//   'coachChanged' → the coach was swapped: "Your assigned coach is now X (previously Y)"
+// Schedule modes need ≥1 session; coach modes always send (dates listed if any).
 function sendPlanSchedule_(o) {
   if (!o.email) return false;
   var who = o.holder || 'there';
+  var mode = o.mode || 'scheduled';
+  var isCoach = (mode === 'coachAssigned' || mode === 'coachChanged');
   var sess = (o.sessions || []).slice().sort(function (a, b) { return (a.date + a.time).localeCompare(b.date + b.time); });
-  if (!sess.length) return false;
-  var upd = !!o.updated;
+  if (!sess.length && !isCoach) return false;
+
+  var headline, introTxt, subjTail;
+  if (mode === 'coachAssigned') {
+    subjTail = ' — Your coach is assigned';
+    headline = 'Your coach is assigned';
+    introTxt = 'Your assigned coach is ' + (o.coachName || 'your coach') + '.';
+  } else if (mode === 'coachChanged') {
+    subjTail = ' — Your coach has changed';
+    headline = 'Your coach has changed';
+    introTxt = 'Your assigned coach is now ' + (o.coachName || 'your coach')
+             + (o.prevCoachName ? (' (previously ' + o.prevCoachName + ')') : '') + '.';
+  } else if (mode === 'rescheduled') {
+    subjTail = ' — Your sessions have been rescheduled';
+    headline = 'Your sessions have been rescheduled';
+    introTxt = 'Your ' + (o.plan || 'pass') + ' booking has been updated. Here is your current schedule:';
+  } else {
+    subjTail = ' — Your sessions are scheduled';
+    headline = 'Your sessions are scheduled';
+    introTxt = 'Good news — your ' + (o.plan || 'pass') + ' sessions are scheduled:';
+  }
+  // For coach modes, follow the coach line with the dates (or a "to follow" note).
+  var listIntro = isCoach ? (sess.length ? 'Your scheduled sessions:' : 'We’ll email your session dates as soon as they’re set.') : '';
+
   var rows = sess.map(function (s) { return '  • ' + prettyDate_(s.date) + ' · ' + s.time; });
-  var subject = BUSINESS_NAME + (upd ? ' — Your sessions have been rescheduled' : ' — Your sessions are scheduled') + (o.ref ? ' (' + o.ref + ')' : '');
-  var lines = [
-    'Hi ' + who + ',',
+  var subject = BUSINESS_NAME + subjTail + (o.ref ? ' (' + o.ref + ')' : '');
+  var lines = [ 'Hi ' + who + ',', '', introTxt ];
+  if (listIntro) { lines.push(''); lines.push(listIntro); }
+  else if (!isCoach) { lines.push(''); }
+  lines = lines.concat(sess.length ? rows : []).concat([
     '',
-    (upd
-      ? ('Your ' + (o.plan || 'pass') + ' booking has been updated. Here is your current schedule:')
-      : ('Good news — your ' + (o.plan || 'pass') + ' sessions are scheduled:')),
-    '',
-  ].concat(rows).concat([
-    '',
-    (o.coachName ? ('Coach: ' + o.coachName) : ''),
+    (!isCoach && o.coachName ? ('Coach: ' + o.coachName) : ''),
     (o.ref ? ('Reference: ' + o.ref) : ''),
     '',
-    'Need to change a date? Reply to this email or text/call ' + CONTACT_NUMBER + '.',
+    'Need to change something? Reply to this email or text/call ' + CONTACT_NUMBER + '.',
     '',
     BUSINESS_NAME
   ]).filter(function (l) { return l !== ''; });
+
   var htmlRows = sess.map(function (s) { return '<tr><td style="padding:6px 0;color:#244232;font-weight:bold;">' + escapeHtml_(prettyDate_(s.date)) + '</td><td style="padding:6px 0;text-align:right;">' + escapeHtml_(s.time) + '</td></tr>'; }).join('');
   var html = '<div style="font-family:Arial,Helvetica,sans-serif;color:#1b2a1f;max-width:520px;">'
-    + '<h2 style="color:#244232;margin:0 0 4px;">' + (upd ? 'Your sessions have been rescheduled' : 'Your sessions are scheduled') + '</h2>'
-    + '<p style="color:#56664f;margin:0 0 18px;">Hi ' + escapeHtml_(who) + ', here ' + (upd ? 'is your updated' : 'are your') + ' ' + escapeHtml_(o.plan || 'pass') + ' ' + (upd ? 'schedule' : 'dates') + ':</p>'
-    + '<table style="border-collapse:collapse;width:100%;font-size:14px;">' + htmlRows + '</table>'
-    + (o.coachName ? ('<p style="font-size:13px;color:#56664f;margin:16px 0 0;"><strong>Coach:</strong> ' + escapeHtml_(o.coachName) + '</p>') : '')
+    + '<h2 style="color:#244232;margin:0 0 4px;">' + escapeHtml_(headline) + '</h2>'
+    + '<p style="color:#56664f;margin:0 0 14px;">Hi ' + escapeHtml_(who) + ' — ' + escapeHtml_(introTxt) + '</p>'
+    + (listIntro ? ('<p style="font-size:13px;color:#56664f;margin:0 0 6px;">' + escapeHtml_(listIntro) + '</p>') : '')
+    + (sess.length ? ('<table style="border-collapse:collapse;width:100%;font-size:14px;">' + htmlRows + '</table>') : '')
+    + (isCoach ? '' : (o.coachName ? ('<p style="font-size:13px;color:#56664f;margin:16px 0 0;"><strong>Coach:</strong> ' + escapeHtml_(o.coachName) + '</p>') : ''))
     + (o.ref ? ('<p style="font-size:12.5px;color:#8a9579;margin:6px 0 0;">Reference: ' + escapeHtml_(o.ref) + '</p>') : '')
-    + '<p style="font-size:13px;color:#56664f;margin:16px 0 0;">Need to change a date? Reply here or text/call ' + escapeHtml_(CONTACT_NUMBER) + '.</p>'
+    + '<p style="font-size:13px;color:#56664f;margin:16px 0 0;">Need to change something? Reply here or text/call ' + escapeHtml_(CONTACT_NUMBER) + '.</p>'
     + '<p style="font-size:13px;color:#244232;margin:18px 0 0;font-weight:bold;">' + escapeHtml_(BUSINESS_NAME) + '</p>'
     + '</div>';
   MailApp.sendEmail({ to: o.email, subject: subject, body: lines.join('\n'), htmlBody: html, name: BUSINESS_NAME });
@@ -565,7 +593,7 @@ function doGet(e) {
     }
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v12', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true });
+      return json_({ version: 'db-v13', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -715,10 +743,20 @@ function planScheduleEmail_(body) {
   var raw = PropertiesService.getScriptProperties().getProperty(planKey_(email, body.ts));
   if (!raw) return json_({ ok: false, reason: 'plan not found' });
   var plan; try { plan = JSON.parse(raw); } catch (e) { return json_({ ok: false, reason: 'bad plan' }); }
-  var coachName = '';
-  if (plan.coach) { var c = coachById_(plan.coach); coachName = c ? c.name : ''; }
+  var coachName = body.coachName || '';
+  if (!coachName && plan.coach) { var c = coachById_(plan.coach); coachName = c ? c.name : ''; }
+  // Prefer the sessions sent by the website (its live copy) so the email always lists the
+  // COMPLETE set — reading them back from the stored plan can race a just-saved update.
+  var sessions = (body.sessions && body.sessions.length != null) ? body.sessions : (plan.sessions || []);
+  // Back-compat: old callers passed only `updated` (true → reschedule).
+  var mode = body.mode || (body.updated ? 'rescheduled' : 'scheduled');
   var emailed = false;
-  try { emailed = sendPlanSchedule_({ email: email, holder: plan.holder, plan: plan.name, ref: plan.ref || '', sessions: plan.sessions || [], coachName: coachName, updated: !!body.updated }); } catch (e) {}
+  try {
+    emailed = sendPlanSchedule_({
+      email: email, holder: plan.holder, plan: plan.name, ref: plan.ref || '',
+      sessions: sessions, coachName: coachName, prevCoachName: body.prevCoachName || '', mode: mode
+    });
+  } catch (e) {}
   return json_({ ok: true, emailed: emailed });
 }
 // Cancellation history for the admin dashboard (newest first).
