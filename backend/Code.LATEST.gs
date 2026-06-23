@@ -523,9 +523,12 @@ function doGet(e) {
     if (action === 'settings') {
       return getSettings_();
     }
+    if (action === 'coachavail') {
+      return listCoachAvail_(e.parameter.coach);
+    }
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v5', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true });
+      return json_({ version: 'db-v6', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -734,6 +737,22 @@ function getSettings_() {
     splits[c.id] = s || { coach: DEFAULT_SPLIT.coach, equip: DEFAULT_SPLIT.equip, range: DEFAULT_SPLIT.range };
   });
   return json_({ splits: splits, defaultSplit: DEFAULT_SPLIT, coaches: COACHES.map(function (c) { return { id: c.id, name: c.name }; }) });
+}
+// Every saved availability override for one coach, so the admin (or the coach on a
+// new device) sees their real custom hours, not just the standard weekday template.
+// Returns { coach, overrides: { 'YYYY-MM-DD': [startHours...] } }.
+function listCoachAvail_(coachId) {
+  var c = coachById_(coachId);
+  if (!c) return json_({ overrides: {} });
+  var props = PropertiesService.getScriptProperties().getProperties();
+  var prefix = 'avail:' + coachId + ':';
+  var out = {};
+  for (var k in props) {
+    if (k.indexOf(prefix) !== 0) continue;
+    var date = k.slice(prefix.length);
+    try { out[date] = JSON.parse(props[k]) || []; } catch (e) { out[date] = []; }
+  }
+  return json_({ coach: coachId, overrides: out });
 }
 function setSplit_(body) {
   var c = coachById_(body.coach);

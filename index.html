@@ -1645,9 +1645,9 @@
           <span style="width:38px;height:38px;border-radius:50%;background:#244232;display:flex;align-items:center;justify-content:center;flex:none;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7fb43f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
           </span>
-          <h2 style="font-size:22px;font-weight:800;color:#1b2a1f;margin:0;">Manage — sign in</h2>
+          <h2 style="font-size:22px;font-weight:800;color:#1b2a1f;margin:0;">Staff sign-in</h2>
         </div>
-        <p style="font-size:14px;line-height:1.55;color:#56664f;margin:0 0 20px;">Staff only. Enter the access code to manage bookings and content.</p>
+        <p style="font-size:14px;line-height:1.55;color:#56664f;margin:0 0 20px;">Enter your access code. <strong>Admins</strong> open the management console; <strong>coaches</strong> open their schedule portal — same sign-in.</p>
         <input value="{{ adminPass }}" onInput="{{ setAdminPass }}" onKeyDown="{{ onPassKey }}" type="password" placeholder="Access code" style="width:100%;background:#f4efe4;border:1px solid rgba(36,66,50,0.18);border-radius:8px;padding:13px 14px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:#1b2a1f;outline:none;" />
         <sc-if value="{{ adminError }}" hint-placeholder-val="{{ false }}"><div style="font-size:13.5px;color:#b4512f;margin-top:10px;">Incorrect code — try again.</div></sc-if>
         <button onClick="{{ tryLogin }}" style="width:100%;margin-top:16px;background:#244232;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;padding:14px;border-radius:999px;" style-hover="background:#1b3325;">Sign in</button>
@@ -1669,7 +1669,8 @@
         <div style="display:flex;gap:8px;margin:22px 0 24px;flex-wrap:wrap;">
           <button onClick="{{ goTabDashboard }}" style="background:{{ tabDashboardBg }};color:{{ tabDashboardFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Dashboard</button>
           <button onClick="{{ goTabBookings }}" style="background:{{ tabBookingsBg }};color:{{ tabBookingsFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Bookings</button>
-          <button onClick="{{ goTabPlans }}" style="background:{{ tabPlansBg }};color:{{ tabPlansFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Plans &amp; coaches</button>
+          <button onClick="{{ goTabPlans }}" style="background:{{ tabPlansBg }};color:{{ tabPlansFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Plans &amp; Sessions</button>
+          <button onClick="{{ goTabCoaches }}" style="background:{{ tabCoachesBg }};color:{{ tabCoachesFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Coaches</button>
           <button onClick="{{ goTabPricing }}" style="background:{{ tabPricingBg }};color:{{ tabPricingFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Pricing</button>
           <button onClick="{{ goTabSchedule }}" style="background:{{ tabScheduleBg }};color:{{ tabScheduleFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Schedule</button>
         </div>
@@ -1938,6 +1939,92 @@
               </div>
             </sc-for>
           </div>
+        </div>
+        </sc-if>
+
+        <!-- COACHES TAB -->
+        <sc-if value="{{ tabCoaches }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <p style="font-size:14px;line-height:1.55;color:#56664f;margin:0 0 6px;">Your coaching team. Pick a coach to <strong>view and edit which hours they're available</strong>, date by date — the same schedule customers book against. Set each coach's payment split on the <strong>Dashboard</strong>.</p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:18px 0 26px;">
+            <sc-for list="{{ adminCoachCards }}" as="cc" hint-placeholder-count="3">
+              <div style="background:{{ cc.bg }};border:1px solid rgba(36,66,50,0.12);border-radius:14px;padding:18px 20px;">
+                <div style="font-size:17px;font-weight:800;color:{{ cc.fg }};">{{ cc.name }}</div>
+                <div style="font-size:13px;color:{{ cc.sub }};margin-top:2px;">{{ cc.role }}</div>
+                <div style="font-size:12.5px;color:{{ cc.sub }};font-family:'Spline Sans Mono',monospace;margin-top:6px;">{{ cc.upcomingLabel }}</div>
+                <button onClick="{{ cc.pick }}" style="margin-top:14px;background:#7fb43f;color:#1b2a1f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;">{{ cc.btnLabel }}</button>
+              </div>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ adminCoachPicked }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <h3 style="font-size:17px;font-weight:800;color:#1b2a1f;margin:0 0 4px;">{{ adminCoachName }} — schedule</h3>
+            <p style="font-size:13px;color:#56664f;margin:0 0 16px;">Tap a day, then tap the hours this coach can take. Changes save instantly and update what customers can book.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+              <!-- CALENDAR -->
+              <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:14px;padding:clamp(16px,2.5vw,22px);">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                  <button onClick="{{ coachCalPrev }}" aria-label="Previous month" style="width:34px;height:34px;flex:none;border-radius:8px;border:1px solid rgba(36,66,50,0.14);background:#f4efe4;color:#244232;font-size:18px;font-weight:700;line-height:1;opacity:{{ coachCalPrevOpacity }};cursor:{{ coachCalPrevCursor }};">‹</button>
+                  <span style="font-size:16px;font-weight:800;color:#1b2a1f;letter-spacing:-0.01em;">{{ coachCalLabel }}</span>
+                  <button onClick="{{ coachCalNext }}" aria-label="Next month" style="width:34px;height:34px;flex:none;border-radius:8px;border:1px solid rgba(36,66,50,0.14);background:#f4efe4;color:#244232;font-size:18px;font-weight:700;line-height:1;cursor:pointer;">›</button>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:6px;">
+                  <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#8a9579;">Su</span>
+                  <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#8a9579;">Mo</span>
+                  <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#8a9579;">Tu</span>
+                  <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#8a9579;">We</span>
+                  <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#8a9579;">Th</span>
+                  <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#8a9579;">Fr</span>
+                  <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#8a9579;">Sa</span>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;">
+                  <sc-for list="{{ coachCalCells }}" as="c" hint-placeholder-count="35">
+                    <sc-if value="{{ c.blank }}" hint-placeholder-val="{{ false }}"><span></span></sc-if>
+                    <sc-if value="{{ c.notBlank }}" hint-placeholder-val="{{ true }}">
+                    <button onClick="{{ c.pick }}" style="aspect-ratio:1;border-radius:9px;border:1.5px solid {{ c.border }};background:{{ c.bg }};color:{{ c.fg }};font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:{{ c.weight }};cursor:{{ c.cursor }};opacity:{{ c.opacity }};position:relative;display:flex;align-items:center;justify-content:center;">
+                      {{ c.day }}
+                      <span style="position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:{{ c.dot }};"></span>
+                    </button>
+                    </sc-if>
+                  </sc-for>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;font-family:'Spline Sans Mono',monospace;font-size:11px;color:#7e8a72;">
+                  <span style="display:flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;border-radius:50%;background:#a6b09a;"></span>Standard hours</span>
+                  <span style="display:flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;border-radius:50%;background:#7fb43f;"></span>Custom</span>
+                  <span style="display:flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;border-radius:50%;background:#c46b4a;"></span>Day off</span>
+                </div>
+              </div>
+
+              <!-- DAY EDITOR -->
+              <div style="background:#244232;border-radius:14px;padding:clamp(18px,2.5vw,24px);">
+                <sc-if value="{{ coachHasEditDate }}" hint-placeholder-val="{{ true }}">
+                <div style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:#7fb43f;margin-bottom:6px;">Editing</div>
+                <h2 style="font-size:19px;font-weight:800;color:#f4efe4;margin:0 0 3px;letter-spacing:-0.01em;">{{ coachEditPretty }}</h2>
+                <div style="font-size:13px;color:#9aa890;font-family:'Spline Sans Mono',monospace;margin-bottom:16px;">{{ coachEditSummary }}</div>
+                <sc-if value="{{ coachEditDayOff }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:13px;line-height:1.5;color:#f0b48a;background:rgba(240,180,138,0.08);border:1px solid rgba(240,180,138,0.2);border-radius:10px;padding:11px 13px;margin-bottom:16px;">Marked off this day — tap any hour to open it.</div>
+                </sc-if>
+                <label style="display:block;font-size:12.5px;font-weight:600;color:#cdd6c5;margin-bottom:9px;">Hours this coach can take</label>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+                  <sc-for list="{{ coachHourChips }}" as="hr" hint-placeholder-count="9">
+                    <button onClick="{{ hr.toggle }}" style="background:{{ hr.bg }};color:{{ hr.fg }};border:1.5px solid {{ hr.border }};border-radius:9px;padding:11px 6px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;font-weight:700;text-align:center;">{{ hr.label }}</button>
+                  </sc-for>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;">
+                  <button onClick="{{ coachSetStandard }}" style="background:#7fb43f;color:#1b2a1f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:10px 16px;border-radius:999px;">Standard hours</button>
+                  <button onClick="{{ coachSetDayOff }}" style="background:none;border:1px solid rgba(244,239,228,0.3);color:#cdd6c5;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">Mark day off</button>
+                  <sc-if value="{{ coachEditOverride }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ coachClearOverride }}" style="background:none;border:1px solid rgba(244,239,228,0.18);color:#9aa890;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">Reset to default</button>
+                  </sc-if>
+                </div>
+                <p style="font-size:11.5px;line-height:1.5;color:#8a9579;margin:16px 0 0;font-family:'Spline Sans Mono',monospace;">Changes save automatically.</p>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+          </sc-if>
+          <sc-if value="{{ adminCoachPicked }}" hint-placeholder-val="{{ false }}"></sc-if>
         </div>
         </sc-if>
 
@@ -2354,16 +2441,31 @@ class Component extends DCLogic {
     }
   }
 
+  // One staff sign-in: the admin code opens the admin console; a coach's personal
+  // code opens that coach's portal. (Coaches can also sign in from the Coach portal link.)
   tryLogin() {
-    if ((this.state.adminPass || '').trim() === 'greenpark2026') {
+    const pass = (this.state.adminPass || '').trim();
+    if (pass === 'greenpark2026') {
       this.setState({ authed: true, adminError: false, adminPass: '' });
       this.loadRemotePlans(); // pull every customer's passes from the backend
       this.loadCancellations(); // pull the cancellation history for the admin
       this.loadAllBookings(); // every booking across the business (dashboard + bookings tab)
       this.loadSettings(); // per-coach payment splits + coach list
-    } else {
-      this.setState({ adminError: true });
+      return;
     }
+    const coach = this.coaches().find(c => c.pass === pass);
+    if (coach) {
+      this.setState({
+        adminPass: '', adminError: false,
+        coachAuthed: true, coachId: coach.id,
+        coachEditDate: this.todayStr(), coachCalMonth: this.todayStr().slice(0, 7),
+        coachAvail: this.loadAllCoachAvail(),
+      });
+      this.loadCoachAvailRemote(coach.id);
+      this.go('coach');
+      return;
+    }
+    this.setState({ adminError: true });
   }
 
   // ---------- COACH SELECTION (booking form) ----------
@@ -2379,6 +2481,13 @@ class Component extends DCLogic {
   // ---------- COACH PORTAL (each coach manages their own hours) ----------
   coachLogin() {
     const pass = (this.state.coachPass || '').trim();
+    // The admin code works here too, so there's effectively one staff sign-in.
+    if (pass === 'greenpark2026') {
+      this.setState({ coachPass: '', coachLoginError: false, authed: true, adminError: false });
+      this.loadRemotePlans(); this.loadCancellations(); this.loadAllBookings(); this.loadSettings();
+      this.go('admin');
+      return;
+    }
     const match = this.coaches().find(c => c.pass === pass);
     if (!match) { this.setState({ coachLoginError: true }); return; }
     this.setState({
@@ -2386,6 +2495,7 @@ class Component extends DCLogic {
       coachEditDate: this.todayStr(), coachCalMonth: this.todayStr().slice(0, 7),
       coachAvail: this.loadAllCoachAvail(),
     });
+    this.loadCoachAvailRemote(match.id);
   }
   coachLogout() { this.setState({ coachAuthed: false, coachId: '', coachEditDate: '', coachLoginError: false }); }
   coachShiftMonth(delta) {
@@ -2429,6 +2539,26 @@ class Component extends DCLogic {
         body: JSON.stringify({ action: 'setCoachAvail', coach: coachId, pass: (this.coachById(coachId) || {}).pass, date: ds, hours: hours }),
       }).catch(() => {});
     } catch (e) {}
+  }
+  // Pull a coach's real saved hours from the backend (so the admin — or the coach on a
+  // new device — sees actual custom days, not just the standard weekday template).
+  loadCoachAvailRemote(coachId) {
+    const ep = this.endpoint(); if (!ep || !coachId) return;
+    fetch(ep + '?action=coachavail&coach=' + encodeURIComponent(coachId)).then(r => r.json()).then(res => {
+      if (res && res.overrides) {
+        const all = JSON.parse(JSON.stringify(this.state.coachAvail || {}));
+        all[coachId] = Object.assign({}, all[coachId] || {}, res.overrides);
+        this.saveAllCoachAvail(all);
+      }
+    }).catch(() => {});
+  }
+  // Admin picks a coach in the Coaches tab to view/edit that coach's schedule.
+  adminPickCoach(id) {
+    this.setState({
+      coachId: id, coachEditDate: this.todayStr(), coachCalMonth: this.todayStr().slice(0, 7),
+      coachAvail: this.loadAllCoachAvail(),
+    });
+    this.loadCoachAvailRemote(id);
   }
 
   // ---------- BOOKING ENGINE (capacity-aware) ----------
@@ -3894,6 +4024,28 @@ class Component extends DCLogic {
       { id: 'cancelled', name: 'Cancelled', sel: bkFilter === 'cancelled' },
     ];
 
+    // ---------- ADMIN: COACHES TAB ----------
+    // Per-coach upcoming session count from the database (non-cancelled, today onward).
+    const coachUpcomingCount = {};
+    dashCoaches.forEach(c => { coachUpcomingCount[c.id] = 0; });
+    (this.state.allBookings || []).forEach(b => {
+      if (String(b.status || '').toLowerCase() === 'cancelled') return;
+      if (!b.date || b.date < todayStr) return;
+      const c = matchCoach(b.coach); if (c) coachUpcomingCount[c.id]++;
+    });
+    const adminCoachCards = dashCoaches.map(c => ({
+      id: c.id, name: c.name, role: c.role || '', first: c.first || '',
+      selected: this.state.coachId === c.id,
+      bg: this.state.coachId === c.id ? '#244232' : '#fffdf6',
+      fg: this.state.coachId === c.id ? '#f4efe4' : '#1b2a1f',
+      sub: this.state.coachId === c.id ? '#cdd6c5' : '#56664f',
+      upcomingLabel: (coachUpcomingCount[c.id] || 0) + ' upcoming',
+      btnLabel: this.state.coachId === c.id ? 'Editing ✓' : 'Edit schedule',
+      pick: () => this.adminPickCoach(c.id),
+    }));
+    const adminCoachPicked = !!this.state.coachId;
+    const adminCoachName = (this.coachById(this.state.coachId) || {}).name || '';
+
     // ---------- COACH PORTAL ----------
     const coachUser = this.coachById(this.state.coachId);
     const ccBase = this.state.coachCalMonth ? new Date(this.state.coachCalMonth + '-01T00:00:00') : new Date(todayStr + 'T00:00:00');
@@ -4136,10 +4288,13 @@ class Component extends DCLogic {
       tabDashboard: this.state.adminTab === 'dashboard',
       tabBookings: this.state.adminTab === 'bookings',
       tabPlans: this.state.adminTab === 'plans',
+      tabCoaches: this.state.adminTab === 'coaches',
       tabPricing: this.state.adminTab === 'pricing',
       tabSchedule: this.state.adminTab === 'schedule',
-      goTabDashboard: adminSetTab('dashboard'), goTabBookings: adminSetTab('bookings'), goTabPlans: adminSetTab('plans'), goTabPricing: adminSetTab('pricing'), goTabSchedule: adminSetTab('schedule'),
+      goTabDashboard: adminSetTab('dashboard'), goTabBookings: adminSetTab('bookings'), goTabPlans: adminSetTab('plans'), goTabCoaches: adminSetTab('coaches'), goTabPricing: adminSetTab('pricing'), goTabSchedule: adminSetTab('schedule'),
       tabDashboardBg: this.state.adminTab === 'dashboard' ? '#244232' : '#fffdf6', tabDashboardFg: this.state.adminTab === 'dashboard' ? '#f4efe4' : '#244232',
+      tabCoachesBg: this.state.adminTab === 'coaches' ? '#244232' : '#fffdf6', tabCoachesFg: this.state.adminTab === 'coaches' ? '#f4efe4' : '#244232',
+      adminCoachCards: adminCoachCards, adminCoachPicked: adminCoachPicked, adminCoachName: adminCoachName,
       tabBookingsBg: this.state.adminTab === 'bookings' ? '#244232' : '#fffdf6', tabBookingsFg: this.state.adminTab === 'bookings' ? '#f4efe4' : '#244232',
       // ----- DASHBOARD values -----
       dashApproved: cApproved, dashPending: cPending, dashCancelled: cCancelled,
