@@ -849,230 +849,258 @@
           <h3 style="font-size:24px;font-weight:800;color:#f4efe4;margin:0 0 6px;">Reserve a session</h3>
           <p style="font-size:14.5px;color:#cdd6c5;margin:0 0 22px;">Pick a date to see real-time availability — up to {{ capacity }} archers per hour.</p>
           <div style="display:flex;flex-direction:column;gap:16px;">
-            <div>
-              <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Your name <span style="color:#e8674a;">*</span></label>
-              <input value="{{ fName }}" onInput="{{ setName }}" placeholder="Juan dela Cruz" style="width:100%;background:#1b3325;border:1px solid {{ nameBorder }};border-radius:8px;padding:13px 14px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:#f4efe4;outline:none;" />
-            </div>
-            <div>
-              <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Mobile number <span style="color:#e8674a;">*</span></label>
-              <input value="{{ fPhone }}" onInput="{{ setPhone }}" placeholder="0917 000 0000" style="width:100%;background:#1b3325;border:1px solid {{ phoneBorder }};border-radius:8px;padding:13px 14px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:#f4efe4;outline:none;" />
-            </div>
-            <div>
-              <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Email <span style="color:#e8674a;">*</span> <span style="color:#7fb43f;font-weight:500;">— we'll send your receipt here</span></label>
-              <input value="{{ fEmail }}" onInput="{{ setEmail }}" type="email" placeholder="juan@email.com" style="width:100%;background:#1b3325;border:1px solid {{ emailBorder }};border-radius:8px;padding:13px 14px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:#f4efe4;outline:none;" />
-            </div>
-            <div>
-              <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Program</label>
-              <select value="{{ fProgram }}" onChange="{{ setProgram }}" style="width:100%;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:13px 14px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:#f4efe4;outline:none;">
-                <option>Little Archers (6–10)</option>
-                <option>Youth Squad (11–17)</option>
-                <option>Adult Beginners (18+)</option>
-                <option>Open Range</option>
-                <option>Private Coaching</option>
-                <option>Group & Corporate</option>
-              </select>
-            </div>
 
-            <div>
-              <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">How many archers?</label>
-              <div style="display:flex;align-items:center;justify-content:space-between;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:7px 10px;">
-                <button onClick="{{ decParty }}" aria-label="Fewer archers" style="width:38px;height:38px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;" style-hover="background:rgba(244,239,228,0.2);">−</button>
-                <div style="text-align:center;">
-                  <div style="font-size:17px;font-weight:800;color:#f4efe4;">{{ partyLabel }}</div>
-                  <sc-if value="{{ isGroup }}" hint-placeholder-val="{{ false }}"><div style="font-size:11px;color:#7fb43f;font-family:'Spline Sans Mono',monospace;margin-top:1px;">group · takes {{ party }} seats</div></sc-if>
-                </div>
-                <button onClick="{{ incParty }}" aria-label="More archers" style="width:38px;height:38px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;" style-hover="background:rgba(244,239,228,0.2);">+</button>
-              </div>
-              <p style="font-size:11.5px;color:#8a9579;margin:6px 2px 0;">Booking for a group? Each archer takes one of the {{ capacity }} hourly spots.</p>
-            </div>
-
-            <sc-if value="{{ isOpenRange }}" hint-placeholder-val="{{ false }}">
-            <div>
-              <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:3px;">Open Range concessions <span style="color:#7fb43f;font-weight:500;">— base ₱400, less ₱100 per concession (stackable)</span></label>
-              <p style="font-size:11.5px;color:#8a9579;margin:0 0 9px;line-height:1.5;">These discounts apply to Open Range only. Tick any that apply and add your proof below.</p>
-              <div style="display:flex;flex-direction:column;gap:8px;">
-                <button onClick="{{ togglePasig }}" role="checkbox" aria-checked="{{ eligPasig }}" aria-label="Pasig City resident — ₱100 off" style="display:flex;align-items:center;gap:11px;text-align:left;background:#1b3325;border:1.5px solid {{ pasigBorder }};border-radius:9px;padding:11px 13px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
-                  <span style="width:20px;height:20px;flex:none;border-radius:5px;border:1.5px solid {{ pasigBorder }};background:{{ pasigBox }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">{{ pasigCheck }}</span>
-                  <span style="flex:1;font-size:14px;color:#f4efe4;">Pasig City resident</span>
-                  <span style="font-family:'Spline Sans Mono',monospace;font-size:12.5px;font-weight:700;color:#7fb43f;white-space:nowrap;">−₱100</span>
-                </button>
-                <sc-if value="{{ eligPasig }}" hint-placeholder-val="{{ false }}">
-                  <label style="display:block;font-size:12px;font-weight:600;color:#cdd6c5;margin:2px 0 -2px;">Pasig City address or valid ID showing it <span style="color:#e8674a;">*</span></label>
-                  <input value="{{ pasigProof }}" onInput="{{ setPasigProof }}" placeholder="Pasig City address or ID number" style="width:100%;background:#1b3325;border:1px solid {{ pasigProofBorder }};border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
-                </sc-if>
-                <button onClick="{{ togglePac }}" role="checkbox" aria-checked="{{ eligPac }}" aria-label="PAC member — ₱100 off" style="display:flex;align-items:center;gap:11px;text-align:left;background:#1b3325;border:1.5px solid {{ pacBorder }};border-radius:9px;padding:11px 13px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
-                  <span style="width:20px;height:20px;flex:none;border-radius:5px;border:1.5px solid {{ pacBorder }};background:{{ pacBox }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">{{ pacCheck }}</span>
-                  <span style="flex:1;font-size:14px;color:#f4efe4;">PAC <span style="color:#9aa890;">— Pasig Archery Club member</span></span>
-                  <span style="font-family:'Spline Sans Mono',monospace;font-size:12.5px;font-weight:700;color:#7fb43f;white-space:nowrap;">−₱100</span>
-                </button>
-                <sc-if value="{{ eligPac }}" hint-placeholder-val="{{ false }}">
-                  <label style="display:block;font-size:12px;font-weight:600;color:#cdd6c5;margin:2px 0 -2px;">WAP ID No. <span style="color:#e8674a;">*</span></label>
-                  <input value="{{ wapId }}" onInput="{{ setWapId }}" placeholder="WAP ID No. (World Archery Philippines)" style="width:100%;background:#1b3325;border:1px solid {{ wapBorder }};border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
-                </sc-if>
-                <button onClick="{{ toggleLocal }}" role="checkbox" aria-checked="{{ eligLocal }}" aria-label="Greenpark resident or RHS student — ₱100 off" style="display:flex;align-items:center;gap:11px;text-align:left;background:#1b3325;border:1.5px solid {{ localBorder }};border-radius:9px;padding:11px 13px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
-                  <span style="width:20px;height:20px;flex:none;border-radius:5px;border:1.5px solid {{ localBorder }};background:{{ localBox }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">{{ localCheck }}</span>
-                  <span style="flex:1;font-size:14px;color:#f4efe4;">Greenpark resident or RHS <span style="color:#9aa890;">— Rizal High School student</span></span>
-                  <span style="font-family:'Spline Sans Mono',monospace;font-size:12.5px;font-weight:700;color:#7fb43f;white-space:nowrap;">−₱100</span>
-                </button>
-                <sc-if value="{{ eligLocal }}" hint-placeholder-val="{{ false }}">
-                  <label style="display:block;font-size:12px;font-weight:600;color:#cdd6c5;margin:2px 0 -2px;">Greenpark address or RHS ID <span style="color:#e8674a;">*</span></label>
-                  <input value="{{ localProof }}" onInput="{{ setLocalProof }}" placeholder="Greenpark address or RHS ID number" style="width:100%;background:#1b3325;border:1px solid {{ localProofBorder }};border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
-                </sc-if>
-              </div>
-              <sc-if value="{{ unlimitedSlots }}" hint-placeholder-val="{{ false }}">
-                <div style="display:flex;align-items:center;gap:9px;margin-top:10px;background:rgba(127,180,63,0.14);border:1px solid rgba(127,180,63,0.35);border-radius:9px;padding:10px 13px;">
-                  <span style="font-size:15px;flex:none;">★</span>
-                  <span style="font-size:12.5px;line-height:1.45;color:#cdd6c5;">Concessions stacked — pick <span style="color:#7fb43f;font-weight:700;">as many time slots as you like</span> at no extra cost.</span>
-                </div>
-              </sc-if>
-            </div>
-            </sc-if>
-
-            <!-- ARCHER DETAILS -->
-            <sc-if value="{{ showArcherDetails }}" hint-placeholder-val="{{ false }}">
-            <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:10px;padding:16px;">
-              <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:3px;">Who's shooting? <span style="color:#e8674a;">*</span></label>
-              <p style="font-size:11.5px;color:#8a9579;margin:0 0 12px;line-height:1.5;">We match each archer's age to your program (<span style="color:#7fb43f;">{{ archerProgramLabel }}</span>). Add a name and birthdate for each.</p>
-              <div style="display:flex;flex-direction:column;gap:12px;">
-                <sc-for list="{{ archerRows }}" as="ar" hint-placeholder-count="2">
-                  <div style="background:#244232;border:1px solid rgba(244,239,228,0.12);border-radius:8px;padding:11px 12px;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
-                      <span style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:#7fb43f;">{{ ar.label }}</span>
-                      <sc-if value="{{ ar.hasNote }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;font-weight:600;font-family:'Spline Sans Mono',monospace;color:{{ ar.noteColor }};">{{ ar.note }}</span></sc-if>
-                    </div>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                      <sc-if value="{{ ar.isExtra }}" hint-placeholder-val="{{ true }}">
-                        <input value="{{ ar.name }}" onInput="{{ ar.setName }}" placeholder="Full name" style="flex:1;min-width:130px;background:#1b3325;border:1px solid {{ ar.nameBorder }};border-radius:7px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
-                      </sc-if>
-                      <sc-if value="{{ ar.isLead }}" hint-placeholder-val="{{ false }}">
-                        <div style="flex:1;min-width:130px;display:flex;align-items:center;background:rgba(244,239,228,0.05);border:1px solid rgba(244,239,228,0.1);border-radius:7px;padding:10px 12px;font-size:14px;color:#cdd6c5;">{{ ar.leadName }}</div>
-                      </sc-if>
-                      <input value="{{ ar.dob }}" onInput="{{ ar.setDob }}" max="{{ minDate }}" type="date" aria-label="Birthdate" style="width:158px;background:#1b3325;border:1px solid {{ ar.dobBorder }};border-radius:7px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
-                    </div>
-                  </div>
-                </sc-for>
-              </div>
-              <sc-if value="{{ ageMismatch }}" hint-placeholder-val="{{ false }}">
-                <p style="font-size:12px;line-height:1.5;color:#f0b48a;background:rgba(240,180,138,0.08);border:1px solid rgba(240,180,138,0.2);border-radius:8px;padding:10px 12px;margin:12px 0 0;">An archer's age falls outside <strong>{{ fProgram }}</strong> (ages {{ ageRangeLabel }}). Pick a program that matches, or update the birthdate.</p>
-              </sc-if>
-            </div>
-            </sc-if>
-
-            <sc-if value="{{ singleDateMode }}" hint-placeholder-val="{{ true }}">
-            <div>
-              <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Date</label>
-              <input value="{{ slotDate }}" onInput="{{ onPickDate }}" min="{{ minDate }}" type="date" style="width:100%;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:13px 14px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:#f4efe4;outline:none;" />
-            </div>
-
-            <!-- SLOTS -->
-            <sc-if value="{{ slotsLoading }}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:14px;color:#9aa890;padding:6px 2px;">Checking availability…</div>
-            </sc-if>
-            <sc-if value="{{ dayClosedForBooking }}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:14px;line-height:1.5;color:#f0b48a;background:rgba(240,180,138,0.08);border:1px solid rgba(240,180,138,0.2);border-radius:10px;padding:12px 14px;">The range is closed that day. Try Tuesday–Sunday (Mondays are our rest day).</div>
-            </sc-if>
-            <sc-if value="{{ noMoreToday }}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:14px;line-height:1.5;color:#f0b48a;background:rgba(240,180,138,0.08);border:1px solid rgba(240,180,138,0.2);border-radius:10px;padding:12px 14px;">Today's sessions have already started or passed. Pick another day to book ahead.</div>
-            </sc-if>
-            <sc-if value="{{ hasSlots }}" hint-placeholder-val="{{ false }}">
+            <!-- CARD: Core booking -->
+            <div data-test="card-core" style="background:#1b3325;border:1px solid rgba(244,239,228,0.14);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:16px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#7fb43f;">Core booking</div>
               <div>
-                <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:4px;">Available times — tap all you'd like</label>
-                <p style="font-size:12px;color:#8a9579;margin:0 0 10px;font-family:'Spline Sans Mono',monospace;">{{ prettyDate }} · you can pick more than one</p>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                  <sc-for list="{{ slotView }}" as="s" hint-placeholder-count="4">
-                    <button onClick="{{ s.pick }}" style="text-align:left;background:{{ s.bg }};color:{{ s.fg }};border:1.5px solid {{ s.border }};border-radius:10px;padding:11px 13px;cursor:{{ s.cursor }};opacity:{{ s.opacity }};font-family:'Hanken Grotesk',sans-serif;display:flex;flex-direction:column;gap:2px;">
-                      <span style="font-size:15px;font-weight:700;">{{ s.check }}{{ s.time }}</span>
-                      <span style="font-size:11.5px;font-weight:600;color:{{ s.leftColor }};font-family:'Spline Sans Mono',monospace;">{{ s.leftLabel }}</span>
-                    </button>
+                <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Your name <span style="color:#e8674a;">*</span></label>
+                <input value="{{ fName }}" onInput="{{ setName }}" placeholder="Juan dela Cruz" style="width:100%;background:#1b3325;border:1px solid {{ nameBorder }};border-radius:8px;padding:13px 14px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:#f4efe4;outline:none;" />
+              </div>
+              <div>
+                <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Mobile number <span style="color:#e8674a;">*</span></label>
+                <input value="{{ fPhone }}" onInput="{{ setPhone }}" placeholder="0917 000 0000" style="width:100%;background:#1b3325;border:1px solid {{ phoneBorder }};border-radius:8px;padding:13px 14px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:#f4efe4;outline:none;" />
+              </div>
+              <div>
+                <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Email <span style="color:#e8674a;">*</span> <span style="color:#7fb43f;font-weight:500;">— we'll send your receipt here</span></label>
+                <input value="{{ fEmail }}" onInput="{{ setEmail }}" type="email" placeholder="juan@email.com" style="width:100%;background:#1b3325;border:1px solid {{ emailBorder }};border-radius:8px;padding:13px 14px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:#f4efe4;outline:none;" />
+              </div>
+              <div>
+                <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Program</label>
+                <select value="{{ fProgram }}" onChange="{{ setProgram }}" style="width:100%;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:13px 14px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:#f4efe4;outline:none;">
+                  <option>Little Archers (6–10)</option>
+                  <option>Youth Squad (11–17)</option>
+                  <option>Adult Beginners (18+)</option>
+                  <option>Open Range</option>
+                  <option>Private Coaching</option>
+                  <option>Group & Corporate</option>
+                </select>
+              </div>
+              <div>
+                <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">How many sessions?</label>
+                <div style="display:flex;align-items:center;justify-content:space-between;background:#244232;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:7px 10px;">
+                  <button onClick="{{ decSession }}" aria-label="Fewer sessions" style="width:38px;height:38px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;">−</button>
+                  <div data-test="session-target" style="font-size:17px;font-weight:800;color:#f4efe4;">{{ sessionTargetLabel }}</div>
+                  <button onClick="{{ incSession }}" aria-label="More sessions" style="width:38px;height:38px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;">+</button>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px;">
+                  <button onClick="{{ setSession1 }}" style="padding:9px;background:#244232;border:1px solid rgba(244,239,228,0.18);border-radius:8px;color:#cdd6c5;font-family:'Hanken Grotesk',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;">1</button>
+                  <button onClick="{{ setSession3 }}" style="padding:9px;background:#244232;border:1px solid rgba(244,239,228,0.18);border-radius:8px;color:#cdd6c5;font-family:'Hanken Grotesk',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;">3</button>
+                  <button onClick="{{ setSession5 }}" style="padding:9px;background:#244232;border:1px solid rgba(244,239,228,0.18);border-radius:8px;color:#cdd6c5;font-family:'Hanken Grotesk',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;">5</button>
+                  <button onClick="{{ setSession10 }}" style="padding:9px;background:#244232;border:1px solid rgba(244,239,228,0.18);border-radius:8px;color:#cdd6c5;font-family:'Hanken Grotesk',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;">10</button>
+                </div>
+                <p style="font-size:11.5px;color:#8a9579;margin:6px 2px 0;font-family:'Spline Sans Mono',monospace;">{{ sessionsChosenLabel }}</p>
+              </div>
+
+              <!-- ARCHER DETAILS -->
+              <sc-if value="{{ showArcherDetails }}" hint-placeholder-val="{{ false }}">
+              <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:10px;padding:16px;">
+                <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:3px;">Who's shooting? <span style="color:#e8674a;">*</span></label>
+                <p style="font-size:11.5px;color:#8a9579;margin:0 0 12px;line-height:1.5;">We match each archer's age to your program (<span style="color:#7fb43f;">{{ archerProgramLabel }}</span>). Add a name and birthdate for each.</p>
+                <div style="display:flex;flex-direction:column;gap:12px;">
+                  <sc-for list="{{ archerRows }}" as="ar" hint-placeholder-count="2">
+                    <div style="background:#244232;border:1px solid rgba(244,239,228,0.12);border-radius:8px;padding:11px 12px;">
+                      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+                        <span style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:#7fb43f;">{{ ar.label }}</span>
+                        <sc-if value="{{ ar.hasNote }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;font-weight:600;font-family:'Spline Sans Mono',monospace;color:{{ ar.noteColor }};">{{ ar.note }}</span></sc-if>
+                      </div>
+                      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <sc-if value="{{ ar.isExtra }}" hint-placeholder-val="{{ true }}">
+                          <input value="{{ ar.name }}" onInput="{{ ar.setName }}" placeholder="Full name" style="flex:1;min-width:130px;background:#1b3325;border:1px solid {{ ar.nameBorder }};border-radius:7px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
+                        </sc-if>
+                        <sc-if value="{{ ar.isLead }}" hint-placeholder-val="{{ false }}">
+                          <div style="flex:1;min-width:130px;display:flex;align-items:center;background:rgba(244,239,228,0.05);border:1px solid rgba(244,239,228,0.1);border-radius:7px;padding:10px 12px;font-size:14px;color:#cdd6c5;">{{ ar.leadName }}</div>
+                        </sc-if>
+                        <input value="{{ ar.dob }}" onInput="{{ ar.setDob }}" max="{{ minDate }}" type="date" aria-label="Birthdate" style="width:158px;background:#1b3325;border:1px solid {{ ar.dobBorder }};border-radius:7px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
+                      </div>
+                    </div>
                   </sc-for>
                 </div>
-                <sc-if value="{{ someSlotsBlocked }}" hint-placeholder-val="{{ false }}">
-                  <p style="font-size:12px;line-height:1.5;color:#8a9579;margin:10px 2px 0;">Dimmed times don't have enough open seats for your group of {{ party }}. Lower the group size or pick a fuller slot.</p>
+                <sc-if value="{{ ageMismatch }}" hint-placeholder-val="{{ false }}">
+                  <p style="font-size:12px;line-height:1.5;color:#f0b48a;background:rgba(240,180,138,0.08);border:1px solid rgba(240,180,138,0.2);border-radius:8px;padding:10px 12px;margin:12px 0 0;">An archer's age falls outside <strong>{{ fProgram }}</strong> (ages {{ ageRangeLabel }}). Pick a program that matches, or update the birthdate.</p>
                 </sc-if>
               </div>
-            </sc-if>
-            </sc-if>
+              </sc-if>
 
-            <sc-if value="{{ multiDateMode }}" hint-placeholder-val="{{ false }}">
-            <div>
-              <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:4px;">Pick your dates <span style="color:#e8674a;">*</span> <span style="color:#7fb43f;font-weight:500;">— tap as many open days as you like</span></label>
-              <p style="font-size:11.5px;color:#8a9579;margin:0 0 10px;line-height:1.5;">Open Range lets you book several days at once. Tap days below, then choose a time for each.</p>
-              <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:12px;padding:14px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                  <button onClick="{{ calPrev }}" aria-label="Previous month" style="width:34px;height:34px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.08);color:#f4efe4;font-size:18px;font-weight:700;line-height:1;opacity:{{ calPrevOpacity }};cursor:{{ calPrevCursor }};">‹</button>
-                  <span style="font-size:15px;font-weight:800;color:#f4efe4;letter-spacing:-0.01em;">{{ calLabel }}</span>
-                  <button onClick="{{ calNext }}" aria-label="Next month" style="width:34px;height:34px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.08);color:#f4efe4;font-size:18px;font-weight:700;line-height:1;cursor:pointer;">›</button>
-                </div>
-                <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:6px;">
-                  <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.04em;color:#8a9579;">Su</span>
-                  <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.04em;color:#8a9579;">Mo</span>
-                  <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.04em;color:#8a9579;">Tu</span>
-                  <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.04em;color:#8a9579;">We</span>
-                  <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.04em;color:#8a9579;">Th</span>
-                  <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.04em;color:#8a9579;">Fr</span>
-                  <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.04em;color:#8a9579;">Sa</span>
-                </div>
-                <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;">
-                  <sc-for list="{{ calCells }}" as="c" hint-placeholder-count="35">
-                    <sc-if value="{{ c.blank }}" hint-placeholder-val="{{ false }}"><span></span></sc-if>
-                    <sc-if value="{{ c.notBlank }}" hint-placeholder-val="{{ true }}"><button onClick="{{ c.pick }}" style="aspect-ratio:1;border-radius:8px;border:1.5px solid {{ c.border }};background:{{ c.bg }};color:{{ c.fg }};font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:{{ c.weight }};cursor:{{ c.cursor }};opacity:{{ c.opacity }};display:flex;align-items:center;justify-content:center;">{{ c.day }}</button></sc-if>
-                  </sc-for>
-                </div>
+              <sc-if value="{{ singleDateMode }}" hint-placeholder-val="{{ true }}">
+              <div>
+                <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Date</label>
+                <input value="{{ slotDate }}" onInput="{{ onPickDate }}" min="{{ minDate }}" type="date" style="width:100%;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:13px 14px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:#f4efe4;outline:none;" />
               </div>
 
-              <sc-if value="{{ multiHasDates }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex;flex-direction:column;gap:12px;margin-top:14px;">
-                <sc-for list="{{ multiPicks }}" as="p" hint-placeholder-count="1">
-                  <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.16);border-radius:10px;padding:14px;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
-                      <div>
-                        <div style="font-size:14px;font-weight:800;color:#f4efe4;">{{ p.pretty }}</div>
-                        <div style="font-size:11.5px;font-weight:600;color:{{ p.timeLabelColor }};font-family:'Spline Sans Mono',monospace;margin-top:2px;">{{ p.timeLabel }}</div>
-                      </div>
-                      <button onClick="{{ p.remove }}" style="background:none;border:1px solid rgba(244,239,228,0.2);color:#cdd6c5;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:6px 11px;border-radius:999px;">Remove</button>
-                    </div>
-                    <sc-if value="{{ p.loading }}" hint-placeholder-val="{{ true }}"><div style="font-size:13px;color:#9aa890;padding:2px 0;">Checking availability…</div></sc-if>
-                    <sc-if value="{{ p.closed }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:#f0b48a;">The range is closed that day.</div></sc-if>
-                    <sc-if value="{{ p.noTimes }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:#f0b48a;">No more sessions left today — try another day.</div></sc-if>
-                    <sc-if value="{{ p.hasSlots }}" hint-placeholder-val="{{ false }}">
-                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                        <sc-for list="{{ p.slotView }}" as="s" hint-placeholder-count="4">
-                          <button onClick="{{ s.pick }}" style="text-align:left;background:{{ s.bg }};color:{{ s.fg }};border:1.5px solid {{ s.border }};border-radius:10px;padding:10px 12px;cursor:{{ s.cursor }};opacity:{{ s.opacity }};font-family:'Hanken Grotesk',sans-serif;display:flex;flex-direction:column;gap:2px;">
-                            <span style="font-size:14px;font-weight:700;">{{ s.check }}{{ s.time }}</span>
-                            <span style="font-size:11px;font-weight:600;color:{{ s.leftColor }};font-family:'Spline Sans Mono',monospace;">{{ s.leftLabel }}</span>
-                          </button>
-                        </sc-for>
-                      </div>
-                    </sc-if>
+              <!-- SLOTS -->
+              <sc-if value="{{ slotsLoading }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:14px;color:#9aa890;padding:6px 2px;">Checking availability…</div>
+              </sc-if>
+              <sc-if value="{{ dayClosedForBooking }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:14px;line-height:1.5;color:#f0b48a;background:rgba(240,180,138,0.08);border:1px solid rgba(240,180,138,0.2);border-radius:10px;padding:12px 14px;">The range is closed that day. Try Tuesday–Sunday (Mondays are our rest day).</div>
+              </sc-if>
+              <sc-if value="{{ noMoreToday }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:14px;line-height:1.5;color:#f0b48a;background:rgba(240,180,138,0.08);border:1px solid rgba(240,180,138,0.2);border-radius:10px;padding:12px 14px;">Today's sessions have already started or passed. Pick another day to book ahead.</div>
+              </sc-if>
+              <sc-if value="{{ hasSlots }}" hint-placeholder-val="{{ false }}">
+                <div>
+                  <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:4px;">Available times — tap all you'd like</label>
+                  <p style="font-size:12px;color:#8a9579;margin:0 0 10px;font-family:'Spline Sans Mono',monospace;">{{ prettyDate }} · you can pick more than one</p>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <sc-for list="{{ slotView }}" as="s" hint-placeholder-count="4">
+                      <button onClick="{{ s.pick }}" style="text-align:left;background:{{ s.bg }};color:{{ s.fg }};border:1.5px solid {{ s.border }};border-radius:10px;padding:11px 13px;cursor:{{ s.cursor }};opacity:{{ s.opacity }};font-family:'Hanken Grotesk',sans-serif;display:flex;flex-direction:column;gap:2px;">
+                        <span style="font-size:15px;font-weight:700;">{{ s.check }}{{ s.time }}</span>
+                        <span style="font-size:11.5px;font-weight:600;color:{{ s.leftColor }};font-family:'Spline Sans Mono',monospace;">{{ s.leftLabel }}</span>
+                      </button>
+                    </sc-for>
                   </div>
-                </sc-for>
+                  <sc-if value="{{ someSlotsBlocked }}" hint-placeholder-val="{{ false }}">
+                    <p style="font-size:12px;line-height:1.5;color:#8a9579;margin:10px 2px 0;">Dimmed times don't have enough open seats for your group of {{ party }}. Lower the group size or pick a fuller slot.</p>
+                  </sc-if>
+                </div>
+              </sc-if>
+              </sc-if>
+
+              <sc-if value="{{ multiDateMode }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:4px;">Pick your dates <span style="color:#e8674a;">*</span> <span style="color:#7fb43f;font-weight:500;">— tap as many open days as you like</span></label>
+                <p style="font-size:11.5px;color:#8a9579;margin:0 0 10px;line-height:1.5;">Open Range lets you book several days at once. Tap days below, then choose a time for each.</p>
+                <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:12px;padding:14px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                    <button onClick="{{ calPrev }}" aria-label="Previous month" style="width:34px;height:34px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.08);color:#f4efe4;font-size:18px;font-weight:700;line-height:1;opacity:{{ calPrevOpacity }};cursor:{{ calPrevCursor }};">‹</button>
+                    <span style="font-size:15px;font-weight:800;color:#f4efe4;letter-spacing:-0.01em;">{{ calLabel }}</span>
+                    <button onClick="{{ calNext }}" aria-label="Next month" style="width:34px;height:34px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.08);color:#f4efe4;font-size:18px;font-weight:700;line-height:1;cursor:pointer;">›</button>
+                  </div>
+                  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:6px;">
+                    <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.04em;color:#8a9579;">Su</span>
+                    <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.04em;color:#8a9579;">Mo</span>
+                    <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.04em;color:#8a9579;">Tu</span>
+                    <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.04em;color:#8a9579;">We</span>
+                    <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.04em;color:#8a9579;">Th</span>
+                    <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.04em;color:#8a9579;">Fr</span>
+                    <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.04em;color:#8a9579;">Sa</span>
+                  </div>
+                  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;">
+                    <sc-for list="{{ calCells }}" as="c" hint-placeholder-count="35">
+                      <sc-if value="{{ c.blank }}" hint-placeholder-val="{{ false }}"><span></span></sc-if>
+                      <sc-if value="{{ c.notBlank }}" hint-placeholder-val="{{ true }}"><button onClick="{{ c.pick }}" style="aspect-ratio:1;border-radius:8px;border:1.5px solid {{ c.border }};background:{{ c.bg }};color:{{ c.fg }};font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:{{ c.weight }};cursor:{{ c.cursor }};opacity:{{ c.opacity }};display:flex;align-items:center;justify-content:center;">{{ c.day }}</button></sc-if>
+                    </sc-for>
+                  </div>
+                </div>
+
+                <sc-if value="{{ multiHasDates }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:12px;margin-top:14px;">
+                  <sc-for list="{{ multiPicks }}" as="p" hint-placeholder-count="1">
+                    <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.16);border-radius:10px;padding:14px;">
+                      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
+                        <div>
+                          <div style="font-size:14px;font-weight:800;color:#f4efe4;">{{ p.pretty }}</div>
+                          <div style="font-size:11.5px;font-weight:600;color:{{ p.timeLabelColor }};font-family:'Spline Sans Mono',monospace;margin-top:2px;">{{ p.timeLabel }}</div>
+                        </div>
+                        <button onClick="{{ p.remove }}" style="background:none;border:1px solid rgba(244,239,228,0.2);color:#cdd6c5;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:6px 11px;border-radius:999px;">Remove</button>
+                      </div>
+                      <sc-if value="{{ p.loading }}" hint-placeholder-val="{{ true }}"><div style="font-size:13px;color:#9aa890;padding:2px 0;">Checking availability…</div></sc-if>
+                      <sc-if value="{{ p.closed }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:#f0b48a;">The range is closed that day.</div></sc-if>
+                      <sc-if value="{{ p.noTimes }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:#f0b48a;">No more sessions left today — try another day.</div></sc-if>
+                      <sc-if value="{{ p.hasSlots }}" hint-placeholder-val="{{ false }}">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                          <sc-for list="{{ p.slotView }}" as="s" hint-placeholder-count="4">
+                            <button onClick="{{ s.pick }}" style="text-align:left;background:{{ s.bg }};color:{{ s.fg }};border:1.5px solid {{ s.border }};border-radius:10px;padding:10px 12px;cursor:{{ s.cursor }};opacity:{{ s.opacity }};font-family:'Hanken Grotesk',sans-serif;display:flex;flex-direction:column;gap:2px;">
+                              <span style="font-size:14px;font-weight:700;">{{ s.check }}{{ s.time }}</span>
+                              <span style="font-size:11px;font-weight:600;color:{{ s.leftColor }};font-family:'Spline Sans Mono',monospace;">{{ s.leftLabel }}</span>
+                            </button>
+                          </sc-for>
+                        </div>
+                      </sc-if>
+                    </div>
+                  </sc-for>
+                </div>
+                </sc-if>
+              </div>
+              </sc-if>
+
+              <sc-if value="{{ statusFull }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:14px;line-height:1.5;color:#f0b48a;background:rgba(240,180,138,0.08);border:1px solid rgba(240,180,138,0.2);border-radius:10px;padding:12px 14px;">
+                  That time just filled up.
+                  <sc-if value="{{ hasAlts }}" hint-placeholder-val="{{ false }}">
+                    <span> Try one of these instead:</span>
+                    <span style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
+                      <sc-for list="{{ bookingAlts }}" as="a" hint-placeholder-count="2">
+                        <button onClick="{{ a.pick }}" style="background:#7fb43f;color:#1b2a1f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:7px 13px;border-radius:999px;">{{ a.time }}</button>
+                      </sc-for>
+                    </span>
+                  </sc-if>
+                </div>
+              </sc-if>
+              <sc-if value="{{ statusError }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:13.5px;color:#f0b48a;">Something went wrong reaching the calendar. Please call us at 0917 127 6677.</div>
+              </sc-if>
+              <sc-if value="{{ formError }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:13.5px;color:#f0b48a;">Please complete your name, mobile number, a valid email, every archer's name &amp; birthdate, your concession proof (WAP ID or Greenpark address / RHS ID), and pick an available time.</div>
+              </sc-if>
+            </div>
+
+            <!-- CARD: Group & discounts -->
+            <div data-test="card-group" style="background:#1b3325;border:1px solid rgba(244,239,228,0.14);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:16px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#7fb43f;">Group &amp; discounts</div>
+              <div>
+                <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">How many archers?</label>
+                <div style="display:flex;align-items:center;justify-content:space-between;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:7px 10px;">
+                  <button onClick="{{ decParty }}" aria-label="Fewer archers" style="width:38px;height:38px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;" style-hover="background:rgba(244,239,228,0.2);">−</button>
+                  <div style="text-align:center;">
+                    <div style="font-size:17px;font-weight:800;color:#f4efe4;">{{ partyLabel }}</div>
+                    <sc-if value="{{ isGroup }}" hint-placeholder-val="{{ false }}"><div style="font-size:11px;color:#7fb43f;font-family:'Spline Sans Mono',monospace;margin-top:1px;">group · takes {{ party }} seats</div></sc-if>
+                  </div>
+                  <button onClick="{{ incParty }}" aria-label="More archers" style="width:38px;height:38px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;" style-hover="background:rgba(244,239,228,0.2);">+</button>
+                </div>
+                <p style="font-size:11.5px;color:#8a9579;margin:6px 2px 0;">Booking for a group? Each archer takes one of the {{ capacity }} hourly spots.</p>
+              </div>
+
+              <sc-if value="{{ isOpenRange }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:3px;">Open Range concessions <span style="color:#7fb43f;font-weight:500;">— base ₱400, less ₱100 per concession (stackable)</span></label>
+                <p style="font-size:11.5px;color:#8a9579;margin:0 0 9px;line-height:1.5;">These discounts apply to Open Range only. Tick any that apply and add your proof below.</p>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <button onClick="{{ togglePasig }}" role="checkbox" aria-checked="{{ eligPasig }}" aria-label="Pasig City resident — ₱100 off" style="display:flex;align-items:center;gap:11px;text-align:left;background:#1b3325;border:1.5px solid {{ pasigBorder }};border-radius:9px;padding:11px 13px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
+                    <span style="width:20px;height:20px;flex:none;border-radius:5px;border:1.5px solid {{ pasigBorder }};background:{{ pasigBox }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">{{ pasigCheck }}</span>
+                    <span style="flex:1;font-size:14px;color:#f4efe4;">Pasig City resident</span>
+                    <span style="font-family:'Spline Sans Mono',monospace;font-size:12.5px;font-weight:700;color:#7fb43f;white-space:nowrap;">−₱100</span>
+                  </button>
+                  <sc-if value="{{ eligPasig }}" hint-placeholder-val="{{ false }}">
+                    <label style="display:block;font-size:12px;font-weight:600;color:#cdd6c5;margin:2px 0 -2px;">Pasig City address or valid ID showing it <span style="color:#e8674a;">*</span></label>
+                    <input value="{{ pasigProof }}" onInput="{{ setPasigProof }}" placeholder="Pasig City address or ID number" style="width:100%;background:#1b3325;border:1px solid {{ pasigProofBorder }};border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
+                  </sc-if>
+                  <button onClick="{{ togglePac }}" role="checkbox" aria-checked="{{ eligPac }}" aria-label="PAC member — ₱100 off" style="display:flex;align-items:center;gap:11px;text-align:left;background:#1b3325;border:1.5px solid {{ pacBorder }};border-radius:9px;padding:11px 13px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
+                    <span style="width:20px;height:20px;flex:none;border-radius:5px;border:1.5px solid {{ pacBorder }};background:{{ pacBox }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">{{ pacCheck }}</span>
+                    <span style="flex:1;font-size:14px;color:#f4efe4;">PAC <span style="color:#9aa890;">— Pasig Archery Club member</span></span>
+                    <span style="font-family:'Spline Sans Mono',monospace;font-size:12.5px;font-weight:700;color:#7fb43f;white-space:nowrap;">−₱100</span>
+                  </button>
+                  <sc-if value="{{ eligPac }}" hint-placeholder-val="{{ false }}">
+                    <label style="display:block;font-size:12px;font-weight:600;color:#cdd6c5;margin:2px 0 -2px;">WAP ID No. <span style="color:#e8674a;">*</span></label>
+                    <input value="{{ wapId }}" onInput="{{ setWapId }}" placeholder="WAP ID No. (World Archery Philippines)" style="width:100%;background:#1b3325;border:1px solid {{ wapBorder }};border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
+                  </sc-if>
+                  <button onClick="{{ toggleLocal }}" role="checkbox" aria-checked="{{ eligLocal }}" aria-label="Greenpark resident or RHS student — ₱100 off" style="display:flex;align-items:center;gap:11px;text-align:left;background:#1b3325;border:1.5px solid {{ localBorder }};border-radius:9px;padding:11px 13px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
+                    <span style="width:20px;height:20px;flex:none;border-radius:5px;border:1.5px solid {{ localBorder }};background:{{ localBox }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">{{ localCheck }}</span>
+                    <span style="flex:1;font-size:14px;color:#f4efe4;">Greenpark resident or RHS <span style="color:#9aa890;">— Rizal High School student</span></span>
+                    <span style="font-family:'Spline Sans Mono',monospace;font-size:12.5px;font-weight:700;color:#7fb43f;white-space:nowrap;">−₱100</span>
+                  </button>
+                  <sc-if value="{{ eligLocal }}" hint-placeholder-val="{{ false }}">
+                    <label style="display:block;font-size:12px;font-weight:600;color:#cdd6c5;margin:2px 0 -2px;">Greenpark address or RHS ID <span style="color:#e8674a;">*</span></label>
+                    <input value="{{ localProof }}" onInput="{{ setLocalProof }}" placeholder="Greenpark address or RHS ID number" style="width:100%;background:#1b3325;border:1px solid {{ localProofBorder }};border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
+                  </sc-if>
+                </div>
+                <sc-if value="{{ unlimitedSlots }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;gap:9px;margin-top:10px;background:rgba(127,180,63,0.14);border:1px solid rgba(127,180,63,0.35);border-radius:9px;padding:10px 13px;">
+                    <span style="font-size:15px;flex:none;">★</span>
+                    <span style="font-size:12.5px;line-height:1.45;color:#cdd6c5;">Concessions stacked — pick <span style="color:#7fb43f;font-weight:700;">as many time slots as you like</span> at no extra cost.</span>
+                  </div>
+                </sc-if>
               </div>
               </sc-if>
             </div>
-            </sc-if>
 
-            <sc-if value="{{ statusFull }}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:14px;line-height:1.5;color:#f0b48a;background:rgba(240,180,138,0.08);border:1px solid rgba(240,180,138,0.2);border-radius:10px;padding:12px 14px;">
-                That time just filled up.
-                <sc-if value="{{ hasAlts }}" hint-placeholder-val="{{ false }}">
-                  <span> Try one of these instead:</span>
-                  <span style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
-                    <sc-for list="{{ bookingAlts }}" as="a" hint-placeholder-count="2">
-                      <button onClick="{{ a.pick }}" style="background:#7fb43f;color:#1b2a1f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:7px 13px;border-radius:999px;">{{ a.time }}</button>
-                    </sc-for>
-                  </span>
-                </sc-if>
-              </div>
-            </sc-if>
-            <sc-if value="{{ statusError }}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:13.5px;color:#f0b48a;">Something went wrong reaching the calendar. Please call us at 0917 127 6677.</div>
-            </sc-if>
-            <sc-if value="{{ formError }}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:13.5px;color:#f0b48a;">Please complete your name, mobile number, a valid email, every archer's name &amp; birthdate, your concession proof (WAP ID or Greenpark address / RHS ID), and pick an available time.</div>
-            </sc-if>
-
-            <sc-if value="{{ slotChosen }}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:13px;color:#cdd6c5;background:rgba(127,180,63,0.12);border:1px solid rgba(127,180,63,0.3);border-radius:8px;padding:9px 12px;">Selected: <span style="font-weight:700;color:#f4efe4;">{{ chosenLabel }}</span></div>
+            <!-- CARD: Your quote -->
+            <div data-test="card-quote" style="background:#1b3325;border:1px solid rgba(244,239,228,0.14);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:16px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#7fb43f;">Your quote</div>
+              <sc-if value="{{ slotChosen }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:13px;color:#cdd6c5;background:rgba(127,180,63,0.12);border:1px solid rgba(127,180,63,0.3);border-radius:8px;padding:9px 12px;">Selected: <span style="font-weight:700;color:#f4efe4;">{{ chosenLabel }}</span></div>
+              </sc-if>
               <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:10px;padding:14px 16px;">
                 <div style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:0.12em;text-transform:uppercase;color:#7fb43f;margin-bottom:8px;">Estimated total</div>
                 <div style="font-size:12.5px;color:#9aa890;font-family:'Spline Sans Mono',monospace;margin-bottom:8px;">{{ costBreakdown }}</div>
@@ -1102,12 +1130,12 @@
                   </div>
                 </sc-if>
               </div>
-            </sc-if>
-            <button onClick="{{ confirmBooking }}" style="background:#7fb43f;color:#1b2a1f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:700;padding:15px;border-radius:999px;margin-top:4px;" style-hover="background:#93c75c;">
-              <sc-if value="{{ isSending }}" hint-placeholder-val="{{ false }}">Booking…</sc-if>
-              <sc-if value="{{ statusIdle }}" hint-placeholder-val="{{ true }}">{{ confirmLabel }}</sc-if>
-            </button>
-            <p style="font-size:12px;color:#8a9579;text-align:center;margin:2px 0 0;">Pay at the range when you arrive · free to reschedule a day ahead</p>
+              <button onClick="{{ confirmBooking }}" style="background:#7fb43f;color:#1b2a1f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:700;padding:15px;border-radius:999px;margin-top:4px;" style-hover="background:#93c75c;">
+                <sc-if value="{{ isSending }}" hint-placeholder-val="{{ false }}">Booking…</sc-if>
+                <sc-if value="{{ statusIdle }}" hint-placeholder-val="{{ true }}">{{ confirmLabel }}</sc-if>
+              </button>
+              <p style="font-size:12px;color:#8a9579;text-align:center;margin:2px 0 0;">Pay at the range when you arrive · free to reschedule a day ahead</p>
+            </div>
           </div>
         </div>
         </sc-if>
