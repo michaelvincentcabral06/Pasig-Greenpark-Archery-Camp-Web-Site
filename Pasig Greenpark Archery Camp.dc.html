@@ -1783,12 +1783,21 @@
         <!-- BOOKINGS TAB -->
         <sc-if value="{{ tabBookings }}" hint-placeholder-val="{{ true }}">
         <div>
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;flex-wrap:wrap;">
-            <div style="font-size:15px;color:#56664f;">{{ bookingCount }} booking(s) on this device</div>
-            <sc-if value="{{ hasBookings }}" hint-placeholder-val="{{ false }}"><button onClick="{{ clearBookings }}" style="background:none;border:1px solid rgba(180,81,47,0.4);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#b4512f;padding:8px 14px;border-radius:999px;">Clear all</button></sc-if>
+          <!-- FILTERS -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+            <input type="text" value="{{ bkSearch }}" onInput="{{ setBkSearch }}" placeholder="Search name, email, reference…" style="flex:1;min-width:200px;padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;">
+            <select value="{{ bkFilter }}" onChange="{{ setBkFilter }}" style="padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;background:#fffdf6;">
+              <sc-for list="{{ bkStatusOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o.id }}">{{ o.name }}</option></sc-for>
+            </select>
+            <select value="{{ bkCoach }}" onChange="{{ setBkCoach }}" style="padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;background:#fffdf6;">
+              <sc-for list="{{ bkCoachOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o.id }}">{{ o.name }}</option></sc-for>
+            </select>
+            <button onClick="{{ refreshBookings }}" title="Refresh from database" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:10px 14px;border-radius:10px;">↻ Refresh</button>
           </div>
+          <div style="font-size:14px;color:#56664f;margin-bottom:14px;">{{ bookingCount }} booking(s) match · <button onClick="{{ clearBkFilters }}" style="background:none;border:none;cursor:pointer;color:#4d7327;font-weight:700;font-size:14px;font-family:'Hanken Grotesk',sans-serif;text-decoration:underline;padding:0;">clear filters</button></div>
+
           <sc-if value="{{ noBookings }}" hint-placeholder-val="{{ true }}">
-            <div style="background:#fffdf6;border:1px dashed rgba(36,66,50,0.2);border-radius:12px;padding:48px 24px;text-align:center;color:#8a9579;font-size:15px;">No bookings yet. Submissions from the Contact form on this device will appear here.</div>
+            <div style="background:#fffdf6;border:1px dashed rgba(36,66,50,0.2);border-radius:12px;padding:48px 24px;text-align:center;color:#8a9579;font-size:15px;">No bookings match. New bookings are recorded to your database automatically and will appear here.</div>
           </sc-if>
           <div style="display:flex;flex-direction:column;gap:12px;">
             <sc-for list="{{ bookingRows }}" as="b" hint-placeholder-count="0">
@@ -1798,24 +1807,29 @@
                     <span style="font-size:17px;font-weight:800;color:#1b2a1f;">{{ b.name }}</span>
                     <span style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;background:{{ b.statusBg }};color:{{ b.statusFg }};padding:4px 9px;border-radius:999px;">{{ b.statusLabel }}</span>
                   </div>
-                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                    <span style="font-size:14px;color:#56664f;">{{ b.program }}</span>
-                    <sc-if value="{{ b.onCalendar }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:#4d7327;background:#e6efd6;padding:3px 8px;border-radius:999px;">On calendar</span></sc-if>
-                  </div>
-                  <sc-if value="{{ b.hasSlot }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;font-weight:700;color:#244232;margin-top:3px;">{{ b.slotInfo }}<sc-if value="{{ b.amountLabel }}" hint-placeholder-val="{{ false }}"> · {{ b.amountLabel }}</sc-if></div></sc-if>
+                  <div style="font-size:14px;color:#56664f;">{{ b.program }} · {{ b.coachLabel }}</div>
+                  <div style="font-size:13px;font-weight:700;color:#244232;margin-top:3px;">{{ b.slotInfo }}<sc-if value="{{ b.amountLabel }}" hint-placeholder-val="{{ false }}"> · {{ b.amountLabel }}</sc-if></div>
                   <div style="font-size:13px;color:#8a9579;font-family:'Spline Sans Mono',monospace;margin-top:4px;">{{ b.phone }}<sc-if value="{{ b.hasEmail }}" hint-placeholder-val="{{ false }}"> · {{ b.email }}</sc-if></div>
-                  <div style="font-size:12px;color:#a6b09a;font-family:'Spline Sans Mono',monospace;margin-top:3px;"><sc-if value="{{ b.hasRef }}" hint-placeholder-val="{{ false }}">{{ b.ref }} · </sc-if>req {{ b.when }}<sc-if value="{{ b.date }}" hint-placeholder-val="{{ false }}"> · {{ b.date }}</sc-if></div>
-                  <sc-if value="{{ b.hasRoster }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#56664f;margin-top:5px;">Archers: {{ b.roster }}</div></sc-if>
-                  <sc-if value="{{ b.hasConcession }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#4d7327;font-family:'Spline Sans Mono',monospace;margin-top:5px;background:#e6efd6;border-radius:6px;padding:5px 9px;display:inline-block;">Concession: {{ b.concessionLabel }}</div></sc-if>
+                  <div style="font-size:12px;color:#a6b09a;font-family:'Spline Sans Mono',monospace;margin-top:3px;"><sc-if value="{{ b.hasRef }}" hint-placeholder-val="{{ false }}">{{ b.ref }} · </sc-if>booked {{ b.bookedAt }}</div>
                 </div>
-                <div style="display:flex;gap:8px;">
-                  <a href="{{ b.callHref }}" style="background:#244232;color:#f4efe4;text-decoration:none;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">Call</a>
-                  <button onClick="{{ b.toggle }}" style="background:#e6efd6;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#4d7327;padding:9px 15px;border-radius:999px;">Mark</button>
-                  <button onClick="{{ b.remove }}" aria-label="Cancel booking" title="Cancel & remove from calendar" style="background:none;border:1px solid rgba(180,81,47,0.35);cursor:pointer;font-size:13px;font-weight:700;color:#b4512f;padding:8px 13px;border-radius:999px;"><sc-if value="{{ b.cancelling }}" hint-placeholder-val="{{ false }}">…</sc-if><sc-if value="{{ b.notCancelling }}" hint-placeholder-val="{{ true }}">Cancel</sc-if></button>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+                  <sc-if value="{{ b.isPending }}" hint-placeholder-val="{{ true }}"><button onClick="{{ b.approve }}" style="background:#4d7327;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">Approve</button></sc-if>
+                  <sc-if value="{{ b.hasPhone }}" hint-placeholder-val="{{ true }}"><a href="{{ b.callHref }}" style="background:#244232;color:#f4efe4;text-decoration:none;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">Call</a></sc-if>
+                  <button onClick="{{ b.retrieve }}" title="Add this customer to Plans &amp; Sessions" style="background:#e6efd6;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#4d7327;padding:9px 15px;border-radius:999px;">→ Plans</button>
+                  <sc-if value="{{ b.notCancelled }}" hint-placeholder-val="{{ true }}"><button onClick="{{ b.cancel }}" aria-label="Cancel booking" title="Cancel &amp; remove from calendar" style="background:none;border:1px solid rgba(180,81,47,0.35);cursor:pointer;font-size:13px;font-weight:700;color:#b4512f;padding:8px 13px;border-radius:999px;"><sc-if value="{{ b.cancelling }}" hint-placeholder-val="{{ false }}">…</sc-if><sc-if value="{{ b.notCancelling }}" hint-placeholder-val="{{ true }}">Cancel</sc-if></button></sc-if>
                 </div>
               </div>
             </sc-for>
           </div>
+
+          <!-- PAGINATION -->
+          <sc-if value="{{ bkMultiPage }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px;">
+            <sc-if value="{{ bkHasPrev }}" hint-placeholder-val="{{ true }}"><button onClick="{{ bkPrev }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">← Prev</button></sc-if>
+            <span style="font-size:13px;color:#56664f;font-family:'Spline Sans Mono',monospace;">{{ bkPageLabel }}</span>
+            <sc-if value="{{ bkHasNext }}" hint-placeholder-val="{{ true }}"><button onClick="{{ bkNext }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">Next →</button></sc-if>
+          </div>
+          </sc-if>
 
           <!-- CANCELLATION HISTORY -->
           <div style="margin-top:32px;">
@@ -2199,6 +2213,10 @@ class Component extends DCLogic {
     coachSplits: {},
     splitDefault: { coach: 80, equip: 10, range: 10 },
     splitDraft: {},
+    bkFilter: 'all',
+    bkCoach: 'all',
+    bkSearch: '',
+    bkPage: 0,
     acctLoading: false,
     acctError: '',
     acctName: '',
@@ -2816,6 +2834,39 @@ class Component extends DCLogic {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'setSplit', coach: coachId, coachPct: d.coach, equipPct: d.equip, rangePct: d.range }),
     }).then(r => r.json()).then(() => { this.loadSettings(); if (typeof alert !== 'undefined') alert('Saved split for this coach.'); }).catch(() => {});
+  }
+  // ---------- ADMIN: BOOKINGS TAB (database-backed) ----------
+  // Mark a booking Approved (status only — bookings still confirm instantly).
+  approveBooking(b) {
+    const ep = this.endpoint(); if (!ep || !b) return;
+    fetch(ep, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'setBookingStatus', eventId: b.eventId || '', ref: b.ref || '', date: b.date || '', time: b.time || '', status: 'approved' }),
+    }).then(r => r.json()).then(() => this.loadAllBookings()).catch(() => {});
+  }
+  // Cancel a booking from the database list (removes the calendar event + emails the customer).
+  adminCancelDbBooking(b) {
+    if (!b) return;
+    if (typeof confirm !== 'undefined' && !confirm('Cancel this booking? This removes it from the Google Calendar' + (b.email ? ' and emails ' + b.email : '') + '.')) return;
+    this.setState({ cancellingTs: b.eventId || b.ref });
+    this.cancelBooking({ eventId: b.eventId, ref: b.ref, date: b.date, time: b.time, name: b.name, email: b.email }, true, 'admin')
+      .then(() => { this.setState({ cancellingTs: null }); this.loadAllBookings(); this.loadCancellations(); });
+  }
+  // Retrieve a booking into Plans & Sessions: pre-creates a pass for that customer
+  // (prefilled name/email/phone) with the booked session already attached — so the
+  // admin doesn't re-type details and can just assign a coach / add more sessions.
+  retrieveToPlan(b) {
+    const email = (b.email || '').trim().toLowerCase();
+    if (!email) { if (typeof alert !== 'undefined') alert('This booking has no email on file, so it cannot be added to Plans.'); return; }
+    const price = b.amount ? ('₱' + Number(b.amount).toLocaleString('en-PH')) : this.passPrice(b.program);
+    const plan = {
+      name: b.program || 'Custom plan', ts: Date.now(), holder: b.name || '', phone: b.phone || '',
+      price: price, ref: b.ref || this.bookingRef(this.todayStr()), updatedAt: Date.now(), coach: '',
+      sessions: (b.date && b.time) ? [{ date: b.date, time: b.time, eventId: b.eventId || '', ref: b.ref || '' }] : [],
+    };
+    this.pushPlan(email, plan);
+    this.setState(s => ({ remotePlans: [{ ...plan, email: email }, ...(s.remotePlans || [])], adminTab: 'plans' }));
+    if (typeof alert !== 'undefined') alert('Added to Plans & Sessions for ' + (b.name || email) + '. Assign a coach and schedule more sessions in the Plans tab.');
   }
   localAcctMatches(email, ref) {
     const e = (email || '').trim().toLowerCase(), r = (ref || '').trim().toUpperCase();
@@ -3539,7 +3590,7 @@ class Component extends DCLogic {
         });
       },
     }));
-    const adminSetTab = (t) => () => { this.setState({ adminTab: t }); if (t === 'plans') this.loadRemotePlans(); if (t === 'dashboard') { this.loadAllBookings(); this.loadSettings(); } };
+    const adminSetTab = (t) => () => { this.setState({ adminTab: t }); if (t === 'plans') this.loadRemotePlans(); if (t === 'dashboard') { this.loadAllBookings(); this.loadSettings(); } if (t === 'bookings') { this.loadAllBookings(); this.loadSettings(); } };
     // Per-plan schedule limit: "N sessions/classes" → N; monthly/unlimited → no cap; otherwise 1 (Day Pass, hourly, single).
     const capFor = (name) => {
       const pk = cm.packages.find(p => p.name === name);
@@ -3779,6 +3830,69 @@ class Component extends DCLogic {
           status: String(b.status || 'booked').toLowerCase(),
         };
       });
+
+    // ---------- ADMIN: BOOKINGS TAB (database, all devices) ----------
+    const BK_PAGE = 10;
+    const bkFilter = this.state.bkFilter || 'all';
+    const bkCoach = this.state.bkCoach || 'all';
+    const bkSearch = (this.state.bkSearch || '').trim().toLowerCase();
+    const bkStatusInfo = (st) => {
+      st = String(st || 'booked').toLowerCase();
+      if (st === 'approved') return { label: 'Approved', bg: '#e6efd6', fg: '#4d7327' };
+      if (st === 'cancelled') return { label: 'Cancelled', bg: '#f3e2e0', fg: '#b4512f' };
+      return { label: 'Pending', bg: '#fff1cf', fg: '#8a6a1f' };
+    };
+    const bkAll = (this.state.allBookings || []).slice()
+      .sort((a, b) => (((b.date || '') + (b.time || '')).localeCompare((a.date || '') + (a.time || ''))));
+    const bkFiltered = bkAll.filter(b => {
+      const st = String(b.status || 'booked').toLowerCase();
+      if (bkFilter !== 'all' && st !== bkFilter) return false;
+      if (bkCoach !== 'all') {
+        const c = matchCoach(b.coach);
+        if (bkCoach === 'unassigned') { if (c) return false; }
+        else if (!c || c.id !== bkCoach) return false;
+      }
+      if (bkSearch) {
+        const hay = ((b.name || '') + ' ' + (b.email || '') + ' ' + (b.ref || '') + ' ' + (b.phone || '') + ' ' + (b.program || '')).toLowerCase();
+        if (hay.indexOf(bkSearch) === -1) return false;
+      }
+      return true;
+    });
+    const bkTotal = bkFiltered.length;
+    const bkPageCount = Math.max(1, Math.ceil(bkTotal / BK_PAGE));
+    const bkPage = Math.min(Math.max(0, this.state.bkPage || 0), bkPageCount - 1);
+    const dbBookingRows = bkFiltered.slice(bkPage * BK_PAGE, bkPage * BK_PAGE + BK_PAGE).map(b => {
+      const si = bkStatusInfo(b.status);
+      const c = matchCoach(b.coach);
+      const st = String(b.status || 'booked').toLowerCase();
+      return {
+        name: b.name || 'Guest', program: b.program || '',
+        statusLabel: si.label, statusBg: si.bg, statusFg: si.fg,
+        slotInfo: fmtSessionDate(b.date) + (b.time ? ' · ' + b.time : '') + ((b.archers || 1) > 1 ? ' · group of ' + b.archers : ''),
+        amountLabel: b.amount ? pesoRound(b.amount) : '',
+        coachLabel: c ? c.name : 'Any / unassigned',
+        phone: b.phone || '', hasPhone: !!(b.phone && String(b.phone).trim()),
+        email: b.email || '', hasEmail: !!(b.email && String(b.email).trim()),
+        ref: b.ref || '', hasRef: !!(b.ref && String(b.ref).trim()),
+        bookedAt: b.bookedAt || '',
+        callHref: 'tel:' + (b.phone || '').replace(/[^0-9+]/g, ''),
+        isPending: st !== 'approved' && st !== 'cancelled',
+        notCancelled: st !== 'cancelled',
+        cancelling: (this.state.cancellingTs === (b.eventId || b.ref)),
+        approve: () => this.approveBooking(b),
+        cancel: () => this.adminCancelDbBooking(b),
+        retrieve: () => this.retrieveToPlan(b),
+      };
+    });
+    const bkCoachOpts = [{ id: 'all', name: 'All coaches', sel: bkCoach === 'all' }]
+      .concat(dashCoaches.map(c => ({ id: c.id, name: c.name, sel: bkCoach === c.id })))
+      .concat([{ id: 'unassigned', name: 'Any / unassigned', sel: bkCoach === 'unassigned' }]);
+    const bkStatusOpts = [
+      { id: 'all', name: 'All statuses', sel: bkFilter === 'all' },
+      { id: 'booked', name: 'Pending', sel: bkFilter === 'booked' },
+      { id: 'approved', name: 'Approved', sel: bkFilter === 'approved' },
+      { id: 'cancelled', name: 'Cancelled', sel: bkFilter === 'cancelled' },
+    ];
 
     // ---------- COACH PORTAL ----------
     const coachUser = this.coachById(this.state.coachId);
@@ -4040,10 +4154,22 @@ class Component extends DCLogic {
       tabPricingBg: this.state.adminTab === 'pricing' ? '#244232' : '#fffdf6', tabPricingFg: this.state.adminTab === 'pricing' ? '#f4efe4' : '#244232',
       tabScheduleBg: this.state.adminTab === 'schedule' ? '#244232' : '#fffdf6', tabScheduleFg: this.state.adminTab === 'schedule' ? '#f4efe4' : '#244232',
       adminPlanRows: adminPlanRows, planAdminCount: adminPlanRows.length, noAdminPlans: adminPlanRows.length === 0,
-      bookingRows, hasBookings: bookingRows.length > 0, noBookings: bookingRows.length === 0,
+      bookingRows: dbBookingRows, hasBookings: dbBookingRows.length > 0, noBookings: bkTotal === 0,
       cancelRows, noCancels: cancelRows.length === 0,
-      bookingCount: bookingRows.length,
-      clearBookings: () => { if (typeof confirm === 'undefined' || confirm('Clear all bookings on this device?')) this.persistBookings([]); },
+      bookingCount: bkTotal,
+      // Bookings filters
+      bkFilter, bkCoach, bkSearch: this.state.bkSearch || '',
+      bkStatusOpts, bkCoachOpts,
+      setBkFilter: (e) => this.setState({ bkFilter: e.target.value, bkPage: 0 }),
+      setBkCoach: (e) => this.setState({ bkCoach: e.target.value, bkPage: 0 }),
+      setBkSearch: (e) => this.setState({ bkSearch: e.target.value, bkPage: 0 }),
+      clearBkFilters: () => this.setState({ bkFilter: 'all', bkCoach: 'all', bkSearch: '', bkPage: 0 }),
+      refreshBookings: () => { this.loadAllBookings(); this.loadSettings(); },
+      // Bookings pagination
+      bkPageLabel: 'Page ' + (bkPage + 1) + ' of ' + bkPageCount,
+      bkHasPrev: bkPage > 0, bkHasNext: bkPage < bkPageCount - 1, bkMultiPage: bkPageCount > 1,
+      bkPrev: () => this.setState(s => ({ bkPage: Math.max(0, (s.bkPage || 0) - 1) })),
+      bkNext: () => this.setState(s => ({ bkPage: (s.bkPage || 0) + 1 })),
       pkgEdits, scheduleEdit,
       funShootEdit: cm.funShoot,
       setFunShoot: (e) => saveCM({ funShoot: e.target.value }),
