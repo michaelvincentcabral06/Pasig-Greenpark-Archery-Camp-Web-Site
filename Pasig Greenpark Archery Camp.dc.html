@@ -1813,24 +1813,11 @@
                   <div style="font-size:13px;color:#8a9579;font-family:'Spline Sans Mono',monospace;margin-top:4px;">{{ b.phone }}<sc-if value="{{ b.hasEmail }}" hint-placeholder-val="{{ false }}"> · {{ b.email }}</sc-if></div>
                   <div style="font-size:12px;color:#a6b09a;font-family:'Spline Sans Mono',monospace;margin-top:3px;"><sc-if value="{{ b.hasRef }}" hint-placeholder-val="{{ false }}">{{ b.ref }} · </sc-if>booked {{ b.bookedAt }}</div>
                 </div>
-                <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
-                  <sc-if value="{{ b.notCancelled }}" hint-placeholder-val="{{ true }}">
-                  <div style="display:flex;align-items:center;gap:6px;">
-                    <label style="font-size:12px;font-weight:700;color:#244232;">Coach</label>
-                    <select value="{{ b.coachId }}" onChange="{{ b.setCoach }}" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.18);border-radius:8px;padding:8px 10px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#1b2a1f;outline:none;">
-                      <option value="">Unassigned</option>
-                      <option value="michael">Michael Cabral</option>
-                      <option value="james">James Victoria</option>
-                      <option value="rotsen">Rotsen Vinluan</option>
-                    </select>
-                  </div>
-                  </sc-if>
-                  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
-                    <sc-if value="{{ b.isPending }}" hint-placeholder-val="{{ true }}"><button onClick="{{ b.approve }}" style="background:#4d7327;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">Approve</button></sc-if>
-                    <sc-if value="{{ b.hasPhone }}" hint-placeholder-val="{{ true }}"><a href="{{ b.callHref }}" style="background:#244232;color:#f4efe4;text-decoration:none;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">Call</a></sc-if>
-                    <button onClick="{{ b.retrieve }}" title="Add this customer to Plans &amp; Sessions" style="background:#e6efd6;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#4d7327;padding:9px 15px;border-radius:999px;">{{ b.retrieveLabel }}</button>
-                    <sc-if value="{{ b.notCancelled }}" hint-placeholder-val="{{ true }}"><button onClick="{{ b.cancel }}" aria-label="Cancel booking" title="Cancel &amp; remove from calendar" style="background:none;border:1px solid rgba(180,81,47,0.35);cursor:pointer;font-size:13px;font-weight:700;color:#b4512f;padding:8px 13px;border-radius:999px;"><sc-if value="{{ b.cancelling }}" hint-placeholder-val="{{ false }}">…</sc-if><sc-if value="{{ b.notCancelling }}" hint-placeholder-val="{{ true }}">Cancel</sc-if></button></sc-if>
-                  </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+                  <sc-if value="{{ b.isPending }}" hint-placeholder-val="{{ true }}"><button onClick="{{ b.approve }}" style="background:#4d7327;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">Approve</button></sc-if>
+                  <sc-if value="{{ b.hasPhone }}" hint-placeholder-val="{{ true }}"><a href="{{ b.callHref }}" style="background:#244232;color:#f4efe4;text-decoration:none;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">Call</a></sc-if>
+                  <button onClick="{{ b.retrieve }}" title="Add this customer to Plans &amp; Sessions" style="background:#e6efd6;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#4d7327;padding:9px 15px;border-radius:999px;">{{ b.retrieveLabel }}</button>
+                  <sc-if value="{{ b.notCancelled }}" hint-placeholder-val="{{ true }}"><button onClick="{{ b.cancel }}" aria-label="Cancel booking" title="Cancel &amp; remove from calendar" style="background:none;border:1px solid rgba(180,81,47,0.35);cursor:pointer;font-size:13px;font-weight:700;color:#b4512f;padding:8px 13px;border-radius:999px;"><sc-if value="{{ b.cancelling }}" hint-placeholder-val="{{ false }}">…</sc-if><sc-if value="{{ b.notCancelling }}" hint-placeholder-val="{{ true }}">Cancel</sc-if></button></sc-if>
                 </div>
               </div>
             </sc-for>
@@ -2964,10 +2951,22 @@ class Component extends DCLogic {
   // Mark a booking Approved (status only — bookings still confirm instantly).
   approveBooking(b) {
     const ep = this.endpoint(); if (!ep || !b) return;
+    // A booking can't be approved without a coach — send it to Plans & Sessions to add one.
+    if (!this.bookingHasCoach(b)) {
+      if (typeof alert !== 'undefined') alert('This booking has no coach yet. It has been moved to Plans & Sessions — assign a coach there, then Approve.');
+      this.retrieveToPlan(b);
+      return;
+    }
     fetch(ep, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'setBookingStatus', eventId: b.eventId || '', ref: b.ref || '', date: b.date || '', time: b.time || '', status: 'approved' }),
     }).then(r => r.json()).then(() => this.loadAllBookings()).catch(() => {});
+  }
+  // A booking counts as having a coach only if it maps to a real named coach (not blank / "any").
+  bookingHasCoach(b) {
+    const cv = String((b && b.coach) || '').trim().toLowerCase();
+    if (!cv || cv === 'any' || /any available/i.test(cv)) return false;
+    return this.coaches().some(c => c.id.toLowerCase() === cv || (c.name || '').toLowerCase() === cv);
   }
   // Assign / change the coach on a booking (updates the calendar event + Bookings sheet).
   assignBookingCoach(b, coachId) {
@@ -3208,7 +3207,8 @@ class Component extends DCLogic {
   approvePlan(email, ts) {
     const plan = this.findPlan(email, ts);
     const sessions = (plan && plan.sessions) || [];
-    if (!sessions.length) { if (typeof alert !== 'undefined') alert('Please schedule at least one session before approving (Call → Schedule → Approve).'); return; }
+    if (!plan || !plan.coach) { if (typeof alert !== 'undefined') alert('Assign a coach (lower-right) before approving.'); return; }
+    if (!sessions.length) { if (typeof alert !== 'undefined') alert('Please schedule at least one session before approving (Call → assign Coach → Schedule → Approve).'); return; }
     this.mutatePlan(email, ts, p => ({ ...p, status: 'approved' }));
     const ep = this.endpoint();
     if (ep) {
@@ -4042,10 +4042,8 @@ class Component extends DCLogic {
         name: b.name || 'Guest', program: b.program || '',
         statusLabel: si.label, statusBg: si.bg, statusFg: si.fg,
         slotInfo: fmtSessionDate(b.date) + (b.time ? ' · ' + b.time : '') + ((b.archers || 1) > 1 ? ' · group of ' + b.archers : ''),
-        amountLabel: b.amount ? pesoRound(b.amount) : '',
-        coachLabel: c ? c.name : 'Any / unassigned',
-        coachId: c ? c.id : '',
-        setCoach: (e) => this.assignBookingCoach(b, e.target.value),
+        amountLabel: pesoRound(b.amount || 0),
+        coachLabel: c ? c.name : 'No coach yet',
         archersLabel: (b.archers || 1) + ((b.archers || 1) === 1 ? ' archer' : ' archers'),
         phone: b.phone || '', hasPhone: !!(b.phone && String(b.phone).trim()),
         email: b.email || '', hasEmail: !!(b.email && String(b.email).trim()),
