@@ -539,7 +539,7 @@ function doGet(e) {
     }
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v9', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true });
+      return json_({ version: 'db-v10', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -626,6 +626,7 @@ function doPost(e) {
     if (body.action === 'setSplit')          return setSplit_(body);
     if (body.action === 'setBookingStatus')  return setBookingStatus_(body);
     if (body.action === 'approveSession')    return approveSession_(body);
+    if (body.action === 'setBookingCoach')   return setBookingCoach_(body);
     return json_({ ok: false, reason: 'unknown action' });
   } catch (err) {
     return json_({ ok: false, reason: 'error', message: String(err) });
@@ -846,6 +847,38 @@ function approveSession_(body) {
     }
     dbAppend_('bookings', [nowStr_(), body.ref || '', 'approved', body.date || '', body.time || '', body.program || '', body.name || '', body.email || '', body.phone || '', 1, (amt || 0), body.coach || '', '', '', body.eventId || '']);
     return json_({ ok: true, inserted: 1 });
+  } catch (e) { return json_({ ok: false, error: String(e) }); }
+}
+
+// Assign/change the coach on an existing booking: update the calendar event's Coach line
+// and the Bookings sheet Coach column. body: { eventId | (ref,date,time), coach: id-or-name }.
+function setBookingCoach_(body) {
+  try {
+    var coachName = '';
+    if (body.coach) { var c = coachById_(body.coach); coachName = c ? c.name : String(body.coach); }
+    if (body.eventId) {
+      try {
+        var ev = getCalendar_().getEventById(body.eventId);
+        if (ev) {
+          var d = ev.getDescription() || '';
+          if (/\nCoach:[^\n]*/i.test(d)) d = d.replace(/\nCoach:[^\n]*/i, coachName ? ('\nCoach: ' + coachName) : '');
+          else if (coachName) d = d + '\nCoach: ' + coachName;
+          ev.setDescription(d);
+        }
+      } catch (e) {}
+    }
+    try {
+      var sh = dbSheet_('bookings');
+      var data = sh.getDataRange().getValues();
+      var h = data[0];
+      var evCol = h.indexOf('Event ID'), cCol = h.indexOf('Coach'), refCol = h.indexOf('Ref'), dCol = h.indexOf('Date'), tCol = h.indexOf('Time');
+      for (var r = 1; r < data.length; r++) {
+        var match = (body.eventId && String(data[r][evCol]) === String(body.eventId)) ||
+          (!body.eventId && String(data[r][refCol]) === String(body.ref || '') && asDateStr_(data[r][dCol]) === String(body.date || '') && String(data[r][tCol]) === String(body.time || ''));
+        if (match) { if (cCol >= 0) sh.getRange(r + 1, cCol + 1).setValue(coachName); if (body.eventId) break; }
+      }
+    } catch (e) {}
+    return json_({ ok: true, coach: coachName });
   } catch (e) { return json_({ ok: false, error: String(e) }); }
 }
 

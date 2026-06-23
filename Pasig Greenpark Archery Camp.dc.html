@@ -1813,11 +1813,24 @@
                   <div style="font-size:13px;color:#8a9579;font-family:'Spline Sans Mono',monospace;margin-top:4px;">{{ b.phone }}<sc-if value="{{ b.hasEmail }}" hint-placeholder-val="{{ false }}"> · {{ b.email }}</sc-if></div>
                   <div style="font-size:12px;color:#a6b09a;font-family:'Spline Sans Mono',monospace;margin-top:3px;"><sc-if value="{{ b.hasRef }}" hint-placeholder-val="{{ false }}">{{ b.ref }} · </sc-if>booked {{ b.bookedAt }}</div>
                 </div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
-                  <sc-if value="{{ b.isPending }}" hint-placeholder-val="{{ true }}"><button onClick="{{ b.approve }}" style="background:#4d7327;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">Approve</button></sc-if>
-                  <sc-if value="{{ b.hasPhone }}" hint-placeholder-val="{{ true }}"><a href="{{ b.callHref }}" style="background:#244232;color:#f4efe4;text-decoration:none;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">Call</a></sc-if>
-                  <button onClick="{{ b.retrieve }}" title="Add this customer to Plans &amp; Sessions" style="background:#e6efd6;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#4d7327;padding:9px 15px;border-radius:999px;">{{ b.retrieveLabel }}</button>
-                  <sc-if value="{{ b.notCancelled }}" hint-placeholder-val="{{ true }}"><button onClick="{{ b.cancel }}" aria-label="Cancel booking" title="Cancel &amp; remove from calendar" style="background:none;border:1px solid rgba(180,81,47,0.35);cursor:pointer;font-size:13px;font-weight:700;color:#b4512f;padding:8px 13px;border-radius:999px;"><sc-if value="{{ b.cancelling }}" hint-placeholder-val="{{ false }}">…</sc-if><sc-if value="{{ b.notCancelling }}" hint-placeholder-val="{{ true }}">Cancel</sc-if></button></sc-if>
+                <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
+                  <sc-if value="{{ b.notCancelled }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <label style="font-size:12px;font-weight:700;color:#244232;">Coach</label>
+                    <select value="{{ b.coachId }}" onChange="{{ b.setCoach }}" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.18);border-radius:8px;padding:8px 10px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#1b2a1f;outline:none;">
+                      <option value="">Unassigned</option>
+                      <option value="michael">Michael Cabral</option>
+                      <option value="james">James Victoria</option>
+                      <option value="rotsen">Rotsen Vinluan</option>
+                    </select>
+                  </div>
+                  </sc-if>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+                    <sc-if value="{{ b.isPending }}" hint-placeholder-val="{{ true }}"><button onClick="{{ b.approve }}" style="background:#4d7327;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">Approve</button></sc-if>
+                    <sc-if value="{{ b.hasPhone }}" hint-placeholder-val="{{ true }}"><a href="{{ b.callHref }}" style="background:#244232;color:#f4efe4;text-decoration:none;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">Call</a></sc-if>
+                    <button onClick="{{ b.retrieve }}" title="Add this customer to Plans &amp; Sessions" style="background:#e6efd6;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#4d7327;padding:9px 15px;border-radius:999px;">{{ b.retrieveLabel }}</button>
+                    <sc-if value="{{ b.notCancelled }}" hint-placeholder-val="{{ true }}"><button onClick="{{ b.cancel }}" aria-label="Cancel booking" title="Cancel &amp; remove from calendar" style="background:none;border:1px solid rgba(180,81,47,0.35);cursor:pointer;font-size:13px;font-weight:700;color:#b4512f;padding:8px 13px;border-radius:999px;"><sc-if value="{{ b.cancelling }}" hint-placeholder-val="{{ false }}">…</sc-if><sc-if value="{{ b.notCancelling }}" hint-placeholder-val="{{ true }}">Cancel</sc-if></button></sc-if>
+                  </div>
                 </div>
               </div>
             </sc-for>
@@ -1858,18 +1871,7 @@
                     <div style="font-size:12px;color:#a6b09a;font-family:'Spline Sans Mono',monospace;margin-top:3px;">added {{ pr.when }} · {{ pr.countLabel }}</div>
                     <sc-if value="{{ pr.hasRef }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#3c6b48;font-family:'Spline Sans Mono',monospace;margin-top:2px;">Ref {{ pr.ref }}</div></sc-if>
                   </div>
-                  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px;">
-                    <sc-if value="{{ pr.hasPrice }}" hint-placeholder-val="{{ true }}"><span style="font-size:20px;font-weight:800;color:#244232;">{{ pr.price }}</span></sc-if>
-                  <div style="display:flex;align-items:center;gap:10px;">
-                    <label style="font-size:13px;font-weight:700;color:#244232;">Coach</label>
-                    <select value="{{ pr.coach }}" onChange="{{ pr.setCoach }}" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.18);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;min-width:170px;">
-                      <option value="">Unassigned</option>
-                      <option value="michael">Michael Cabral</option>
-                      <option value="james">James Victoria</option>
-                      <option value="rotsen">Rotsen Vinluan</option>
-                    </select>
-                  </div>
-                  </div>
+                  <sc-if value="{{ pr.hasPrice }}" hint-placeholder-val="{{ true }}"><span style="font-size:20px;font-weight:800;color:#244232;">{{ pr.price }}</span></sc-if>
                 </div>
 
                 <!-- scheduled sessions -->
@@ -1891,6 +1893,15 @@
                   <button onClick="{{ pr.toggleEditor }}" style="background:#244232;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;">② {{ pr.editLabel }}</button>
                   <sc-if value="{{ pr.notApproved }}" hint-placeholder-val="{{ true }}"><button onClick="{{ pr.approvePlan }}" title="Approve — records the scheduled sessions to Bookings as approved" style="background:#4d7327;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;">③ Approve</button></sc-if>
                   <button onClick="{{ pr.cancelPlan }}" title="Cancel this pass" style="background:none;border:1px solid rgba(180,81,47,0.35);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#b4512f;padding:8px 13px;border-radius:999px;">Cancel</button>
+                  <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+                    <label style="font-size:13px;font-weight:700;color:#244232;">Coach</label>
+                    <select value="{{ pr.coach }}" onChange="{{ pr.setCoach }}" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.18);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;min-width:160px;">
+                      <option value="">Unassigned</option>
+                      <option value="michael">Michael Cabral</option>
+                      <option value="james">James Victoria</option>
+                      <option value="rotsen">Rotsen Vinluan</option>
+                    </select>
+                  </div>
                 </div>
 
                 <!-- scheduling panel -->
@@ -2956,6 +2967,14 @@ class Component extends DCLogic {
     fetch(ep, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'setBookingStatus', eventId: b.eventId || '', ref: b.ref || '', date: b.date || '', time: b.time || '', status: 'approved' }),
+    }).then(r => r.json()).then(() => this.loadAllBookings()).catch(() => {});
+  }
+  // Assign / change the coach on a booking (updates the calendar event + Bookings sheet).
+  assignBookingCoach(b, coachId) {
+    const ep = this.endpoint(); if (!ep || !b) return;
+    fetch(ep, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'setBookingCoach', eventId: b.eventId || '', ref: b.ref || '', date: b.date || '', time: b.time || '', coach: coachId }),
     }).then(r => r.json()).then(() => this.loadAllBookings()).catch(() => {});
   }
   // Cancel a booking from the database list (removes the calendar event + emails the customer).
@@ -4025,6 +4044,9 @@ class Component extends DCLogic {
         slotInfo: fmtSessionDate(b.date) + (b.time ? ' · ' + b.time : '') + ((b.archers || 1) > 1 ? ' · group of ' + b.archers : ''),
         amountLabel: b.amount ? pesoRound(b.amount) : '',
         coachLabel: c ? c.name : 'Any / unassigned',
+        coachId: c ? c.id : '',
+        setCoach: (e) => this.assignBookingCoach(b, e.target.value),
+        archersLabel: (b.archers || 1) + ((b.archers || 1) === 1 ? ' archer' : ' archers'),
         phone: b.phone || '', hasPhone: !!(b.phone && String(b.phone).trim()),
         email: b.email || '', hasEmail: !!(b.email && String(b.email).trim()),
         ref: b.ref || '', hasRef: !!(b.ref && String(b.ref).trim()),
