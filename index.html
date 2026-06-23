@@ -1034,6 +1034,7 @@
               <sc-if value="{{ formError }}" hint-placeholder-val="{{ false }}">
                 <div style="font-size:13.5px;color:#f0b48a;">Please complete your name, mobile number, a valid email, every archer's name &amp; birthdate, your concession proof (WAP ID or Greenpark address / RHS ID), and pick an available time.</div>
               </sc-if>
+              <sc-if value="{{ statusSessionMismatch }}" hint-placeholder-val="{{ false }}"><div style="font-size:13.5px;color:#f0b48a;">{{ bookHint }}</div></sc-if>
             </div>
 
             <!-- CARD: Group & discounts -->
@@ -1130,10 +1131,11 @@
                   </div>
                 </sc-if>
               </div>
-              <button onClick="{{ confirmBooking }}" style="background:#7fb43f;color:#1b2a1f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:700;padding:15px;border-radius:999px;margin-top:4px;" style-hover="background:#93c75c;">
+              <button onClick="{{ confirmBooking }}" style="background:#7fb43f;color:#1b2a1f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:700;padding:15px;border-radius:999px;margin-top:4px;opacity:{{ bookOpacity }};" style-hover="background:#93c75c;">
                 <sc-if value="{{ isSending }}" hint-placeholder-val="{{ false }}">Booking…</sc-if>
                 <sc-if value="{{ statusIdle }}" hint-placeholder-val="{{ true }}">{{ confirmLabel }}</sc-if>
               </button>
+              <sc-if value="{{ bookDisabled }}" hint-placeholder-val="{{ true }}"><p style="font-size:12px;color:#f0b48a;text-align:center;margin:6px 0 0;">{{ bookHint }}</p></sc-if>
               <p style="font-size:12px;color:#8a9579;text-align:center;margin:2px 0 0;">Pay at the range when you arrive · free to reschedule a day ahead</p>
             </div>
           </div>
@@ -3862,6 +3864,9 @@ class Component extends DCLogic {
       const proofBlock = openRange && ((this.state.eligPac && !this.state.wapId.trim()) || (this.state.eligLocal && !this.state.localProof.trim()) || (this.state.eligPasig && !this.state.pasigProof.trim()));
       const mPairs = (this.state.selectedDates || []).reduce((n, d) => n + (((this.state.multiTimes || {})[d]) || []).length, 0);
       const noSlot = openRange ? (mPairs === 0) : (chosenTimes.length === 0);
+      const sc = openRange ? mPairs : (this.state.slotTimes || []).length;
+      const target = Math.max(1, this.state.sessionTarget || 1);
+      if (sc !== target) { this.setState({ bookingStatus: 'sessionMismatch' }); return; }
       if (!f.name.trim() || !f.phone.trim() || !validEmail(f.email) || noSlot || archersBlock || proofBlock) { this.setState({ formError: true }); return; }
       this.setState({ formError: false });
       this.bookSlot(f, resolvedArchers);
@@ -3957,7 +3962,7 @@ class Component extends DCLogic {
     const billableSessions = unlimitedSlots ? dayCount : slotCount;
     const costSubtotal = rrate * party * billableSessions;
     const discountRate = this.discountFor(party);
-    const costTotal = this.priceFor(this.state.form.program || '', party, slotCount, dayCount);
+    const costTotal = this.priceFor(this.state.form.program || '', party, Math.max(slotCount, Math.max(1, st.sessionTarget||1)), dayCount);
     const groupDiscountAmount = Math.round(costSubtotal * discountRate);
     const eligPer = this.eligPerArcher();
     const eligDiscountAmount = eligPer * party * billableSessions;
@@ -4585,6 +4590,12 @@ class Component extends DCLogic {
       unlimitedSlots, unlimitedActive,
       confirmLabel: chosenTimes.length > 1 ? ('Confirm ' + chosenTimes.length + ' slots →') : 'Confirm booking →',
       confirmBooking,
+      bookDisabled: slotCount !== Math.max(1, st.sessionTarget || 1),
+      bookHint: slotCount < Math.max(1, st.sessionTarget||1)
+        ? ('Pick ' + (Math.max(1, st.sessionTarget||1) - slotCount) + ' more slot' + ((Math.max(1, st.sessionTarget||1)-slotCount)===1?'':'s') + ' to book')
+        : (slotCount > Math.max(1, st.sessionTarget||1) ? 'Remove a slot or raise the session count' : ''),
+      bookOpacity: (slotCount !== Math.max(1, st.sessionTarget||1)) ? '0.5' : '1',
+      statusSessionMismatch: this.state.bookingStatus === 'sessionMismatch',
       statusIdle: !this.state.bookingStatus || this.state.bookingStatus === 'sending',
       isSending: this.state.bookingStatus === 'sending',
       statusConfirmed: this.state.bookingStatus === 'confirmed',
