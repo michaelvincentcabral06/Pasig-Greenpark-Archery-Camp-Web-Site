@@ -1850,7 +1850,7 @@
                     <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">
                       <span style="font-size:16px;font-weight:800;color:#1b2a1f;">{{ pr.name }}</span>
                       <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;background:{{ pr.apprBg }};color:{{ pr.apprFg }};padding:4px 10px;border-radius:999px;">{{ pr.apprLabel }}</span>
-                      <sc-if value="{{ pr.hasPrice }}" hint-placeholder-val="{{ false }}"><span style="font-size:14px;font-weight:700;color:#244232;">{{ pr.price }}</span></sc-if>
+                      <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;background:{{ pr.statusBg }};color:{{ pr.statusFg }};padding:4px 10px;border-radius:999px;">{{ pr.statusLabel }}</span>
                       <sc-if value="{{ pr.complete }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:#4d7327;background:#e6efd6;padding:3px 8px;border-radius:999px;">Scheduled</span></sc-if>
                     </div>
                     <sc-if value="{{ pr.hasHolder }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;font-weight:700;color:#244232;margin-top:2px;">{{ pr.holder }}</div></sc-if>
@@ -1858,6 +1858,8 @@
                     <div style="font-size:12px;color:#a6b09a;font-family:'Spline Sans Mono',monospace;margin-top:3px;">added {{ pr.when }} · {{ pr.countLabel }}</div>
                     <sc-if value="{{ pr.hasRef }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#3c6b48;font-family:'Spline Sans Mono',monospace;margin-top:2px;">Ref {{ pr.ref }}</div></sc-if>
                   </div>
+                  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px;">
+                    <sc-if value="{{ pr.hasPrice }}" hint-placeholder-val="{{ true }}"><span style="font-size:20px;font-weight:800;color:#244232;">{{ pr.price }}</span></sc-if>
                   <div style="display:flex;align-items:center;gap:10px;">
                     <label style="font-size:13px;font-weight:700;color:#244232;">Coach</label>
                     <select value="{{ pr.coach }}" onChange="{{ pr.setCoach }}" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.18);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;min-width:170px;">
@@ -1866,6 +1868,7 @@
                       <option value="james">James Victoria</option>
                       <option value="rotsen">Rotsen Vinluan</option>
                     </select>
+                  </div>
                   </div>
                 </div>
 
@@ -1885,7 +1888,6 @@
                 <div style="margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
                   <sc-if value="{{ pr.hasPhone }}" hint-placeholder-val="{{ false }}"><a href="{{ pr.callHref }}" style="background:#244232;color:#f4efe4;text-decoration:none;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">① Call</a></sc-if>
                   <button onClick="{{ pr.markContacted }}" style="background:#e6efd6;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#4d7327;padding:9px 15px;border-radius:999px;">Mark</button>
-                  <span style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;background:{{ pr.statusBg }};color:{{ pr.statusFg }};padding:5px 10px;border-radius:999px;">{{ pr.statusLabel }}</span>
                   <button onClick="{{ pr.toggleEditor }}" style="background:#244232;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;">② {{ pr.editLabel }}</button>
                   <sc-if value="{{ pr.notApproved }}" hint-placeholder-val="{{ true }}"><button onClick="{{ pr.approvePlan }}" title="Approve — records the scheduled sessions to Bookings as approved" style="background:#4d7327;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;">③ Approve</button></sc-if>
                   <button onClick="{{ pr.cancelPlan }}" title="Cancel this pass" style="background:none;border:1px solid rgba(180,81,47,0.35);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#b4512f;padding:8px 13px;border-radius:999px;">Cancel</button>
@@ -3743,7 +3745,9 @@ class Component extends DCLogic {
     const planMap = {};
     this.loadAllPlansLocal().forEach(p => { planMap[(p.email || '').toLowerCase() + '|' + p.ts] = p; });
     (this.state.remotePlans || []).forEach(p => { planMap[(p.email || '').toLowerCase() + '|' + p.ts] = { email: (p.email || '').toLowerCase(), name: p.name, ts: p.ts, coach: p.coach || '', sessions: p.sessions || [], holder: p.holder || '', phone: p.phone || '', ref: p.ref || '', price: p.price || '', contacted: !!p.contacted, status: p.status || 'pending' }; });
-    const allPlans = Object.keys(planMap).map(k => planMap[k]).sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    // Approved plans move to the Bookings list (their sessions are now confirmed bookings),
+    // so they drop off the Plans & Sessions tab. The pass still shows in the customer's My Bookings.
+    const allPlans = Object.keys(planMap).map(k => planMap[k]).filter(p => p.status !== 'approved').sort((a, b) => (b.ts || 0) - (a.ts || 0));
     const adminPlanRows = allPlans.map(p => {
       const rowKey = p.email + '|' + p.ts;
       const isEditing = rowKey === planEditKey;
