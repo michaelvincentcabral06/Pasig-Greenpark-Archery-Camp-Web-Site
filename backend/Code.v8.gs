@@ -539,7 +539,7 @@ function doGet(e) {
     }
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v7', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true });
+      return json_({ version: 'db-v8', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -625,6 +625,7 @@ function doPost(e) {
     if (body.action === 'planScheduleEmail') return planScheduleEmail_(body);
     if (body.action === 'setSplit')          return setSplit_(body);
     if (body.action === 'setBookingStatus')  return setBookingStatus_(body);
+    if (body.action === 'approveSession')    return approveSession_(body);
     return json_({ ok: false, reason: 'unknown action' });
   } catch (err) {
     return json_({ ok: false, reason: 'error', message: String(err) });
@@ -771,6 +772,31 @@ function setSplit_(body) {
   var s = { coach: Number(body.coachPct) || 0, equip: Number(body.equipPct) || 0, range: Number(body.rangePct) || 0 };
   PropertiesService.getScriptProperties().setProperty(splitKey_(c.id), JSON.stringify(s));
   return json_({ ok: true, coach: c.id, split: s });
+}
+
+// Approve one plan session: flip its Bookings row to "approved" (and set the amount),
+// or INSERT an approved row if the session isn't recorded yet (e.g. history was cleared).
+// This guarantees an approved plan always shows up in the Bookings list.
+function approveSession_(body) {
+  try {
+    var sh = dbSheet_('bookings');
+    var data = sh.getDataRange().getValues();
+    var h = data[0];
+    var evCol = h.indexOf('Event ID'), stCol = h.indexOf('Status'), refCol = h.indexOf('Ref'),
+        dCol = h.indexOf('Date'), tCol = h.indexOf('Time'), amtCol = h.indexOf('Amount');
+    var amt = (body.amount == null || body.amount === '') ? null : (Number(body.amount) || 0);
+    for (var r = 1; r < data.length; r++) {
+      var match = (body.eventId && String(data[r][evCol]) === String(body.eventId)) ||
+        (!body.eventId && String(data[r][refCol]) === String(body.ref || '') && asDateStr_(data[r][dCol]) === String(body.date || '') && String(data[r][tCol]) === String(body.time || ''));
+      if (match) {
+        sh.getRange(r + 1, stCol + 1).setValue('approved');
+        if (amt != null && amtCol >= 0) sh.getRange(r + 1, amtCol + 1).setValue(amt);
+        return json_({ ok: true, updated: 1 });
+      }
+    }
+    dbAppend_('bookings', [nowStr_(), body.ref || '', 'approved', body.date || '', body.time || '', body.program || '', body.name || '', body.email || '', body.phone || '', 1, (amt || 0), body.coach || '', '', '', body.eventId || '']);
+    return json_({ ok: true, inserted: 1 });
+  } catch (e) { return json_({ ok: false, error: String(e) }); }
 }
 
 // Set a booking's status (e.g. 'approved') in the Bookings tab. Match by event id, else ref+date+time.

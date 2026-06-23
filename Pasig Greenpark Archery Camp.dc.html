@@ -3193,15 +3193,23 @@ class Component extends DCLogic {
     this.mutatePlan(email, ts, p => ({ ...p, status: 'approved' }));
     const ep = this.endpoint();
     if (ep) {
+      // Split the plan price evenly across its sessions so earnings count once.
+      const total = Number(String((plan && plan.price) || '').replace(/[^0-9.]/g, '')) || 0;
+      const per = sessions.length ? Math.round(total / sessions.length) : 0;
+      const coachName = plan.coach ? ((this.coachById(plan.coach) || {}).name || '') : '';
       sessions.forEach(s => {
         try {
           fetch(ep, {
             method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'setBookingStatus', eventId: s.eventId || '', ref: s.ref || '', date: s.date || '', time: s.time || '', status: 'approved' }),
+            body: JSON.stringify({
+              action: 'approveSession', eventId: s.eventId || '', ref: s.ref || '', date: s.date || '', time: s.time || '',
+              program: (plan.name || 'Plan') + ' (plan)', name: plan.holder || email, email: email, phone: plan.phone || '',
+              amount: per, coach: coachName,
+            }),
           }).catch(() => {});
         } catch (e) {}
       });
-      setTimeout(() => this.loadAllBookings(), 1000);
+      setTimeout(() => this.loadAllBookings(), 1400);
     }
   }
   // ---------- ADMIN: plans across this device (coach assignment) ----------
