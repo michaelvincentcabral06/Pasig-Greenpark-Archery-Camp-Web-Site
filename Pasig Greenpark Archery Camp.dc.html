@@ -1869,14 +1869,13 @@
                 </div>
                 </sc-if>
 
-                <sc-if value="{{ pr.active }}" hint-placeholder-val="{{ true }}">
-                <div style="font-size:11.5px;color:#8a9579;font-family:'Spline Sans Mono',monospace;margin-top:14px;">Process: ① Call &amp; mark contacted → ② assign Coach + Schedule dates → ③ Approve (or Cancel)</div>
+                <div style="font-size:11.5px;color:#8a9579;font-family:'Spline Sans Mono',monospace;margin-top:14px;">Process: ① Call &amp; mark contacted → ② assign Coach + Schedule dates → ③ Approve (toggles to Cancel)</div>
                 <div style="margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
                   <sc-if value="{{ pr.hasPhone }}" hint-placeholder-val="{{ false }}"><a href="{{ pr.callHref }}" style="background:#244232;color:#f4efe4;text-decoration:none;font-size:13px;font-weight:700;padding:9px 15px;border-radius:999px;">① Call</a></sc-if>
                   <button onClick="{{ pr.markContacted }}" style="background:#e6efd6;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#4d7327;padding:9px 15px;border-radius:999px;">Mark</button>
                   <button onClick="{{ pr.toggleEditor }}" style="background:#244232;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;">② {{ pr.editLabel }}</button>
-                  <sc-if value="{{ pr.notApproved }}" hint-placeholder-val="{{ true }}"><button onClick="{{ pr.approvePlan }}" title="Approve — records the scheduled sessions to Bookings as approved" style="background:#4d7327;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;">③ Approve</button></sc-if>
-                  <button onClick="{{ pr.cancelPlan }}" title="Cancel this pass" style="background:none;border:1px solid rgba(180,81,47,0.35);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#b4512f;padding:8px 13px;border-radius:999px;">Cancel</button>
+                  <sc-if value="{{ pr.showApprove }}" hint-placeholder-val="{{ true }}"><button onClick="{{ pr.approvePlan }}" title="Approve — confirms the sessions and emails the client" style="background:#4d7327;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;">③ Approve</button></sc-if>
+                  <sc-if value="{{ pr.toggleIsCancel }}" hint-placeholder-val="{{ false }}"><button onClick="{{ pr.cancelPlan }}" title="Cancel this pass (emails the client)" style="background:#b4512f;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;">Cancel</button></sc-if>
                   <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
                     <label style="font-size:13px;font-weight:700;color:#244232;">Coach</label>
                     <select value="{{ pr.coach }}" onChange="{{ pr.setCoach }}" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.18);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;min-width:160px;">
@@ -1914,7 +1913,6 @@
                   </sc-if>
                   </sc-if>
                 </div>
-                </sc-if>
                 </sc-if>
               </div>
             </sc-for>
@@ -2994,6 +2992,14 @@ class Component extends DCLogic {
     const ep = this.endpoint(); if (!ep) return;
     fetch(ep + '?action=activity').then(r => r.json()).then(res => { if (res && res.activity) this.setState({ activity: res.activity }); }).catch(() => {});
   }
+  // Make sure a plan has a reference number (older plans may not) so the activity log shows it.
+  ensurePlanRef(email, ts) {
+    const plan = this.findPlan(email, ts);
+    if (plan && plan.ref) return plan.ref;
+    const ref = this.bookingRef(this.todayStr());
+    this.mutatePlan(email, ts, p => ({ ...p, ref: p.ref || ref }));
+    return (plan && plan.ref) || ref;
+  }
   // Assign / change the coach on a booking (updates the calendar event + Bookings sheet).
   assignBookingCoach(b, coachId) {
     const ep = this.endpoint(); if (!ep || !b) return;
@@ -3216,6 +3222,7 @@ class Component extends DCLogic {
       // Remove the calendar events silently (one summary email is sent below, not one per date).
       plan.sessions.forEach(s => { if (s && s.eventId) this.cancelBooking({ eventId: s.eventId, ref: s.ref || '', date: s.date || '', time: s.time || '', name: plan.holder || '', email: email }, false, 'admin'); });
     }
+    const planRef = this.ensurePlanRef(email, ts);
     // Keep the plan, mark it cancelled (and clear its sessions since the events are gone).
     this.mutatePlan(email, ts, p => ({ ...p, status: 'cancelled', sessions: [] }));
     const ep = this.endpoint();
@@ -3227,7 +3234,7 @@ class Component extends DCLogic {
         }).catch(() => {});
       } catch (e) {}
     }
-    this.logAction((plan && plan.ref) || '', 'Cancelled', (plan && plan.name) || 'Pass', (plan && plan.holder) || email, email);
+    this.logAction(planRef, 'Cancelled', ((plan && plan.name) || 'Pass') + ' · ' + ((plan && plan.holder) || ''), (plan && plan.holder) || email, email);
     this.forceUpdate();
   }
   // Admin: mark a pass holder as contacted (toggles, like the bookings list).
@@ -3242,6 +3249,7 @@ class Component extends DCLogic {
     const sessions = (plan && plan.sessions) || [];
     if (!plan || !plan.coach) { if (typeof alert !== 'undefined') alert('Assign a coach (lower-right) before approving.'); return; }
     if (!sessions.length) { if (typeof alert !== 'undefined') alert('Please schedule at least one session before approving (Call → assign Coach → Schedule → Approve).'); return; }
+    const planRef = this.ensurePlanRef(email, ts);
     this.mutatePlan(email, ts, p => ({ ...p, status: 'approved' }));
     const ep = this.endpoint();
     if (ep) {
@@ -3261,7 +3269,8 @@ class Component extends DCLogic {
           }).catch(() => {});
         } catch (e) {}
       });
-      this.logAction(plan.ref || '', 'Approved', (plan.name || 'Plan'), plan.holder || email, email);
+      this.emailPlanSchedule(email, ts); // email the client their confirmed sessions + coach
+      this.logAction(planRef, 'Approved', (plan.name || 'Plan') + ' · ' + (plan.holder || ''), plan.holder || email, email);
       setTimeout(() => this.loadAllBookings(), 1400);
     }
   }
@@ -3318,7 +3327,10 @@ class Component extends DCLogic {
     this.mutatePlan(email, ts, p => ({ ...p, coach: coachId || '' }));
     const plan = this.findPlan(email, ts);
     const coachName = coachId ? ((this.coachById(coachId) || {}).name || coachId) : 'Unassigned';
-    this.logAction((plan && plan.ref) || '', 'Coach changed', coachName, (plan && plan.holder) || email, email);
+    const planRef = this.ensurePlanRef(email, ts);
+    this.logAction(planRef, 'Coach changed', coachName + ' · ' + ((plan && plan.holder) || ''), (plan && plan.holder) || email, email);
+    // Email the client the (updated) coach + schedule, if any sessions are set.
+    if (coachId && plan && (plan.sessions || []).length) this.emailPlanSchedule(email, ts);
   }
   addPlanSession(email, ts, date, time, cap) {
     if (!date || !time) return;
@@ -3333,7 +3345,8 @@ class Component extends DCLogic {
     }));
     this.setState({ planEditDate: '' });
     this.syncPlanSessionToCalendar(email, ts, session);
-    this.logAction((existing && existing.ref) || '', 'Session scheduled', date + ' · ' + time, (existing && existing.holder) || email, email);
+    const planRef = this.ensurePlanRef(email, ts);
+    this.logAction(planRef, 'Session scheduled', date + ' · ' + time + ' · ' + ((existing && existing.holder) || ''), (existing && existing.holder) || email, email);
   }
   // Push a scheduled plan session to the Google Calendar (best-effort; no-op offline).
   syncPlanSessionToCalendar(email, ts, session) {
@@ -3372,7 +3385,7 @@ class Component extends DCLogic {
         body: JSON.stringify({ action: 'cancel', eventId: sess.eventId, ref: sess.ref || '', date: sess.date, time: sess.time, email: email, notify: false, by: 'admin' }),
       }).catch(() => {});
     }
-    if (sess) this.logAction((plan && plan.ref) || '', 'Session removed', sess.date + ' · ' + sess.time, (plan && plan.holder) || email, email);
+    if (sess) { const planRef = this.ensurePlanRef(email, ts); this.logAction(planRef, 'Session removed', sess.date + ' · ' + sess.time + ' · ' + ((plan && plan.holder) || ''), (plan && plan.holder) || email, email); }
   }
   openPlanEditor(key) {
     const idx = key.lastIndexOf('|');
@@ -3860,6 +3873,8 @@ class Component extends DCLogic {
         approved: (p.status === 'approved'),
         notApproved: (p.status !== 'approved' && p.status !== 'cancelled'),
         active: (p.status !== 'cancelled'),
+        toggleIsCancel: (p.status === 'approved'),   // approved → show Cancel; otherwise → show Approve
+        showApprove: (p.status !== 'approved'),
         apprLabel: (p.status === 'approved') ? 'Approved' : (p.status === 'cancelled' ? 'Cancelled' : 'Pending'),
         apprBg: (p.status === 'approved') ? '#e6efd6' : (p.status === 'cancelled' ? '#f3e2e0' : '#fff1cf'),
         apprFg: (p.status === 'approved') ? '#4d7327' : (p.status === 'cancelled' ? '#b4512f' : '#8a6a1f'),
@@ -3955,7 +3970,7 @@ class Component extends DCLogic {
       if (/month|unlimited/i.test(hay)) return null;
       return 1;
     };
-    const acctPlanRows = (this.state.acctPlans || []).map(p => {
+    const acctPlanRows = (this.state.acctPlans || []).filter(p => String(p.status || '').toLowerCase() !== 'cancelled').map(p => {
       const c = p.coach ? this.coachById(p.coach) : null;
       const sess = (p.sessions || []).map(s => {
         let lbl = s.date;
