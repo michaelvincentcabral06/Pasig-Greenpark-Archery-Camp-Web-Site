@@ -1215,6 +1215,20 @@
           </div>
         </div>
 
+        <!-- ADD ANOTHER EMAIL -->
+        <div style="background:#244232;border-radius:14px;padding:18px 20px;margin-bottom:22px;">
+          <div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#7fb43f;margin-bottom:10px;">Add another email</div>
+          <p style="font-size:13.5px;color:#cdd6c5;margin:0 0 14px;line-height:1.5;">Booked under a different email? Enter it below with any booking reference from that account to link them.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
+            <input value="{{ mergeEmail }}" onInput="{{ setMergeEmail }}" type="email" placeholder="other@email.com" style="flex:1;min-width:160px;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
+            <input value="{{ mergeRef }}" onInput="{{ setMergeRef }}" type="text" placeholder="PGA-XXXX" style="width:120px;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;text-transform:uppercase;" />
+            <button id="merge-add-btn" onClick="{{ addEmailAlias }}" style="background:#7fb43f;color:#1b2a1f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;padding:11px 20px;border-radius:999px;white-space:nowrap;" style-hover="background:#93c75c;">Add</button>
+          </div>
+          <sc-if value="{{ mergeMsg }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:10px;font-size:13.5px;color:#f4efe4;font-weight:500;">{{ mergeMsg }}</div>
+          </sc-if>
+        </div>
+
         <sc-if value="{{ acctBookingOpen }}" hint-placeholder-val="{{ false }}">
         <div id="acct-booking-form" style="background:#244232;border-radius:16px;padding:clamp(20px,3vw,30px);margin-bottom:26px;">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;">
@@ -2376,6 +2390,9 @@ class Component extends DCLogic {
     bookingResult: null,
     acctEmail: '',
     acctEmails: [],
+    mergeEmail: '',
+    mergeRef: '',
+    mergeMsg: '',
     acctRef: '',
     acctIn: false,
     acctBookingOpen: false,
@@ -3291,6 +3308,22 @@ class Component extends DCLogic {
         finish(merged, (data && data.name), primary);
       })
       .catch(() => finish(this.localAcctMatches(email, ref)));
+  }
+  addAcctEmail() {
+    const email = (this.state.acctEmail || '').trim().toLowerCase();
+    const addEmail = (this.state.mergeEmail || '').trim().toLowerCase();
+    const ref = (this.state.mergeRef || '').trim().toUpperCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addEmail) || !ref) { this.setState({ mergeMsg: 'Enter the other email and one of its booking references.' }); return; }
+    const ep = this.endpoint(); if (!ep) { this.setState({ mergeMsg: 'Backend not connected.' }); return; }
+    this.setState({ mergeMsg: 'Linking…' });
+    fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'addEmailAlias', email: email, addEmail: addEmail, ref: ref }) })
+      .then(r => r.json()).then(data => {
+        if (!data || !data.ok) { this.setState({ mergeMsg: (data && data.reason) || 'That reference doesn’t match that email.' }); return; }
+        try { localStorage.setItem('pgac_acct_emails', JSON.stringify(data.emails || [])); } catch (e) {}
+        this.setState({ acctEmails: data.emails || [], mergeEmail: '', mergeRef: '', mergeMsg: 'Merged — showing all your bookings.' });
+        this.accountLogin(); // re-run lookup for the group to refresh bookings + passes
+      })
+      .catch(() => this.setState({ mergeMsg: 'Something went wrong. Please try again.' }));
   }
   accountLogout() { this.setState({ acctIn: false, acctBookingOpen: false, acctBookings: [], acctPlans: [], acctRef: '', acctError: '', editTs: null }); }
   refreshAcctLocal() {
@@ -4695,6 +4728,10 @@ class Component extends DCLogic {
       onAcctKey: (e) => { if (e.key === 'Enter') this.accountLogin(); },
       accountLogin: () => this.accountLogin(),
       accountLogout: () => this.accountLogout(),
+      mergeEmail: this.state.mergeEmail, mergeRef: this.state.mergeRef, mergeMsg: this.state.mergeMsg,
+      setMergeEmail: (e) => this.setState({ mergeEmail: e.target.value, mergeMsg: '' }),
+      setMergeRef: (e) => this.setState({ mergeRef: e.target.value, mergeMsg: '' }),
+      addEmailAlias: () => this.addAcctEmail(),
       acctIn: this.state.acctIn, acctNotIn: !this.state.acctIn, acctLoading: this.state.acctLoading, acctNotLoading: !this.state.acctLoading,
       acctError: this.state.acctError, hasAcctError: !!this.state.acctError,
       acctName: this.state.acctName, acctFirst: (this.state.acctName || '').trim().split(' ')[0],
