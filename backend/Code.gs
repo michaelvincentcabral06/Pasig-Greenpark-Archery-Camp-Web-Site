@@ -84,7 +84,7 @@ var DB_SHEETS = {
   bookings: { name: 'Bookings',      headers: ['Booked At','Ref','Status','Date','Time','Program','Name','Email','Mobile','Archers','Amount','Coach','Concession','Roster','Event ID'] },
   passes:   { name: 'Passes',        headers: ['Saved At','Email','Holder','Pass','Coach','Sessions','Plan ID'] },
   cancels:  { name: 'Cancellations', headers: ['Cancelled At','Ref','Date','Time','Program','Name','Email','Cancelled By','Event ID'] },
-  activity: { name: 'Activity',      headers: ['At','Ref','Action','Detail','Name','Email'] }
+  activity: { name: 'Activity',      headers: ['At','Ref','Action','Detail','Name','Email','Actor'] }
 };
 
 function getDb_() {
@@ -110,7 +110,7 @@ function dbSheet_(key) {
 }
 function dbAppend_(key, row) { try { dbSheet_(key).appendRow(row); } catch (e) {} } // never let logging break a booking
 // Append one entry to the Activity log (the admin Bookings tab shows this).
-function dbLog_(ref, action, detail, name, email) { dbAppend_('activity', [nowStr_(), ref || '', action || '', detail || '', name || '', email || '']); }
+function dbLog_(ref, action, detail, name, email, actor) { dbAppend_('activity', [nowStr_(), ref || '', action || '', detail || '', name || '', email || '', actor || '']); }
 function nowStr_() { return Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd HH:mm:ss'); }
 function concSummary_(body) { var l = concLine_(body); return l ? l.replace(/^\nConcession:\s*/, '') : ''; }
 
@@ -645,7 +645,7 @@ function doGet(e) {
     if (action === 'content') return getContent_();
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v16', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true });
+      return json_({ version: 'db-v17', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -837,7 +837,7 @@ function listActivity_() {
     var out = [];
     for (var r = 1; r < data.length; r++) {
       var row = data[r];
-      out.push({ at: String(row[0] || ''), ref: String(row[1] || ''), action: String(row[2] || ''), detail: String(row[3] || ''), name: String(row[4] || ''), email: String(row[5] || '') });
+      out.push({ at: String(row[0] || ''), ref: String(row[1] || ''), action: String(row[2] || ''), detail: String(row[3] || ''), name: String(row[4] || ''), email: String(row[5] || ''), actor: String(row[6] || '') });
     }
     out.reverse();
     return json_({ activity: out });
@@ -845,7 +845,7 @@ function listActivity_() {
 }
 // Record an admin action (approve / cancel / coach change / schedule) from the website.
 function logAction_(body) {
-  dbLog_(body.ref || '', body.label || '', body.detail || '', body.name || '', body.email || '');
+  dbLog_(body.ref || '', body.label || '', body.detail || '', body.name || '', body.email || '', body.actor || '');
   return json_({ ok: true });
 }
 // Email a pass-cancelled notice WITHOUT deleting the plan (the plan stays, marked cancelled).
