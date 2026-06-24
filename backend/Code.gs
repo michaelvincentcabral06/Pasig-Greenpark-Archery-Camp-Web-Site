@@ -156,6 +156,35 @@ function dbRemovePass_(email, ts) {
   } catch (e) {}
 }
 
+// ---------- EMAIL GROUPS (db-v14) ----------
+function aliasKey_(email){ return 'aliases:' + (email || '').trim().toLowerCase(); }
+function groupFor_(email){
+  email = (email || '').trim().toLowerCase();
+  if (!email) return [];
+  try { var raw = PropertiesService.getScriptProperties().getProperty(aliasKey_(email));
+    if (raw) { var a = JSON.parse(raw); if (a && a.length) return a; } } catch (e) {}
+  return [email];
+}
+function mergeEmails_(a, b){
+  a = (a || '').trim().toLowerCase(); b = (b || '').trim().toLowerCase();
+  if (!a || !b) return groupFor_(a || b);
+  var set = {}, out = [];
+  groupFor_(a).concat(groupFor_(b)).forEach(function (e) { e = (e || '').trim().toLowerCase(); if (e && !set[e]) { set[e] = 1; out.push(e); } });
+  var props = PropertiesService.getScriptProperties();
+  out.forEach(function (m) { props.setProperty(aliasKey_(m), JSON.stringify(out)); });
+  return out;
+}
+function emailForRef_(ref){
+  ref = (ref || '').trim().toUpperCase();
+  if (!ref) return '';
+  try { var sh = dbSheet_('bookings'); var data = sh.getDataRange().getValues(); var h = data[0];
+    var refCol = h.indexOf('Ref'), emCol = h.indexOf('Email');
+    if (refCol < 0 || emCol < 0) return '';
+    for (var r = 1; r < data.length; r++) { if (String(data[r][refCol] || '').trim().toUpperCase() === ref) return String(data[r][emCol] || '').trim().toLowerCase(); }
+  } catch (e) {}
+  return '';
+}
+
 // RUN THIS ONCE from the editor to create the database sheet and print its link.
 function setupDatabase() {
   var ss = getDb_();
@@ -603,10 +632,15 @@ function doGet(e) {
 
 // Find a customer's sessions by email (+ optional booking reference) for the My Bookings page.
 // Scans calendar events in a window and reads the structured description we write at booking time.
+// db-v14: accepts email OR ref (ref-only resolves the email via the Bookings sheet);
+// unions events across the whole email group; ref no longer filters results.
 function lookup_(email, ref) {
   email = (email || '').trim().toLowerCase();
   ref = (ref || '').trim().toUpperCase();
-  if (!email) return json_({ bookings: [] });
+  if (!email && ref) email = emailForRef_(ref);   // ref-only login
+  if (!email) return json_({ bookings: [], name: '', emails: [], primary: '' });
+  var group = groupFor_(email);
+  var inGroup = {}; group.forEach(function (e) { inGroup[e] = 1; });
   var cal = getCalendar_();
   var from = new Date(); from.setDate(from.getDate() - 120);
   var to = new Date(); to.setDate(to.getDate() + 240);
@@ -615,28 +649,22 @@ function lookup_(email, ref) {
   function field(d, key) { var m = new RegExp(key + ':\\s*(.+)', 'i').exec(d); return m ? m[1].trim() : ''; }
   events.forEach(function (ev) {
     var d = ev.getDescription() || '';
-    if (field(d, 'Email').toLowerCase() !== email) return;
-    var rf = field(d, 'Ref').toUpperCase();
-    if (ref && rf !== ref) return;
-    // Admin-scheduled pass sessions are shown under the customer's pass, not as
-    // standalone session bookings — skip them here so they don't appear twice.
+    var em = field(d, 'Email').toLowerCase();
+    if (!inGroup[em]) return;                       // any email in the group (was: single email)
     if (/\(plan\)\s*$/i.test(field(d, 'Program'))) return;
     var conc = field(d, 'Concession');
     var c = conc ? { pasig: /Pasig/i.test(conc), local: /Greenpark|RHS/i.test(conc), pac: /PAC/i.test(conc) } : null;
     var st = ev.getStartTime();
-    var nm = field(d, 'Name');
-    if (nm) name = nm;
-    out.push({
-      name: nm, phone: field(d, 'Mobile'), email: email, program: field(d, 'Program'),
+    var nm = field(d, 'Name'); if (nm) name = nm;
+    out.push({ name: nm, phone: field(d, 'Mobile'), email: em, program: field(d, 'Program'),
       date: Utilities.formatDate(st, TIMEZONE, 'yyyy-MM-dd'),
       time: fmtLabel_(parseInt(Utilities.formatDate(st, TIMEZONE, 'H'), 10)),
       party: parseInt(field(d, 'Archers') || '1', 10) || 1,
       amount: parseInt(field(d, 'Amount') || '0', 10) || 0,
-      coachName: field(d, 'Coach'),
-      ref: rf, eventId: ev.getId(), concession: c, ts: st.getTime(), __remote: true,
-    });
+      coachName: field(d, 'Coach'), ref: field(d, 'Ref').toUpperCase(),
+      eventId: ev.getId(), concession: c, ts: st.getTime(), __remote: true });
   });
-  return json_({ bookings: out, name: name });
+  return json_({ bookings: out, name: name, emails: group, primary: email });
 }
 
 // Compact concession summary written into the calendar event so lookup_ can read it back.
@@ -1105,19 +1133,31 @@ function removePlan_(body) {
   return json_({ ok: true, emailed: emailed });
 }
 // GET ?action=plans            → every pass across all customers (for the admin)
-// GET ?action=plans&email=x    → just that customer's passes (for My Bookings)
+// GET ?action=plans&email=x    → passes for this customer's email group (for My Bookings)
+// db-v14: when a specific email is given, unions passes across groupFor_(email) and dedupes by ts.
 function listPlans_(email) {
   email = (email || '').trim().toLowerCase();
   var props = PropertiesService.getScriptProperties().getProperties();
   var out = [];
+  // Build the set of emails to include. For the admin (no email) include all; for a
+  // customer, include every address in their email group.
+  var groupSet = null;
+  if (email) {
+    groupSet = {};
+    groupFor_(email).forEach(function (e) { groupSet[e] = 1; });
+  }
+  var seen = {};  // dedup by plan ts (plan id) so a plan stored under an alias isn't doubled
   for (var key in props) {
     if (key.indexOf('plan:') !== 0) continue;
     var rest = key.slice('plan:'.length);
     var cut = rest.lastIndexOf(':');
     var keyEmail = cut >= 0 ? rest.slice(0, cut) : rest;
-    if (email && keyEmail !== email) continue;
+    if (groupSet && !groupSet[keyEmail]) continue;
     var plan; try { plan = JSON.parse(props[key]); } catch (e) { continue; }
     if (!plan) continue;
+    var tsKey = String(plan.ts);
+    if (seen[tsKey]) continue;
+    seen[tsKey] = 1;
     plan.email = keyEmail;
     out.push(plan);
   }
