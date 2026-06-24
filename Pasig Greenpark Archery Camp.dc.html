@@ -3413,7 +3413,7 @@ class Component extends DCLogic {
   // admin doesn't re-type details and can just assign a coach / add more sessions.
   retrieveToPlan(b) {
     const email = (b.email || '').trim().toLowerCase();
-    if (!email) { if (typeof alert !== 'undefined') alert('This booking has no email on file, so it cannot be added to Plans.'); return; }
+    if (!email) { if (typeof alert !== 'undefined') alert('This booking has no email on file, so it cannot be added to Bookings.'); return; }
     const price = b.amount ? ('₱' + Number(b.amount).toLocaleString('en-PH')) : this.passPrice(b.program);
     // A cancelled booking's calendar event is gone, so don't carry its (dead) session —
     // start the plan fresh so the admin can reschedule.
