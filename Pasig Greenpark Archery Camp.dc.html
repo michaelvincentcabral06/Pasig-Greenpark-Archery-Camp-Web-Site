@@ -2934,7 +2934,9 @@ class Component extends DCLogic {
       .then(data => {
         const cap = data.capacity || this.capacity();
         // Trust the backend's slot list — it already drops past slots in Asia/Manila.
-        const slots = (data.slots || []).map(s => ({ time: s.label || s.time, booked: s.booked, left: s.left != null ? s.left : (cap - s.booked), full: (s.left != null ? s.left : (cap - s.booked)) <= 0 }));
+        let slots = (data.slots || []).map(s => ({ time: s.label || s.time, booked: s.booked, left: s.left != null ? s.left : (cap - s.booked), full: (s.left != null ? s.left : (cap - s.booked)) <= 0 }));
+        // Defensive frontend filter: drop any past slots (handles clock drift / timezone edge cases).
+        slots = slots.filter(function (s) { return !this.isPastSlot(dateStr, s.time); }.bind(this));
         this.setState({ slots, slotsLoading: false });
       })
       .catch(() => this.setState({ slots: this.buildSampleSlots(dateStr), slotsLoading: false }));
@@ -3434,7 +3436,9 @@ class Component extends DCLogic {
       .then(r => r.json())
       .then(data => {
         const cap = data.capacity || this.capacity();
-        const slots = (data.slots || []).map(s => ({ time: s.label || s.time, booked: s.booked, left: s.left != null ? s.left : (cap - s.booked), full: (s.left != null ? s.left : (cap - s.booked)) <= 0 }));
+        let slots = (data.slots || []).map(s => ({ time: s.label || s.time, booked: s.booked, left: s.left != null ? s.left : (cap - s.booked), full: (s.left != null ? s.left : (cap - s.booked)) <= 0 }));
+        // Defensive frontend filter: drop any past slots in the reschedule picker too.
+        slots = slots.filter(function (s) { return !this.isPastSlot(dateStr, s.time); }.bind(this));
         this.setState({ editSlots: slots, editLoading: false });
       })
       .catch(() => this.setState({ editSlots: this.buildSampleSlots(dateStr), editLoading: false }));
