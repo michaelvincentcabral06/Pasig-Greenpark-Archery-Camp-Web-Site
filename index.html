@@ -1183,14 +1183,15 @@
       <div style="max-width:460px;margin:24px auto;background:#244232;border-radius:16px;padding:clamp(28px,4vw,40px);box-shadow:0 18px 50px rgba(27,42,31,0.18);">
         <div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#7fb43f;margin-bottom:10px;">My Bookings</div>
         <h1 style="font-size:clamp(24px,3vw,30px);font-weight:800;letter-spacing:-0.02em;color:#f4efe4;margin:0 0 8px;">Find your sessions</h1>
-        <p style="font-size:14.5px;line-height:1.6;color:#cdd6c5;margin:0 0 22px;">Enter the email from your confirmation to view, reschedule, or cancel sessions and see your plans. The booking reference is optional — it just helps us pinpoint one booking.</p>
+        <p style="font-size:14.5px;line-height:1.6;color:#cdd6c5;margin:0 0 4px;">Enter your email <strong>or</strong> a booking reference — either one finds your sessions.</p>
+        <p style="font-size:13.5px;line-height:1.55;color:#9aa890;margin:0 0 22px;">View, reschedule, or cancel sessions and see your plans.</p>
         <div style="display:flex;flex-direction:column;gap:14px;">
           <div>
             <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Email</label>
             <input value="{{ acctEmail }}" onInput="{{ setAcctEmail }}" onKeyDown="{{ onAcctKey }}" type="email" placeholder="juan@email.com" style="width:100%;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:13px 14px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:#f4efe4;outline:none;" />
           </div>
           <div>
-            <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Booking reference <span style="color:#9aa890;font-weight:500;">— optional</span></label>
+            <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Booking reference</label>
             <input value="{{ acctRef }}" onInput="{{ setAcctRef }}" onKeyDown="{{ onAcctKey }}" placeholder="PGA-260620-AB12" style="width:100%;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:13px 14px;font-family:'Spline Sans Mono',monospace;font-size:15px;color:#f4efe4;outline:none;letter-spacing:0.04em;" />
           </div>
           <sc-if value="{{ hasAcctError }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;line-height:1.5;color:#f0b48a;background:rgba(240,180,138,0.08);border:1px solid rgba(240,180,138,0.2);border-radius:8px;padding:10px 12px;">{{ acctError }}</div></sc-if>
@@ -2373,6 +2374,7 @@ class Component extends DCLogic {
     bookingAlts: [],
     bookingResult: null,
     acctEmail: '',
+    acctEmails: [],
     acctRef: '',
     acctIn: false,
     acctBookingOpen: false,
@@ -3249,8 +3251,11 @@ class Component extends DCLogic {
   accountLogin() {
     const email = (this.state.acctEmail || '').trim();
     const ref = (this.state.acctRef || '').trim().toUpperCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { this.setState({ acctError: 'Enter the email you used to book or add a plan.' }); return; }
+    const hasEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!hasEmail && !ref) { this.setState({ acctError: 'Enter your email or a booking reference.' }); return; }
     this.setState({ acctLoading: true, acctError: '' });
+    const ep = this.endpoint();
+    const qs = (hasEmail ? ('&email=' + encodeURIComponent(email)) : '') + (ref ? ('&ref=' + encodeURIComponent(ref)) : '');
     const finish = (list, name) => {
       const plans = this.loadAcctPlans(email);
       if ((!list || !list.length) && (!plans || !plans.length)) {
@@ -3260,11 +3265,14 @@ class Component extends DCLogic {
       this.setState({ acctIn: true, acctLoading: false, acctError: '', acctBookings: list || [], acctName: name || (list && list[0] && list[0].name) || (plans && plans[0] && plans[0].holder) || '', acctPlans: plans });
       this.fetchPlansForEmail(email); // refresh passes from the backend (cross-device)
     };
-    const ep = this.endpoint();
     if (!ep) { setTimeout(() => finish(this.localAcctMatches(email, ref)), 250); return; }
-    fetch(ep + '?action=lookup&email=' + encodeURIComponent(email) + '&ref=' + encodeURIComponent(ref))
+    fetch(ep + '?action=lookup' + qs)
       .then(r => r.json())
       .then(data => {
+        const primary = (data && data.primary) || email;
+        const emails = (data && data.emails && data.emails.length) ? data.emails : (primary ? [primary] : []);
+        try { localStorage.setItem('pgac_acct_emails', JSON.stringify(emails)); } catch (e) {}
+        this.setState({ acctEmail: primary, acctEmails: emails });
         const remote = (data && data.bookings) ? data.bookings : [];
         const local = this.localAcctMatches(email, ref);
         // merge remote + any device-only rows (dedupe by eventId/ts/date+time)
