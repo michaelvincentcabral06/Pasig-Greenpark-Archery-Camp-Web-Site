@@ -645,7 +645,7 @@ function doGet(e) {
     if (action === 'content') return getContent_();
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v15', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true });
+      return json_({ version: 'db-v16', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -722,6 +722,7 @@ function doPost(e) {
   try {
     var body = JSON.parse(e.postData.contents);
     if (body.action === 'cancel') return cancel_(body);
+    if (body.action === 'reschedule') return reschedule_(body);
     if (body.action === 'book')   return book_(body);
     if (body.action === 'setCoachAvail') return setCoachAvail_(body);
     if (body.action === 'coachLogin')    return coachLogin_(body);
@@ -794,8 +795,9 @@ function planScheduleEmail_(body) {
   var email = (body.email || '').trim().toLowerCase();
   if (!email || body.ts == null) return json_({ ok: false, reason: 'missing email or ts' });
   var raw = PropertiesService.getScriptProperties().getProperty(planKey_(email, body.ts));
-  if (!raw) return json_({ ok: false, reason: 'plan not found' });
-  var plan; try { plan = JSON.parse(raw); } catch (e) { return json_({ ok: false, reason: 'bad plan' }); }
+  var plan;
+  if (raw) { try { plan = JSON.parse(raw); } catch (e) { plan = null; } }
+  if (!plan) { plan = { holder: body.holder || '', name: body.plan || '', ref: body.ref || '', coach: '', sessions: [] }; }
   var coachName = body.coachName || '';
   if (!coachName && plan.coach) { var c = coachById_(plan.coach); coachName = c ? c.name : ''; }
   // Prefer the sessions sent by the website (its live copy) so the email always lists the
@@ -1378,6 +1380,36 @@ function bookMulti_(body) {
   }
 
   return json_({ ok: true, ref: ref, bookedPairs: bookedPairs, eventIds: eventIds, party: party, amount: amount, emailed: emailed });
+}
+
+function reschedule_(body) {
+  var cal = getCalendar_();
+  var ev = null;
+  if (body.eventId) { try { ev = cal.getEventById(body.eventId); } catch (e1) { ev = null; } }
+  if (!ev && body.date && body.time) {
+    var p = body.date.split('-');
+    var ds = new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10), 0,0,0);
+    var de = new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10), 23,59,59);
+    var evs = cal.getEvents(ds, de);
+    for (var i = 0; i < evs.length; i++) {
+      var lbl = fmtLabel_(parseInt(Utilities.formatDate(evs[i].getStartTime(), TIMEZONE, 'H'), 10));
+      var desc = evs[i].getDescription() || '';
+      var refOk = !body.ref || desc.indexOf(body.ref) !== -1;
+      if (lbl === body.time && refOk) { ev = evs[i]; break; }
+    }
+  }
+  if (!ev) return json_({ ok: false, reason: 'event not found' });
+  var np = (body.newDate || '').split('-');
+  var nh = hourFromLabel_(body.newTime);
+  if (np.length !== 3 || nh == null) return json_({ ok: false, reason: 'bad new slot' });
+  var start = new Date(parseInt(np[0],10), parseInt(np[1],10)-1, parseInt(np[2],10), nh, 0, 0);
+  var end = new Date(start.getTime() + 60 * 60 * 1000);
+  try { ev.setTime(start, end); } catch (e2) { return json_({ ok: false, reason: 'move failed' }); }
+  return json_({ ok: true, eventId: ev.getId(), ref: body.ref || '' });
+}
+function hourFromLabel_(label) {
+  var m = /(\d+):(\d+)\s*(AM|PM)/i.exec(label || ''); if (!m) return null;
+  var h = parseInt(m[1], 10) % 12; if (/PM/i.test(m[3])) h += 12; return h;
 }
 
 function cancel_(body) {

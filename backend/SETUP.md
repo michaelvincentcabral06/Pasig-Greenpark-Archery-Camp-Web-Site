@@ -225,3 +225,20 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 - [ ] Open `…/exec?action=content` in a browser — confirm the response shows `{"content":{…}}` with the price you just edited.
 - [ ] Open the **public site on a different device** (or incognito window) — confirm the updated price is shown (the frontend fetches `?action=content` on load once Task 2 is wired up).
 - [ ] In the admin **Tweaks / Pricing tab**, edit the **Capacity / hour** field and save — then open `…/exec?action=availability&date=<any-open-date>` and confirm the returned `capacity` value and each slot's `left` count reflect the new number (not the hardcoded 6).
+
+---
+
+## db-v16 deploy & verify
+
+### Deploy steps
+
+1. Open the Apps Script project in your browser.
+2. Paste the entire contents of `backend/Code.gs` (overwriting the old code), then click **Save** (💾).
+3. Click **Deploy → Manage deployments → edit (✏️) → Version: New version → Deploy.**
+   - This keeps the same `/exec` URL — no changes needed in the website.
+
+### Verification checklist
+
+- [ ] Open `…/exec?action=version` in a browser — confirm the response shows `"version":"db-v16"`, `"reschedule":true`, and all previous flags (`contentStore:true`, etc.) still present.
+- [ ] **Reschedule moves (no duplicate):** On the live site, open My Bookings, reschedule an existing session to a different date/time. Confirm: (a) the original calendar event moves to the new slot — it does **not** get cancelled and re-created, and (b) only one calendar event exists for that booking (no duplicate).
+- [ ] **Self-schedule email (Bug 4):** Have a customer with an active pass self-schedule one of their sessions (Plans & Sessions page). Confirm: (a) a confirmation email arrives in their inbox listing the newly scheduled date/time, and (b) the session appears in the admin Plans & Sessions tab.
