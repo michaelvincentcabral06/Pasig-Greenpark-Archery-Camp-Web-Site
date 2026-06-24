@@ -1632,6 +1632,13 @@
               </div>
             </sc-for>
           </div>
+          <sc-if value="{{ acctUpMultiPage }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px;">
+            <sc-if value="{{ acctUpHasPrev }}" hint-placeholder-val="{{ true }}"><button onClick="{{ acctUpPrev }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">← Prev</button></sc-if>
+            <span style="font-size:13px;color:#56664f;font-family:'Spline Sans Mono',monospace;">{{ acctUpPageLabel }}</span>
+            <sc-if value="{{ acctUpHasNext }}" hint-placeholder-val="{{ true }}"><button onClick="{{ acctUpNext }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">Next →</button></sc-if>
+          </div>
+          </sc-if>
         </div>
         </sc-if>
 
@@ -1650,6 +1657,13 @@
               </div>
             </sc-for>
           </div>
+          <sc-if value="{{ acctPastMultiPage }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px;">
+            <sc-if value="{{ acctPastHasPrev }}" hint-placeholder-val="{{ true }}"><button onClick="{{ acctPastPrev }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">← Prev</button></sc-if>
+            <span style="font-size:13px;color:#56664f;font-family:'Spline Sans Mono',monospace;">{{ acctPastPageLabel }}</span>
+            <sc-if value="{{ acctPastHasNext }}" hint-placeholder-val="{{ true }}"><button onClick="{{ acctPastNext }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">Next →</button></sc-if>
+          </div>
+          </sc-if>
         </div>
         </sc-if>
 
@@ -1687,6 +1701,13 @@
               </div>
             </sc-for>
           </div>
+          <sc-if value="{{ acctPassMultiPage }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px;">
+            <sc-if value="{{ acctPassHasPrev }}" hint-placeholder-val="{{ true }}"><button onClick="{{ acctPassPrev }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">← Prev</button></sc-if>
+            <span style="font-size:13px;color:#56664f;font-family:'Spline Sans Mono',monospace;">{{ acctPassPageLabel }}</span>
+            <sc-if value="{{ acctPassHasNext }}" hint-placeholder-val="{{ true }}"><button onClick="{{ acctPassNext }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">Next →</button></sc-if>
+          </div>
+          </sc-if>
           </sc-if>
 
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;">
@@ -2410,6 +2431,7 @@ class Component extends DCLogic {
     plFilter: 'all',
     plSearch: '',
     plPage: 0,
+    acctUpPage: 0, acctPastPage: 0, acctPassPage: 0,
     acctLoading: false,
     acctError: '',
     acctName: '',
@@ -3281,7 +3303,7 @@ class Component extends DCLogic {
         this.setState({ acctLoading: false, acctError: 'No bookings or plans found. Check the email or reference from your confirmation.' });
         return;
       }
-      this.setState({ acctIn: true, acctLoading: false, acctError: '', acctBookings: list || [], acctName: name || (list && list[0] && list[0].name) || (plans && plans[0] && plans[0].holder) || '', acctPlans: plans });
+      this.setState({ acctIn: true, acctLoading: false, acctError: '', acctBookings: list || [], acctName: name || (list && list[0] && list[0].name) || (plans && plans[0] && plans[0].holder) || '', acctPlans: plans, acctUpPage: 0, acctPastPage: 0, acctPassPage: 0 });
       this.fetchPlansForEmail(em); // refresh passes from the backend (cross-device)
     };
     if (!ep) { setTimeout(() => finish(this.localAcctMatches(email, ref)), 250); return; }
@@ -3325,7 +3347,7 @@ class Component extends DCLogic {
       })
       .catch(() => this.setState({ mergeMsg: 'Something went wrong. Please try again.' }));
   }
-  accountLogout() { this.setState({ acctIn: false, acctBookingOpen: false, acctBookings: [], acctPlans: [], acctRef: '', acctError: '', editTs: null }); }
+  accountLogout() { this.setState({ acctIn: false, acctBookingOpen: false, acctBookings: [], acctPlans: [], acctRef: '', acctError: '', editTs: null, acctUpPage: 0, acctPastPage: 0, acctPassPage: 0 }); }
   refreshAcctLocal() {
     // after an edit, rebuild the visible list from device bookings (keeps UI instant)
     const merged = this.localAcctMatches(this.state.acctEmail, this.state.acctRef);
@@ -4309,6 +4331,17 @@ class Component extends DCLogic {
       };
     });
     const planChoices = cm.packages.map(pk => ({ name: pk.name, price: pk.price, unit: pk.unit, desc: pk.desc, add: () => this.addAcctPlan(pk.name) }));
+    const ACCT_PAGE = 5;
+    const acctUpAll = acctUpcoming, acctPastAll = acctPast, acctPassAll = acctPlanRows;
+    const acctUpPageCount = Math.max(1, Math.ceil(acctUpAll.length / ACCT_PAGE));
+    const acctUpPage = Math.min(Math.max(0, this.state.acctUpPage || 0), acctUpPageCount - 1);
+    const acctUpPaged = acctUpAll.slice(acctUpPage * ACCT_PAGE, acctUpPage * ACCT_PAGE + ACCT_PAGE);
+    const acctPastPageCount = Math.max(1, Math.ceil(acctPastAll.length / ACCT_PAGE));
+    const acctPastPage = Math.min(Math.max(0, this.state.acctPastPage || 0), acctPastPageCount - 1);
+    const acctPastPaged = acctPastAll.slice(acctPastPage * ACCT_PAGE, acctPastPage * ACCT_PAGE + ACCT_PAGE);
+    const acctPassPageCount = Math.max(1, Math.ceil(acctPassAll.length / ACCT_PAGE));
+    const acctPassPage = Math.min(Math.max(0, this.state.acctPassPage || 0), acctPassPageCount - 1);
+    const acctPassPaged = acctPassAll.slice(acctPassPage * ACCT_PAGE, acctPassPage * ACCT_PAGE + ACCT_PAGE);
 
     // ---------- ADMIN: cancellation history (from the database) ----------
     const cancelRows = (this.state.cancelHistory || []).map(c => {
@@ -4736,9 +4769,15 @@ class Component extends DCLogic {
       acctIn: this.state.acctIn, acctNotIn: !this.state.acctIn, acctLoading: this.state.acctLoading, acctNotLoading: !this.state.acctLoading,
       acctError: this.state.acctError, hasAcctError: !!this.state.acctError,
       acctName: this.state.acctName, acctFirst: (this.state.acctName || '').trim().split(' ')[0],
-      acctUpcoming: acctUpcoming, acctPast: acctPast,
-      acctHasUpcoming: acctUpcoming.length > 0, hasUpcoming: acctUpcoming.length > 0, hasPast: acctPast.length > 0,
-      acctEmpty: acctUpcoming.length === 0 && acctPast.length === 0,
+      acctUpcoming: acctUpPaged, acctPast: acctPastPaged,
+      acctHasUpcoming: acctUpAll.length > 0, hasUpcoming: acctUpAll.length > 0, hasPast: acctPastAll.length > 0,
+      acctEmpty: acctUpAll.length === 0 && acctPastAll.length === 0,
+      acctUpPageLabel: 'Page ' + (acctUpPage + 1) + ' of ' + acctUpPageCount, acctUpHasPrev: acctUpPage > 0, acctUpHasNext: acctUpPage < acctUpPageCount - 1, acctUpMultiPage: acctUpPageCount > 1,
+      acctUpPrev: () => this.setState(s => ({ acctUpPage: Math.max(0, (s.acctUpPage || 0) - 1) })), acctUpNext: () => this.setState(s => ({ acctUpPage: (s.acctUpPage || 0) + 1 })),
+      acctPastPageLabel: 'Page ' + (acctPastPage + 1) + ' of ' + acctPastPageCount, acctPastHasPrev: acctPastPage > 0, acctPastHasNext: acctPastPage < acctPastPageCount - 1, acctPastMultiPage: acctPastPageCount > 1,
+      acctPastPrev: () => this.setState(s => ({ acctPastPage: Math.max(0, (s.acctPastPage || 0) - 1) })), acctPastNext: () => this.setState(s => ({ acctPastPage: (s.acctPastPage || 0) + 1 })),
+      acctPassPageLabel: 'Page ' + (acctPassPage + 1) + ' of ' + acctPassPageCount, acctPassHasPrev: acctPassPage > 0, acctPassHasNext: acctPassPage < acctPassPageCount - 1, acctPassMultiPage: acctPassPageCount > 1,
+      acctPassPrev: () => this.setState(s => ({ acctPassPage: Math.max(0, (s.acctPassPage || 0) - 1) })), acctPassNext: () => this.setState(s => ({ acctPassPage: (s.acctPassPage || 0) + 1 })),
       editingEntry: editingEntry, editIsOpen: editIsOpen,
       editDate: this.state.editDate, editTime: this.state.editTime,
       editParty: editPartyN, editPartyLabel: editPartyN + (editPartyN === 1 ? ' archer' : ' archers'),
@@ -4775,7 +4814,7 @@ class Component extends DCLogic {
         }
       },
       closeAcctBooking: () => { this.setState({ acctBookingOpen: false, bookingStatus: '', bookingResult: null }); if (typeof window !== 'undefined') setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 30); },
-      acctPlanRows: acctPlanRows, hasAcctPlans: acctPlanRows.length > 0, planChoices: planChoices,
+      acctPlanRows: acctPassPaged, hasAcctPlans: acctPassAll.length > 0, planChoices: planChoices,
       // ----- PASSES & MEMBERSHIPS page -----
       isPlans: page === 'plans',
       goPlans: () => this.go('plans'),
