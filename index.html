@@ -1225,7 +1225,7 @@
             <button id="merge-add-btn" onClick="{{ addEmailAlias }}" style="background:#7fb43f;color:#1b2a1f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;padding:11px 20px;border-radius:999px;white-space:nowrap;" style-hover="background:#93c75c;">Add</button>
           </div>
           <sc-if value="{{ mergeMsg }}" hint-placeholder-val="{{ false }}">
-            <div style="margin-top:10px;font-size:13.5px;color:#f4efe4;font-weight:500;">{{ mergeMsg }}</div>
+            <div style="margin-top:10px;font-size:13.5px;color:{{ mergeMsgColor }};font-weight:500;">{{ mergeMsg }}</div>
           </sc-if>
         </div>
 
@@ -4232,7 +4232,7 @@ class Component extends DCLogic {
         partyLabel: (b.party || 1) + ((b.party || 1) === 1 ? ' archer' : ' archers'),
         amountLabel: b.amount ? ('\u20B1' + Number(b.amount).toLocaleString('en-PH')) : '',
         ref: b.ref || '', hasRef: !!b.ref, concLabel: cl, hasConc: !!cl,
-        underEmail: b.email || '', hasUnderEmail: !!(b.email),
+        underEmail: b.email || '', hasUnderEmail: ((this.state.acctEmails || []).length > 1) && !!(b.email),
         onCalendar: !!b.eventId,
         edit: () => this.startEdit(b), cancel: () => this.cancelAcctBooking(b),
         isEditing: this.state.editTs === b.ts, notEditing: this.state.editTs !== b.ts,
@@ -4729,6 +4729,7 @@ class Component extends DCLogic {
       accountLogin: () => this.accountLogin(),
       accountLogout: () => this.accountLogout(),
       mergeEmail: this.state.mergeEmail, mergeRef: this.state.mergeRef, mergeMsg: this.state.mergeMsg,
+      mergeMsgColor: ((this.state.mergeMsg || '').indexOf('Merged') === 0) ? '#7fb43f' : (((this.state.mergeMsg || '').indexOf('Linking') === 0) ? '#9aa890' : '#f0b48a'),
       setMergeEmail: (e) => this.setState({ mergeEmail: e.target.value, mergeMsg: '' }),
       setMergeRef: (e) => this.setState({ mergeRef: e.target.value, mergeMsg: '' }),
       addEmailAlias: () => this.addAcctEmail(),
