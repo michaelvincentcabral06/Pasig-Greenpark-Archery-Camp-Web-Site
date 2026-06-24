@@ -71,6 +71,24 @@ function getCoaches_() {
 function saveCoaches_(list) {
   PropertiesService.getScriptProperties().setProperty(COACHES_PROP_KEY, JSON.stringify(list || []));
 }
+function coachPhotoMap_() {
+  var map = {};
+  try {
+    var sh = dbSheet_('coachPhotos');
+    var data = sh.getDataRange().getValues();
+    for (var r = 1; r < data.length; r++) { var id = String(data[r][0] || ''); if (id) map[id] = String(data[r][1] || ''); }
+  } catch (e) {}
+  return map;
+}
+function setCoachPhotoCell_(id, dataUrl) {
+  var sh = dbSheet_('coachPhotos');
+  var data = sh.getDataRange().getValues();
+  var rowIndex = -1;
+  for (var r = 1; r < data.length; r++) { if (String(data[r][0] || '') === String(id)) { rowIndex = r + 1; break; } }
+  if (!dataUrl) { if (rowIndex > 0) sh.deleteRow(rowIndex); return; }
+  if (rowIndex > 0) { sh.getRange(rowIndex, 2).setValue(dataUrl); }
+  else { sh.appendRow([id, dataUrl]); }
+}
 // ================================================================
 
 // ====================== DATABASE (Google Sheet) ======================
@@ -84,7 +102,8 @@ var DB_SHEETS = {
   bookings: { name: 'Bookings',      headers: ['Booked At','Ref','Status','Date','Time','Program','Name','Email','Mobile','Archers','Amount','Coach','Concession','Roster','Event ID'] },
   passes:   { name: 'Passes',        headers: ['Saved At','Email','Holder','Pass','Coach','Sessions','Plan ID'] },
   cancels:  { name: 'Cancellations', headers: ['Cancelled At','Ref','Date','Time','Program','Name','Email','Cancelled By','Event ID'] },
-  activity: { name: 'Activity',      headers: ['At','Ref','Action','Detail','Name','Email','Actor'] }
+  activity:    { name: 'Activity',      headers: ['At','Ref','Action','Detail','Name','Email','Actor'] },
+  coachPhotos: { name: 'CoachPhotos',  headers: ['Id','Photo'] }
 };
 
 function getDb_() {
@@ -645,7 +664,7 @@ function doGet(e) {
     if (action === 'content') return getContent_();
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v17', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true });
+      return json_({ version: 'db-v18', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -738,6 +757,7 @@ function doPost(e) {
     if (body.action === 'addCoach')          return addCoach_(body);
     if (body.action === 'updateCoach')       return updateCoach_(body);
     if (body.action === 'deleteCoach')       return deleteCoach_(body);
+    if (body.action === 'setCoachProfile')   return setCoachProfile_(body);
     if (body.action === 'clearAll')          return clearAll_(body);
     if (body.action === 'addEmailAlias')     return addEmailAlias_(body);
     if (body.action === 'setContent')        return setContent_(body);
@@ -986,7 +1006,14 @@ function setSplit_(body) {
 // The list (incl. passcodes) is returned so the website behaves the same on any device —
 // this matches the existing model where coach passcodes already live in the public site.
 function listCoaches_() {
-  return json_({ coaches: getCoaches_() });
+  var list = getCoaches_();
+  var photos = coachPhotoMap_();
+  var out = [];
+  for (var i = 0; i < list.length; i++) {
+    var c = list[i];
+    out.push({ id: c.id, name: c.name, first: c.first || '', role: c.role || '', pass: c.pass || '', bio: c.bio || '', photo: photos[c.id] || '' });
+  }
+  return json_({ coaches: out });
 }
 function slugifyCoachId_(name) {
   var base = String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'coach';
@@ -1003,7 +1030,8 @@ function addCoach_(body) {
   var coach = {
     id: id, name: name, first: name.split(' ')[0],
     role: (body.role || '').trim() || 'Coach',
-    pass: (body.pass || '').trim() || (id + '2026')
+    pass: (body.pass || '').trim() || (id + '2026'),
+    bio: body.bio || ''
   };
   list.push(coach);
   saveCoaches_(list);
@@ -1019,6 +1047,7 @@ function updateCoach_(body) {
   if (body.name != null && String(body.name).trim()) { c.name = String(body.name).trim(); c.first = c.name.split(' ')[0]; }
   if (body.role != null) c.role = String(body.role).trim();
   if (body.pass != null && String(body.pass).trim()) c.pass = String(body.pass).trim();
+  c.bio = (body.bio != null ? body.bio : c.bio);
   list[i] = c;
   saveCoaches_(list);
   dbLog_('', 'Coach updated', c.name + (c.role ? (' · ' + c.role) : ''), c.name, '');
@@ -1031,8 +1060,20 @@ function deleteCoach_(body) {
   var next = list.filter(function (c) { if (c.id === id) { removed = c; return false; } return true; });
   if (!removed) return json_({ ok: false, reason: 'not found' });
   saveCoaches_(next);
+  setCoachPhotoCell_(id, '');
   dbLog_('', 'Coach removed', removed.name, removed.name, '');
   return json_({ ok: true, coaches: next });
+}
+
+function setCoachProfile_(body) {
+  var id = String(body.id || ''); if (!id) return json_({ ok: false, reason: 'no id' });
+  if (body.bio != null) {
+    var list = getCoaches_();
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) { list[i].bio = String(body.bio || ''); break; } }
+    saveCoaches_(list);
+  }
+  if (body.photo != null) { setCoachPhotoCell_(id, String(body.photo || '')); }
+  return listCoaches_();
 }
 
 // ---------- RESET: wipe every booking so the owner can test from scratch ----------

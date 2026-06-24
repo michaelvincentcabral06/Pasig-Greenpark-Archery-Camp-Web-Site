@@ -260,3 +260,23 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 - [ ] Open `…/exec?action=version` in a browser — confirm the response shows `"version":"db-v16"`, `"reschedule":true`, and all previous flags (`contentStore:true`, etc.) still present.
 - [ ] **Reschedule moves (no duplicate):** On the live site, open My Bookings, reschedule an existing session to a different date/time. Confirm: (a) the original calendar event moves to the new slot — it does **not** get cancelled and re-created, and (b) only one calendar event exists for that booking (no duplicate).
 - [ ] **Self-schedule email (Bug 4):** Have a customer with an active pass self-schedule one of their sessions (Plans & Sessions page). Confirm: (a) a confirmation email arrives in their inbox listing the newly scheduled date/time, and (b) the session appears in the admin Plans & Sessions tab.
+
+---
+
+## db-v18 deploy & verify
+
+### Deploy steps
+
+1. Open the Apps Script project in your browser.
+2. Paste the entire contents of `backend/Code.gs` (overwriting the old code), then click **Save** (💾).
+3. Click **Deploy → Manage deployments → edit (✏️) → Version: New version → Deploy.**
+   - This keeps the same `/exec` URL — no changes needed in the website.
+
+### Verification checklist
+
+- [ ] Open `…/exec?action=version` in a browser — confirm the response shows `"version":"db-v18"`, `"coachProfiles":true`, and all prior flags (`activityActor:true`, `reschedule:true`, `contentStore:true`, etc.) still present.
+- [ ] **CoachPhotos tab auto-creates on first photo write:** In the admin Coaches tab, set a photo for any coach — confirm a new `CoachPhotos` tab appears in the Google Sheet (it does not exist until the first write).
+- [ ] **Bio persists:** Add or edit a coach's bio in admin and save. Open `…/exec?action=coaches` — confirm the returned coach object has a non-empty `bio` field.
+- [ ] **Photo persists:** Set a coach photo (data URL) via admin. Open `…/exec?action=coaches` — confirm the returned coach object has a non-empty `photo` field. Reload on a different device — photo still present.
+- [ ] **Photo and bio appear on About page:** Confirm the About / Coaches section on the live site renders the updated bio and photo.
+- [ ] **Delete coach clears CoachPhotos row:** Remove a coach in admin. Open the `CoachPhotos` sheet — confirm their row is gone (a re-added coach with the same id starts with no stale photo).
