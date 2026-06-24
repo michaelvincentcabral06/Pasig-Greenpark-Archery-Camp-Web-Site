@@ -2284,6 +2284,18 @@
           </div>
           <button onClick="{{ coachLogout }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.18);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;font-weight:700;color:#244232;padding:10px 16px;border-radius:999px;">Sign out</button>
         </div>
+        <div style="display:flex;align-items:center;gap:16px;margin:8px 0 20px;flex-wrap:wrap;">
+          <sc-if value="{{ portalHasPhoto }}" hint-placeholder-val="{{ false }}"><img src="{{ portalPhoto }}" alt="You" style="width:72px;height:72px;border-radius:50%;object-fit:cover;flex:none;" /></sc-if>
+          <sc-if value="{{ portalNoPhoto }}" hint-placeholder-val="{{ true }}"><span style="width:72px;height:72px;border-radius:50%;flex:none;background:#244232;color:#f4efe4;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:24px;font-family:'Hanken Grotesk',sans-serif;">{{ portalInitials }}</span></sc-if>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <label style="background:#fffdf6;border:1px solid rgba(36,66,50,0.18);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12.5px;font-weight:700;color:#244232;padding:8px 14px;border-radius:999px;align-self:flex-start;">Change photo<input type="file" accept="image/*" onChange="{{ portalOnPhotoFile }}" style="display:none;" /></label>
+            <sc-if value="{{ portalHasPhoto }}" hint-placeholder-val="{{ false }}"><button onClick="{{ portalRemovePhoto }}" style="background:none;border:none;cursor:pointer;color:#b4512f;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:0;text-align:left;">Remove photo</button></sc-if>
+          </div>
+        </div>
+        <div style="max-width:60em;margin:0 0 24px;">
+          <label style="font-size:12px;font-weight:700;color:#244232;">Your bio (shown on the About page)<textarea value="{{ portalBioValue }}" onInput="{{ portalSetBio }}" rows="2" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:10px 12px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;resize:vertical;"></textarea></label>
+          <button onClick="{{ portalSaveBio }}" style="margin-top:8px;background:#4d7327;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:8px 16px;border-radius:999px;">Save bio</button>
+        </div>
         <p style="font-size:14.5px;line-height:1.6;color:#56664f;margin:0 0 24px;max-width:60em;">Tap a day, then tap the hours you can coach. Changes save instantly and update what customers can book with you.</p>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
@@ -4828,6 +4840,10 @@ class Component extends DCLogic {
 
     // ---------- COACH PORTAL ----------
     const coachUser = this.coachById(this.state.coachId);
+    const _pc = this.coachById(this.state.coachId) || {};
+    const _pcAv = this.coachAvatar(_pc);
+    const _pcId = _pc.id || '';
+    const portalBioValue = (this.state.coachBioDrafts[_pcId] != null ? this.state.coachBioDrafts[_pcId] : (_pc.bio || ''));
     const ccBase = this.state.coachCalMonth ? new Date(this.state.coachCalMonth + '-01T00:00:00') : new Date(todayStr + 'T00:00:00');
     const ccYear = ccBase.getFullYear(), ccMon = ccBase.getMonth();
     const coachCalLabel = ccBase.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
@@ -5009,6 +5025,12 @@ class Component extends DCLogic {
       coachName: coachUser ? coachUser.name : '',
       coachFirst: coachUser ? coachUser.first : '',
       coachRole: coachUser ? coachUser.role : '',
+      portalHasPhoto: _pcAv.hasPhoto, portalNoPhoto: !_pcAv.hasPhoto, portalPhoto: _pcAv.photo, portalInitials: _pcAv.initials,
+      portalBioValue: portalBioValue,
+      portalSetBio: (e) => { const v = e.target.value; this.setState(s => ({ coachBioDrafts: { ...s.coachBioDrafts, [_pcId]: v } })); },
+      portalSaveBio: () => this.saveCoachProfile(_pcId, { bio: (this.state.coachBioDrafts[_pcId] != null ? this.state.coachBioDrafts[_pcId] : (_pc.bio || '')) }),
+      portalOnPhotoFile: (e) => { const f = e.target.files && e.target.files[0]; if (f) this.resizeImageFile(f, (url) => this.saveCoachProfile(_pcId, { photo: url })); },
+      portalRemovePhoto: () => this.saveCoachProfile(_pcId, { photo: '' }),
       coachCalLabel: coachCalLabel,
       coachCalCells: coachCalCells,
       coachCalPrev: () => { if (ccCanPrev) this.coachShiftMonth(-1); },
