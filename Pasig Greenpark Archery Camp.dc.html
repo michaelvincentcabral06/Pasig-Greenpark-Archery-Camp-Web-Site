@@ -2188,6 +2188,15 @@
             <input value="{{ funShootEdit }}" onInput="{{ setFunShoot }}" style="width:120px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;color:#1b2a1f;outline:none;" />
             <span style="font-size:14px;color:#8a9579;">per arrow</span>
           </div>
+          <div style="margin-top:22px;">
+            <div style="font-size:13px;font-weight:700;color:#1b2a1f;margin-bottom:10px;">Booking rates (per session)</div>
+            <div style="display:flex;flex-wrap:wrap;gap:14px;">
+              <label style="font-size:12.5px;font-weight:600;color:#56664f;">Open Range ₱<input value="{{ rateOpenEdit }}" onInput="{{ setRateOpen }}" type="number" min="0" style="display:block;margin-top:4px;width:120px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
+              <label style="font-size:12.5px;font-weight:600;color:#56664f;">Session ₱<input value="{{ rateSessionEdit }}" onInput="{{ setRateSession }}" type="number" min="0" style="display:block;margin-top:4px;width:120px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
+              <label style="font-size:12.5px;font-weight:600;color:#56664f;">Private ₱<input value="{{ ratePrivateEdit }}" onInput="{{ setRatePrivate }}" type="number" min="0" style="display:block;margin-top:4px;width:120px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
+              <label style="font-size:12.5px;font-weight:600;color:#56664f;">Capacity / hour<input value="{{ capacityEdit }}" onInput="{{ setCapacity }}" type="number" min="1" max="20" style="display:block;margin-top:4px;width:120px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
+            </div>
+          </div>
           <button onClick="{{ resetContent }}" style="margin-top:18px;background:none;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#8a9579;padding:9px 16px;border-radius:999px;">Reset all content to defaults</button>
         </div>
         </sc-if>
@@ -2652,11 +2661,24 @@ class Component extends DCLogic {
     try { const cl = localStorage.getItem('pgac_coaches'); if (cl) { const a = JSON.parse(cl); if (a && a.length) coachList = a; } } catch (e) {}
     this.setState({ content, bookings, coachList, coachAvail: this.loadAllCoachAvail() });
     this.loadCoaches(); // refresh the roster from the backend (cross-device)
+    this.loadContentRemote();
+  }
+
+  loadContentRemote() {
+    var ep = this.endpoint(); if (!ep) return;
+    fetch(ep + '?action=content').then(function (r) { return r.json(); }).then(function (res) {
+      if (res && res.content && Object.keys(res.content).length) {
+        try { localStorage.setItem('pgac_content', JSON.stringify(res.content)); } catch (e) {}
+        this.setState({ content: res.content });
+      }
+    }.bind(this)).catch(function () {});
   }
 
   persistContent(content) {
     try { localStorage.setItem('pgac_content', JSON.stringify(content)); } catch (e) {}
     this.setState({ content });
+    var ep = this.endpoint();
+    if (ep) { try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'setContent', content: content }) }).catch(function () {}); } catch (e) {} }
   }
   persistBookings(bookings) {
     try { localStorage.setItem('pgac_bookings', JSON.stringify(bookings)); } catch (e) {}
@@ -2669,6 +2691,8 @@ class Component extends DCLogic {
       scheduleNote: c.scheduleNote != null ? c.scheduleNote : defaults.scheduleNote,
       schedule: c.schedule || defaults.schedule,
       funShoot: c.funShoot != null ? c.funShoot : defaults.funShoot,
+      rates: c.rates || defaults.rates,
+      capacity: c.capacity != null ? c.capacity : defaults.capacity,
     };
   }
   componentWillUnmount() { if (this._onResize) window.removeEventListener('resize', this._onResize); }
@@ -2820,7 +2844,15 @@ class Component extends DCLogic {
     if (ep == null) ep = 'https://script.google.com/macros/s/AKfycbzGPuLsTrijb08rFTFVwkBU1KcG0HKg-mtlgVOWODsFubwCl8o_urpcDAxeTVEGqCYOug/exec';
     return (ep || '').trim();
   }
-  capacity() { return Number(this.props.capacityPerHour) || 6; }
+  cfgRates() {
+    var c = (this.state.content && this.state.content.rates) || {};
+    return {
+      openRange: Number(c.openRange) || Number(this.props.openRangeRate) || 400,
+      session: Number(c.session) || Number(this.props.sessionRate) || 600,
+      priv: Number(c.priv != null ? c.priv : c.private) || Number(this.props.privateRate) || 1200,
+    };
+  }
+  capacity() { var c = this.state.content; return (c && c.capacity != null ? Number(c.capacity) : (Number(this.props.capacityPerHour) || 6)) || 6; }
 
   // Opening hours per weekday → array of start-hours (24h). Mon (1) closed.
   startHours(dow) {
@@ -2956,10 +2988,9 @@ class Component extends DCLogic {
 
   // per-archer session price, used for the receipt total
   rateFor(program) {
-    var priv = Number(this.props.privateRate) || 1200;
-    var base = Number(this.props.sessionRate) || 600;
-    if (/Open Range/i.test(program || '')) return Number(this.props.openRangeRate) || 400;
-    return /Private/i.test(program || '') ? priv : base;
+    var r = this.cfgRates();
+    if (/Open Range/i.test(program || '')) return r.openRange;
+    return /Private/i.test(program || '') ? r.priv : r.session;
   }
   // Flat per-archer concessions (Open Range only), ₱100 each, stackable:
   // Pasig City resident · Greenpark resident / RHS student · PAC member.
@@ -3784,7 +3815,7 @@ class Component extends DCLogic {
       Sat: [ { time: '9:00 AM', name: 'Little Archers', level: 'ages 6–10' }, { time: '10:30 AM', name: 'Adult Beginners', level: 'beginner' }, { time: '1:00 PM', name: 'Open Range', level: 'all levels' }, { time: '3:00 PM', name: 'Youth Squad', level: 'ages 11–17' } ],
       Sun: [ { time: '9:00 AM', name: 'Open Range', level: 'all levels' }, { time: '10:30 AM', name: 'Little Archers', level: 'ages 6–10' }, { time: '1:00 PM', name: 'Private Coaching', level: 'by appt' } ],
     };
-    const cm = this.mergedContent({ packages: defaultPackages, scheduleNote: defaultScheduleNote, schedule: defaultSchedule, funShoot: '₱10' });
+    const cm = this.mergedContent({ packages: defaultPackages, scheduleNote: defaultScheduleNote, schedule: defaultSchedule, funShoot: '₱10', rates: { openRange: 400, session: 600, private: 1200 }, capacity: 6 });
     const packages = cm.packages.map(pk => ({ ...pk, choose: () => this.selectPlanToBuy(pk.name) }));
 
     const planPick = this.state.planPick || '';
@@ -4964,6 +4995,14 @@ class Component extends DCLogic {
       pkgEdits, scheduleEdit,
       funShootEdit: cm.funShoot,
       setFunShoot: (e) => saveCM({ funShoot: e.target.value }),
+      rateOpenEdit: String((cm.rates && cm.rates.openRange) != null ? cm.rates.openRange : 400),
+      rateSessionEdit: String((cm.rates && cm.rates.session) != null ? cm.rates.session : 600),
+      ratePrivateEdit: String((cm.rates && cm.rates.private) != null ? cm.rates.private : 1200),
+      capacityEdit: String(cm.capacity != null ? cm.capacity : 6),
+      setRateOpen: (e) => saveCM({ rates: { ...(cm.rates || {}), openRange: Number(e.target.value) || 0 } }),
+      setRateSession: (e) => saveCM({ rates: { ...(cm.rates || {}), session: Number(e.target.value) || 0 } }),
+      setRatePrivate: (e) => saveCM({ rates: { ...(cm.rates || {}), private: Number(e.target.value) || 0 } }),
+      setCapacity: (e) => saveCM({ capacity: Number(e.target.value) || 6 }),
       scheduleNoteEdit: cm.scheduleNote,
       setScheduleNote: (e) => saveCM({ scheduleNote: e.target.value }),
       resetContent: () => { if (typeof confirm === 'undefined' || confirm('Reset all content edits to defaults?')) { try { localStorage.removeItem('pgac_content'); } catch (e) {} this.setState({ content: null }); } },
