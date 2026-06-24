@@ -3211,9 +3211,22 @@ class Component extends DCLogic {
       { name: 'Private Coaching', price: '₱1,200', unit: '/ hour', desc: 'Personalized one-on-one coaching.', features: ['1:1 with a coach', 'Video form review', 'Custom training plan'], sessions: 1, validDays: 60, popular: false, bg: '#fffdf6', fg: '#1b2a1f', border: 'rgba(36,66,50,0.12)', tick: '#3c6b48', btnBg: '#244232', btnFg: '#f4efe4' },
     ];
   }
+  normalizePackages(pkgs) {
+    const defs = this.defaultPackages();
+    const byName = {};
+    defs.forEach(d => { byName[d.name] = d; });
+    return (pkgs || []).map(p => {
+      const d = byName[p.name] || {};
+      const out = { ...p };
+      if (out.sessions == null || out.sessions === '') out.sessions = (d.sessions != null ? d.sessions : 1);
+      if (out.validDays == null || out.validDays === '') out.validDays = (d.validDays != null ? d.validDays : 30);
+      return out;
+    });
+  }
   mergedPackages() {
     const c = this.state.content || {};
-    return (c.packages && c.packages.length) ? c.packages : this.defaultPackages();
+    const raw = (c.packages && c.packages.length) ? c.packages : this.defaultPackages();
+    return this.normalizePackages(raw);
   }
   packageByName(name) {
     return this.mergedPackages().filter(p => p.name === name)[0] || null;
@@ -3241,6 +3254,7 @@ class Component extends DCLogic {
   }
   planCap(plan) {
     if (plan && plan.cap != null && plan.cap !== '') { const c = parseInt(plan.cap, 10); return (c > 0) ? c : 1; }
+    if (plan && ('cap' in plan)) return null; // stamped explicitly (blank/null) → no cap; authoritative, don't re-read the live package
     const pk = this.packageByName(plan && plan.name);
     if (pk && pk.sessions != null && pk.sessions !== '') { const s = parseInt(pk.sessions, 10); return (s > 0) ? s : 1; }
     return this.legacyCapFromName(plan && plan.name);
@@ -3248,8 +3262,15 @@ class Component extends DCLogic {
   planExpiry(plan) {
     if (!plan) return '';
     if (plan.expiry) return plan.expiry;
-    let days = (plan.validDays != null && plan.validDays !== '') ? parseInt(plan.validDays, 10) : null;
-    if (days == null) { const pk = this.packageByName(plan.name); days = (pk && pk.validDays != null && pk.validDays !== '') ? parseInt(pk.validDays, 10) : null; }
+    // A stamped plan (carries its own validDays/expiry key) is authoritative — never re-derive
+    // from the live package, so later admin edits can't change an already-bought pass.
+    let days;
+    if (('validDays' in plan) || ('expiry' in plan)) {
+      days = (plan.validDays != null && plan.validDays !== '') ? parseInt(plan.validDays, 10) : null;
+    } else {
+      const pk = this.packageByName(plan.name);
+      days = (pk && pk.validDays != null && pk.validDays !== '') ? parseInt(pk.validDays, 10) : null;
+    }
     if (days == null || isNaN(days) || !plan.ts) return '';
     return this.addDaysStr(this.tsToDateStr(plan.ts), days);
   }
@@ -3903,6 +3924,7 @@ class Component extends DCLogic {
       Sun: [ { time: '9:00 AM', name: 'Open Range', level: 'all levels' }, { time: '10:30 AM', name: 'Little Archers', level: 'ages 6–10' }, { time: '1:00 PM', name: 'Private Coaching', level: 'by appt' } ],
     };
     const cm = this.mergedContent({ packages: defaultPackages, scheduleNote: defaultScheduleNote, schedule: defaultSchedule, funShoot: '₱10', rates: { openRange: 400, session: 600, private: 1200 }, capacity: 6 });
+    cm.packages = this.normalizePackages(cm.packages);
     const packages = cm.packages.map(pk => ({ ...pk, choose: () => this.selectPlanToBuy(pk.name) }));
 
     const planPick = this.state.planPick || '';
