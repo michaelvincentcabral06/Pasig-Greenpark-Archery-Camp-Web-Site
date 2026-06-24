@@ -3355,7 +3355,7 @@ class Component extends DCLogic {
     const ep = this.endpoint(); if (!ep || !b) return;
     // A booking can't be approved without a coach — send it to Plans & Sessions to add one.
     if (!this.bookingHasCoach(b)) {
-      if (typeof alert !== 'undefined') alert('This booking has no coach yet. It has been moved to Plans & Sessions — assign a coach there, then Approve.');
+      if (typeof alert !== 'undefined') alert('This booking has no coach yet. It has been moved to Bookings — assign a coach there, then Approve.');
       this.retrieveToPlan(b);
       return;
     }
@@ -3425,7 +3425,7 @@ class Component extends DCLogic {
     };
     this.pushPlan(email, plan);
     this.setState(s => ({ remotePlans: [{ ...plan, email: email }, ...(s.remotePlans || [])], adminTab: 'plans' }));
-    if (typeof alert !== 'undefined') alert('Added to Plans & Sessions for ' + (b.name || email) + '. Assign a coach and schedule sessions in the Plans tab.');
+    if (typeof alert !== 'undefined') alert('Added to Bookings for ' + (b.name || email) + '. Assign a coach and schedule sessions in the Bookings tab.');
   }
   localAcctMatches(email, ref) {
     const e = (email || '').trim().toLowerCase(), r = (ref || '').trim().toUpperCase();
