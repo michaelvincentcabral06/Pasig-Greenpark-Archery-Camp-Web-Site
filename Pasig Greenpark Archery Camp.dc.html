@@ -4676,7 +4676,7 @@ class Component extends DCLogic {
         callHref: 'tel:' + (b.phone || '').replace(/[^0-9+]/g, ''),
         isPending: st !== 'approved' && st !== 'cancelled',
         notCancelled: st !== 'cancelled',
-        retrieveLabel: (st === 'cancelled') ? '↩ Move to Plans' : '→ Plans',
+        retrieveLabel: (st === 'cancelled') ? '↩ Move to Bookings' : '→ Bookings',
         cancelling: (this.state.cancellingTs === (b.eventId || b.ref)),
         approve: () => this.approveBooking(b),
         cancel: () => this.adminCancelDbBooking(b),
