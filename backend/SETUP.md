@@ -187,3 +187,22 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 - **SMS receipts** aren't included — Google can't send SMS on its own. If you later want automatic texts, that needs a paid gateway (e.g. Semaphore in the Philippines); tell me and I'll wire it.
 - If you later add online **payment**, that's a separate step (e.g. a payment link in the receipt) — tell me and I'll wire it.
 - **Re-deploying after edits:** see **Part C** above — always use **Manage deployments → New version** so the same URL keeps working.
+
+---
+
+## db-v14 deploy & verify
+
+### Deploy steps
+
+1. Open the Apps Script project in your browser.
+2. Paste the entire contents of `backend/Code.gs` (overwriting the old code), then click **Save** (💾).
+3. Click **Deploy → Manage deployments → edit (✏️) → Version: New version → Deploy.**
+   - This keeps the same `/exec` URL — no changes needed in the website.
+
+### Verification checklist
+
+- [ ] Open `…/exec?action=version` in a browser — confirm the response shows `"version":"db-v14"` and both `"refLookup":true` and `"emailMerge":true`.
+- [ ] Open `…/exec?action=lookup&ref=PGA-260625-9RJD` — confirm it returns the booking for that reference with its associated email address in the `emails` array.
+- [ ] In My Bookings on the website, log in using reference `PGA-260625-9RJD` (no email required) — confirm the booking appears.
+- [ ] While logged in, use the "Add email alias" flow: enter a second email address and one of its booking references — confirm the request succeeds (`ok:true`) and both addresses appear in the returned `emails` list.
+- [ ] Open My Bookings on a **different device** using the second email address — confirm all bookings from both addresses appear.

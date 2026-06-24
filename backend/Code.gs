@@ -622,7 +622,7 @@ function doGet(e) {
     }
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v13', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true });
+      return json_({ version: 'db-v14', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -715,6 +715,7 @@ function doPost(e) {
     if (body.action === 'updateCoach')       return updateCoach_(body);
     if (body.action === 'deleteCoach')       return deleteCoach_(body);
     if (body.action === 'clearAll')          return clearAll_(body);
+    if (body.action === 'addEmailAlias')     return addEmailAlias_(body);
     return json_({ ok: false, reason: 'unknown action' });
   } catch (err) {
     return json_({ ok: false, reason: 'error', message: String(err) });
@@ -1038,6 +1039,20 @@ function clearAll_(body) {
     for (var pk in all) { if (pk.indexOf('plan:') === 0) props.deleteProperty(pk); }
   } catch (e) {}
   return json_({ ok: true, deletedEvents: deletedEvents });
+}
+
+// ---------- EMAIL ALIAS / MERGE (db-v14) ----------
+// Link two email addresses so My Bookings shows all bookings under either address.
+// Validates that `addEmail` is the address on file for the given `ref`; on success
+// merges the two addresses into one group in Script Properties.
+function addEmailAlias_(body){
+  var email = (body.email || '').trim().toLowerCase();
+  var addEmail = (body.addEmail || '').trim().toLowerCase();
+  var ref = (body.ref || '').trim().toUpperCase();
+  if (!email || !addEmail || !ref) return json_({ ok: false, reason: 'missing fields' });
+  if (emailForRef_(ref) !== addEmail) return json_({ ok: false, reason: 'ref does not match that email' });
+  var emails = mergeEmails_(email, addEmail);
+  return json_({ ok: true, emails: emails });
 }
 
 // Approve one plan session: flip its Bookings row to "approved" (and set the amount),
