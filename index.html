@@ -2524,6 +2524,7 @@ class Component extends DCLogic {
     coachEditId: '',        // which coach is being edited inline
     coachEditName: '', coachEditRole: '', coachEditPass: '',
     coachBusy: false,
+    coachBioDrafts: {},
     resetting: false,
   };
 
@@ -2543,6 +2544,47 @@ class Component extends DCLogic {
     return (list && list.length) ? list : this.coachesDefault();
   }
   coachById(id) { return this.coaches().find(c => c.id === id) || null; }
+  coachInitials(name) {
+    const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    const a = parts[0][0] || '';
+    const b = parts.length > 1 ? (parts[parts.length - 1][0] || '') : '';
+    return (a + b).toUpperCase();
+  }
+  coachAvatar(c) {
+    c = c || {};
+    return { hasPhoto: !!c.photo, photo: c.photo || '', initials: this.coachInitials(c.name) };
+  }
+  resizeImageFile(file, cb) {
+    if (!file || !/^image\//.test(file.type || '')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const S = 200;
+        const canvas = document.createElement('canvas'); canvas.width = S; canvas.height = S;
+        const ctx = canvas.getContext('2d');
+        const min = Math.min(img.width, img.height);
+        const sx = (img.width - min) / 2, sy = (img.height - min) / 2;
+        ctx.drawImage(img, sx, sy, min, min, 0, 0, S, S);
+        let q = 0.7, url = canvas.toDataURL('image/jpeg', q);
+        while (url.length > 40000 && q > 0.4) { q -= 0.1; url = canvas.toDataURL('image/jpeg', q); }
+        cb(url);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+  saveCoachProfile(id, patch) {
+    const ep = this.endpoint(); if (!ep || !id) return;
+    const body = { action: 'setCoachProfile', id: id };
+    if (patch.bio != null) body.bio = patch.bio;
+    if (patch.photo != null) body.photo = patch.photo;
+    this.setState({ coachBusy: true });
+    fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
+      .then(r => r.json()).then(res => { if (res && res.coaches) this.applyCoaches(res.coaches); this.setState({ coachBusy: false }); })
+      .catch(() => this.setState({ coachBusy: false }));
+  }
   // Pull the coach roster from the backend (cross-device) and cache it.
   loadCoaches() {
     const ep = this.endpoint(); if (!ep) return;
@@ -2553,7 +2595,7 @@ class Component extends DCLogic {
   applyCoaches(raw) {
     const list = (raw || []).map(c => ({
       id: c.id, name: c.name, first: c.first || (c.name || '').split(' ')[0],
-      role: c.role || 'Coach', pass: c.pass || '',
+      role: c.role || 'Coach', pass: c.pass || '', bio: c.bio || '', photo: c.photo || '',
     }));
     try { localStorage.setItem('pgac_coaches', JSON.stringify(list)); } catch (e) {}
     this.setState({ coachList: list });
