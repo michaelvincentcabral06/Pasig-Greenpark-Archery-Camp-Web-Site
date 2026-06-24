@@ -1686,6 +1686,7 @@
                     <span style="font-size:12.5px;color:{{ pl.coachColor }};font-family:'Spline Sans Mono',monospace;">{{ pl.coachLabel }}</span>
                   </div>
                   <sc-if value="{{ pl.showSchedLabel }}" hint-placeholder-val="{{ false }}"><div style="padding-left:25px;margin-top:2px;"><span style="font-size:11.5px;color:#8a9579;font-family:'Spline Sans Mono',monospace;">{{ pl.schedLabel }}</span></div></sc-if>
+                  <sc-if value="{{ pl.hasExpiry }}" hint-placeholder-val="{{ false }}"><div style="padding-left:25px;"><span style="font-size:11.5px;color:{{ pl.expired ? '#b4512f' : '#8a9579' }};font-family:'Spline Sans Mono',monospace;">{{ pl.expiryLabel }}</span></div></sc-if>
                   <sc-if value="{{ pl.hasSessions }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;flex-direction:column;gap:5px;padding-left:25px;margin-top:3px;">
                     <div style="display:flex;flex-wrap:wrap;gap:6px;">
@@ -1702,7 +1703,7 @@
                   <sc-if value="{{ pl.scheduling }}" hint-placeholder-val="{{ false }}">
                     <div style="margin-top:10px;width:100%;background:#fffdf6;border:1px solid rgba(36,66,50,0.14);border-radius:10px;padding:12px;">
                       <div style="font-size:12.5px;font-weight:700;color:#244232;margin-bottom:8px;">Pick a date, then an open time</div>
-                      <input value="{{ acctSchedDate }}" onInput="{{ onPickDate }}" min="{{ minDate }}" type="date" style="width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(36,66,50,0.2);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#1b2a1f;outline:none;" />
+                      <input value="{{ acctSchedDate }}" onInput="{{ onPickDate }}" min="{{ minDate }}" max="{{ acctSchedMax }}" type="date" style="width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(36,66,50,0.2);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#1b2a1f;outline:none;" />
                       <sc-if value="{{ acctSchedLoading }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#8a9579;margin-top:8px;">Checking availability…</div></sc-if>
                       <sc-if value="{{ acctSchedHasTimes }}" hint-placeholder-val="{{ false }}">
                         <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;">
@@ -1720,6 +1721,7 @@
                   </sc-if>
                 </sc-if>
                 <sc-if value="{{ pl.atCap }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;color:#8a9579;font-family:'Spline Sans Mono',monospace;">{{ pl.capFullLabel }}</span></sc-if>
+                <sc-if value="{{ pl.expired }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;color:#b4512f;font-family:'Spline Sans Mono',monospace;">{{ pl.expiredNote }}</span></sc-if>
               </div>
             </sc-for>
           </div>
@@ -2014,7 +2016,7 @@
                   </sc-if>
                   <sc-if value="{{ pr.canSchedule }}" hint-placeholder-val="{{ true }}">
                   <label style="display:block;font-size:12.5px;font-weight:700;color:#244232;margin-bottom:6px;">Add a session date</label>
-                  <input value="{{ pr.editDate }}" onInput="{{ pr.setEditDate }}" min="{{ pr.minDate }}" type="date" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.18);border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#1b2a1f;outline:none;" />
+                  <input value="{{ pr.editDate }}" onInput="{{ pr.setEditDate }}" min="{{ pr.minDate }}" max="{{ pr.maxDate }}" type="date" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.18);border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#1b2a1f;outline:none;" />
                   <sc-if value="{{ pr.editPrompt }}" hint-placeholder-val="{{ true }}"><div style="font-size:12.5px;color:#8a9579;font-family:'Spline Sans Mono',monospace;margin-top:10px;">{{ pr.editPrompt }}</div></sc-if>
                   <sc-if value="{{ pr.editClosed }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#b4512f;margin-top:10px;">No open hours that day for this coach. Pick another date, or open hours in the Coach portal.</div></sc-if>
                   <sc-if value="{{ pr.hasEditTimes }}" hint-placeholder-val="{{ false }}">
@@ -4352,7 +4354,7 @@ class Component extends DCLogic {
         complete: atLimit, atLimit: atLimit,
         isEditing: isEditing, toggleEditor: () => this.openPlanEditor(rowKey),
         editLabel: isEditing ? 'Done' : (atLimit ? 'Review dates' : 'Schedule dates'),
-        editDate: planEditDate, minDate: todayStr,
+        editDate: planEditDate, minDate: todayStr, maxDate: this.planExpiry(p) || '',
         setEditDate: (e) => this.setState({ planEditDate: e.target.value }),
         editTimes: editTimes, hasEditTimes: editTimes.length > 0,
         editPrompt: planEditDate ? '' : ('Pick a date to see open times' + (p.coach ? (' for ' + (coachObj ? coachObj.name.split(' ')[0] : 'the coach')) : '')),
@@ -4437,6 +4439,7 @@ class Component extends DCLogic {
         return { label: lbl + ' · ' + s.time, onCalendar: !!s.eventId };
       });
       const cap = this.planCap(p);
+      const expired = this.isPlanExpired(p); const expDate = this.planExpiry(p);
       return {
         name: p.name, ts: p.ts,
         holder: p.holder || '', hasHolder: !!(p.holder && p.holder.trim()),
@@ -4451,7 +4454,11 @@ class Component extends DCLogic {
         showSchedLabel: true,
         schedKey: schedKey,
         atCap: cap != null && sess.length >= cap,
-        canSchedule: !(cap != null && sess.length >= cap) && String(p.status || '').toLowerCase() !== 'cancelled',
+        expired: expired,
+        expiryLabel: expDate ? ((expired ? 'Expired ' : 'Expires ') + this.prettyDateStr(expDate)) : '',
+        hasExpiry: !!expDate,
+        expiredNote: expired ? ('This pass expired ' + this.prettyDateStr(expDate) + '.') : '',
+        canSchedule: !(cap != null && sess.length >= cap) && !expired && String(p.status || '').toLowerCase() !== 'cancelled',
         scheduling: this.state.acctSchedKey === schedKey,
         notScheduling: this.state.acctSchedKey !== schedKey,
         openSched: () => this.openAcctSched(schedKey),
@@ -4959,6 +4966,7 @@ class Component extends DCLogic {
       acctPlanRows: acctPassPaged, hasAcctPlans: acctPassAll.length > 0, planChoices: planChoices,
       acctSchedKey: this.state.acctSchedKey, acctSchedMsg: this.state.acctSchedMsg,
       acctSchedDate: this.state.slotDate || '', acctSchedLoading: !!this.state.slotsLoading,
+      acctSchedMax: this.planExpiry(_schedPlan) || '',
       closeAcctSched: () => this.closeAcctSched(),
       acctSchedTimes: acctSchedTimes, acctSchedHasTimes: acctSchedTimes.length > 0,
       // ----- PASSES & MEMBERSHIPS page -----
