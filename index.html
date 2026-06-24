@@ -1786,8 +1786,8 @@
 
         <div style="display:flex;gap:8px;margin:22px 0 24px;flex-wrap:wrap;">
           <button onClick="{{ goTabDashboard }}" style="background:{{ tabDashboardBg }};color:{{ tabDashboardFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Dashboard</button>
-          <button onClick="{{ goTabBookings }}" style="background:{{ tabBookingsBg }};color:{{ tabBookingsFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Bookings</button>
-          <button onClick="{{ goTabPlans }}" style="background:{{ tabPlansBg }};color:{{ tabPlansFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Plans &amp; Sessions</button>
+          <button onClick="{{ goTabBookings }}" style="background:{{ tabBookingsBg }};color:{{ tabBookingsFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Activity</button>
+          <button onClick="{{ goTabPlans }}" style="background:{{ tabPlansBg }};color:{{ tabPlansFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Bookings</button>
           <button onClick="{{ goTabCoaches }}" style="background:{{ tabCoachesBg }};color:{{ tabCoachesFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Coaches</button>
           <button onClick="{{ goTabPricing }}" style="background:{{ tabPricingBg }};color:{{ tabPricingFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Pricing</button>
           <button onClick="{{ goTabSchedule }}" style="background:{{ tabScheduleBg }};color:{{ tabScheduleFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:700;padding:10px 20px;border-radius:999px;">Schedule</button>
@@ -1903,7 +1903,7 @@
         <sc-if value="{{ tabBookings }}" hint-placeholder-val="{{ true }}">
         <div>
           <h3 style="font-size:16px;font-weight:800;color:#1b2a1f;margin:0 0 4px;">Activity log</h3>
-          <p style="font-size:13px;color:#56664f;margin:0 0 14px;">Every action on a plan or session — approved, cancelled, coach changed, scheduled — with its reference and time. All managing is done in the Plans &amp; Sessions tab.</p>
+          <p style="font-size:13px;color:#56664f;margin:0 0 14px;">Every action on a plan or session — approved, cancelled, coach changed, scheduled — with its reference and time. All managing is done in the Bookings tab.</p>
           <!-- FILTERS -->
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
             <input type="text" value="{{ actSearch }}" onInput="{{ setActSearch }}" placeholder="Search reference, name, action…" style="flex:1;min-width:200px;padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;">
@@ -1915,14 +1915,16 @@
           <div style="font-size:14px;color:#56664f;margin-bottom:14px;">{{ actCount }} entr(ies) · <button onClick="{{ clearActFilters }}" style="background:none;border:none;cursor:pointer;color:#4d7327;font-weight:700;font-size:14px;font-family:'Hanken Grotesk',sans-serif;text-decoration:underline;padding:0;">clear filters</button></div>
 
           <sc-if value="{{ actNone }}" hint-placeholder-val="{{ true }}">
-            <div style="background:#fffdf6;border:1px dashed rgba(36,66,50,0.2);border-radius:12px;padding:48px 24px;text-align:center;color:#8a9579;font-size:15px;">No activity yet. Approving, cancelling, or scheduling in Plans &amp; Sessions will be logged here.</div>
+            <div style="background:#fffdf6;border:1px dashed rgba(36,66,50,0.2);border-radius:12px;padding:48px 24px;text-align:center;color:#8a9579;font-size:15px;">No activity yet. Approving, cancelling, or scheduling in Bookings will be logged here.</div>
           </sc-if>
           <div style="display:flex;flex-direction:column;gap:8px;">
             <sc-for list="{{ activityRows }}" as="a" hint-placeholder-count="0">
               <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
                 <span style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;background:{{ a.actBg }};color:{{ a.actFg }};padding:5px 11px;border-radius:999px;">{{ a.action }}</span>
+                <sc-if value="{{ a.hasActor }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:0.04em;background:{{ a.actorBg }};color:{{ a.actorFg }};padding:5px 11px;border-radius:999px;">{{ a.actorText }}</span></sc-if>
                 <div style="flex:1;min-width:180px;">
-                  <div style="font-size:14px;font-weight:700;color:#1b2a1f;"><sc-if value="{{ a.hasRef }}" hint-placeholder-val="{{ true }}">{{ a.ref }}</sc-if><sc-if value="{{ a.hasName }}" hint-placeholder-val="{{ false }}"> · {{ a.name }}</sc-if></div>
+                  <div style="font-size:14px;font-weight:700;color:#1b2a1f;">{{ a.friendly }}</div>
+                  <div style="font-size:12.5px;color:#56664f;font-family:'Spline Sans Mono',monospace;margin-top:2px;"><sc-if value="{{ a.hasRef }}" hint-placeholder-val="{{ true }}">{{ a.ref }}</sc-if><sc-if value="{{ a.hasName }}" hint-placeholder-val="{{ false }}"> · {{ a.name }}</sc-if></div>
                   <sc-if value="{{ a.hasDetail }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#56664f;font-family:'Spline Sans Mono',monospace;margin-top:2px;">{{ a.detail }}</div></sc-if>
                   <sc-if value="{{ a.hasPhone }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#3c6b48;font-family:'Spline Sans Mono',monospace;margin-top:2px;">📞 <a href="{{ a.callHref }}" style="color:#3c6b48;text-decoration:none;font-weight:700;">{{ a.phone }}</a></div></sc-if>
                 </div>
@@ -3355,7 +3357,7 @@ class Component extends DCLogic {
     const ep = this.endpoint(); if (!ep || !b) return;
     // A booking can't be approved without a coach — send it to Plans & Sessions to add one.
     if (!this.bookingHasCoach(b)) {
-      if (typeof alert !== 'undefined') alert('This booking has no coach yet. It has been moved to Plans & Sessions — assign a coach there, then Approve.');
+      if (typeof alert !== 'undefined') alert('This booking has no coach yet. It has been moved to Bookings — assign a coach there, then Approve.');
       this.retrieveToPlan(b);
       return;
     }
@@ -3370,13 +3372,28 @@ class Component extends DCLogic {
     if (!cv || cv === 'any' || /any available/i.test(cv)) return false;
     return this.coaches().some(c => c.id.toLowerCase() === cv || (c.name || '').toLowerCase() === cv);
   }
+  activityFriendly(action, actor) {
+    const map = {
+      'Session scheduled': { client: 'Client booked a session', admin: 'You booked a session' },
+      'Rescheduled': { client: 'Client rescheduled a session', admin: 'You rescheduled a session' },
+      'Pass purchased': { client: 'Client bought a pass', admin: 'You added a pass' },
+      'Pass removed': { client: 'Client removed a pass', admin: 'You removed a pass' },
+      'Session removed': { client: 'Client removed a session', admin: 'You removed a session' },
+      'Cancelled': { client: 'Client cancelled', admin: 'You cancelled a pass' },
+      'Approved': { admin: 'You approved a pass' },
+      'Coach changed': { admin: 'You changed the coach' },
+    };
+    const m = map[action];
+    if (m && actor && m[actor]) return m[actor];
+    return action || '';   // unknown action or blank actor → raw label
+  }
   // Record an admin action to the Activity log (shown in the Bookings tab).
-  logAction(ref, label, detail, name, email) {
+  logAction(ref, label, detail, name, email, actor) {
     const ep = this.endpoint(); if (!ep) return;
     try {
       fetch(ep, {
         method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'logAction', ref: ref || '', label: label || '', detail: detail || '', name: name || '', email: email || '' }),
+        body: JSON.stringify({ action: 'logAction', ref: ref || '', label: label || '', detail: detail || '', name: name || '', email: email || '', actor: actor || '' }),
       }).then(() => setTimeout(() => this.loadActivity(), 600)).catch(() => {});
     } catch (e) {}
   }
@@ -3413,7 +3430,7 @@ class Component extends DCLogic {
   // admin doesn't re-type details and can just assign a coach / add more sessions.
   retrieveToPlan(b) {
     const email = (b.email || '').trim().toLowerCase();
-    if (!email) { if (typeof alert !== 'undefined') alert('This booking has no email on file, so it cannot be added to Plans.'); return; }
+    if (!email) { if (typeof alert !== 'undefined') alert('This booking has no email on file, so it cannot be added to Bookings.'); return; }
     const price = b.amount ? ('₱' + Number(b.amount).toLocaleString('en-PH')) : this.passPrice(b.program);
     // A cancelled booking's calendar event is gone, so don't carry its (dead) session —
     // start the plan fresh so the admin can reschedule.
@@ -3425,7 +3442,7 @@ class Component extends DCLogic {
     };
     this.pushPlan(email, plan);
     this.setState(s => ({ remotePlans: [{ ...plan, email: email }, ...(s.remotePlans || [])], adminTab: 'plans' }));
-    if (typeof alert !== 'undefined') alert('Added to Plans & Sessions for ' + (b.name || email) + '. Assign a coach and schedule sessions in the Plans tab.');
+    if (typeof alert !== 'undefined') alert('Added to Bookings for ' + (b.name || email) + '. Assign a coach and schedule sessions in the Bookings tab.');
   }
   localAcctMatches(email, ref) {
     const e = (email || '').trim().toLowerCase(), r = (ref || '').trim().toUpperCase();
@@ -3574,7 +3591,7 @@ class Component extends DCLogic {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'reschedule', eventId: entry.eventId || '', ref: entry.ref || '', date: entry.date || '', time: entry.time || '', newDate: date, newTime: time, name: entry.name || '', email: entry.email || '' })
     }).then(function (r) { return r.json(); }).then(function (res) {
-      if (res && res.ok) { applyLocal((res.eventId || entry.eventId), (res.ref || entry.ref)); }
+      if (res && res.ok) { applyLocal((res.eventId || entry.eventId), (res.ref || entry.ref)); this.logAction(entry.ref || '', 'Rescheduled', this.prettyDateStr(entry.date) + ' ' + entry.time + ' → ' + this.prettyDateStr(date) + ' ' + time + ' · ' + (entry.name || ''), entry.name || '', entry.email || '', 'client'); }
       else { applyLocal(entry.eventId, entry.ref); }   // backend lacks reschedule → no-op move; keep one entry
     }.bind(this)).catch(function () { applyLocal(entry.eventId, entry.ref); });
   }
@@ -3612,6 +3629,7 @@ class Component extends DCLogic {
     try { localStorage.setItem(key, JSON.stringify(arr)); } catch (e) {}
     // Sync the pass + email the buyer a confirmation with the total.
     this.pushPlan(email, newPlan, { sendReceipt: true, price: this.passPrice(pick) });
+    this.logAction(newPlan.ref || '', 'Pass purchased', pick + ' ' + (newPlan.price || '') + ' · ' + name, name, email, 'client');
     const patch = { planPurchased: true, planError: '' };
     if ((this.state.acctEmail || '').trim().toLowerCase() === email.toLowerCase()) patch.acctPlans = arr;
     this.setState(patch);
@@ -3625,6 +3643,7 @@ class Component extends DCLogic {
     const plans = (this.loadAcctPlans(email) || []).concat([newPlan]);
     this.saveAcctPlans(email, plans);
     this.pushPlan(email, newPlan);
+    this.logAction(newPlan.ref || '', 'Pass purchased', name + ' ' + (newPlan.price || '') + ' · ' + (newPlan.holder || ''), newPlan.holder || '', email, 'client');
   }
   removeAcctPlan(ts) {
     const email = (this.state.acctEmail || '').trim();
@@ -3639,6 +3658,7 @@ class Component extends DCLogic {
     this.saveAcctPlans(email, plans);
     this.addDeletedPlan(email, ts); // tombstone so a stale backend copy can't resurrect it
     this.pushRemovePlan(email, ts, 'customer');
+    if (plan) this.logAction(plan.ref || '', 'Pass removed', (plan.name || 'Pass') + ' · ' + (plan.holder || ''), plan.holder || '', email, 'client');
     this.setState(s => ({ remotePlans: (s.remotePlans || []).filter(p => !((p.email || '').toLowerCase() === email.toLowerCase() && p.ts === ts)) }));
   }
   // Admin: cancel a customer's pass. The plan now STAYS in Plans & Sessions (marked
@@ -3664,7 +3684,7 @@ class Component extends DCLogic {
         }).catch(() => {});
       } catch (e) {}
     }
-    this.logAction(planRef, 'Cancelled', ((plan && plan.name) || 'Pass') + ' · ' + ((plan && plan.holder) || ''), (plan && plan.holder) || email, email);
+    this.logAction(planRef, 'Cancelled', ((plan && plan.name) || 'Pass') + ' · ' + ((plan && plan.holder) || ''), (plan && plan.holder) || email, email, 'admin');
     this.forceUpdate();
   }
   // Admin: mark a pass holder as contacted (toggles, like the bookings list).
@@ -3701,7 +3721,7 @@ class Component extends DCLogic {
       });
       // Email the client their confirmed sessions (+ coach) — full list, "scheduled" wording.
       this.emailPlanSchedule(email, ts, { mode: 'scheduled', sessions: sessions.map(s => ({ date: s.date, time: s.time })) });
-      this.logAction(planRef, 'Approved', (plan.name || 'Plan') + ' · ' + (plan.holder || ''), plan.holder || email, email);
+      this.logAction(planRef, 'Approved', (plan.name || 'Plan') + ' · ' + (plan.holder || ''), plan.holder || email, email, 'admin');
       setTimeout(() => this.loadAllBookings(), 1400);
     }
   }
@@ -3781,7 +3801,7 @@ class Component extends DCLogic {
     this.mutatePlan(email, ts, p => ({ ...p, coach: coachId }));
     const plan = this.findPlan(email, ts);
     const planRef = this.ensurePlanRef(email, ts);
-    this.logAction(planRef, 'Coach changed', (newName || 'Unassigned') + ' · ' + ((plan && plan.holder) || ''), (plan && plan.holder) || email, email);
+    this.logAction(planRef, 'Coach changed', (prevName || 'Unassigned') + ' → ' + (newName || 'Unassigned') + ' · ' + ((plan && plan.holder) || ''), (plan && plan.holder) || email, email, 'admin');
     // Update the coach on every already-scheduled calendar event so the calendar (and the
     // customer's My Bookings) reflects the new coach, not just future-created events.
     const ep = this.endpoint();
@@ -3813,13 +3833,13 @@ class Component extends DCLogic {
     if (cap != null && curCount >= cap) { this.setState({ acctSchedMsg: 'All sessions on this pass are scheduled.' }); return; }
     const _exp2 = this.planExpiry(plan);
     if (_exp2 && date > _exp2) { this.setState({ acctSchedMsg: 'This pass is valid through ' + this.prettyDateStr(_exp2) + '. Pick an earlier date.' }); return; }
-    this.addPlanSession(email, ts, date, time, cap);                // add + reserve calendar slot + cap + activity log
+    this.addPlanSession(email, ts, date, time, cap, 'client');                // add + reserve calendar slot + cap + activity log
     this.emailPlanSchedule(email, ts, { mode: 'scheduled', sessions: [{ date: date, time: time }] });
     this.setState({ slotDate: '', slots: [], acctSchedMsg: 'Scheduled — a confirmation is on its way.' });
   }
   openAcctSched(key) { this.setState({ acctSchedKey: key, acctBookingOpen: false, slotDate: '', slots: [], slotTimes: [], acctSchedMsg: '' }); }
   closeAcctSched() { this.setState({ acctSchedKey: '', slotDate: '', slots: [], acctSchedMsg: '' }); }
-  addPlanSession(email, ts, date, time, cap) {
+  addPlanSession(email, ts, date, time, cap, actor) {
     if (!date || !time) return;
     const _planForExp = this.findPlan(email, ts);
     const _exp = this.planExpiry(_planForExp);
@@ -3836,7 +3856,7 @@ class Component extends DCLogic {
     this.setState({ planEditDate: '' });
     this.syncPlanSessionToCalendar(email, ts, session);
     const planRef = this.ensurePlanRef(email, ts);
-    this.logAction(planRef, 'Session scheduled', date + ' · ' + time + ' · ' + ((existing && existing.holder) || ''), (existing && existing.holder) || email, email);
+    this.logAction(planRef, 'Session scheduled', date + ' · ' + time + ' · ' + ((existing && existing.holder) || ''), (existing && existing.holder) || email, email, actor || 'admin');
   }
   // Push a scheduled plan session to the Google Calendar (best-effort; no-op offline).
   syncPlanSessionToCalendar(email, ts, session) {
@@ -3875,7 +3895,7 @@ class Component extends DCLogic {
         body: JSON.stringify({ action: 'cancel', eventId: sess.eventId, ref: sess.ref || '', date: sess.date, time: sess.time, email: email, notify: false, by: 'admin' }),
       }).catch(() => {});
     }
-    if (sess) { const planRef = this.ensurePlanRef(email, ts); this.logAction(planRef, 'Session removed', sess.date + ' · ' + sess.time + ' · ' + ((plan && plan.holder) || ''), (plan && plan.holder) || email, email); }
+    if (sess) { const planRef = this.ensurePlanRef(email, ts); this.logAction(planRef, 'Session removed', sess.date + ' · ' + sess.time + ' · ' + ((plan && plan.holder) || ''), (plan && plan.holder) || email, email, 'admin'); }
   }
   openPlanEditor(key) {
     const idx = key.lastIndexOf('|');
@@ -4656,7 +4676,7 @@ class Component extends DCLogic {
         callHref: 'tel:' + (b.phone || '').replace(/[^0-9+]/g, ''),
         isPending: st !== 'approved' && st !== 'cancelled',
         notCancelled: st !== 'cancelled',
-        retrieveLabel: (st === 'cancelled') ? '↩ Move to Plans' : '→ Plans',
+        retrieveLabel: (st === 'cancelled') ? '↩ Move to Bookings' : '→ Bookings',
         cancelling: (this.state.cancellingTs === (b.eventId || b.ref)),
         approve: () => this.approveBooking(b),
         cancel: () => this.adminCancelDbBooking(b),
@@ -4679,6 +4699,7 @@ class Component extends DCLogic {
     const actSearch = (this.state.bkSearch || '').trim().toLowerCase();
     const actFiltered = (this.state.activity || []).filter(a => {
       const act = String(a.action || '').toLowerCase();
+      if (actFilter.indexOf('actor:') === 0) { if (String(a.actor || '') !== actFilter.slice(6)) return false; }
       if (actFilter === 'approved' && act.indexOf('approv') === -1) return false;
       if (actFilter === 'cancelled' && act.indexOf('cancel') === -1) return false;
       if (actFilter === 'coach' && act.indexOf('coach') === -1) return false;
@@ -4698,6 +4719,7 @@ class Component extends DCLogic {
     (this.state.remotePlans || []).forEach(p => { const em = (p.email || '').toLowerCase(); if (em && p.phone && !phoneByEmail[em]) phoneByEmail[em] = p.phone; });
     (this.state.allBookings || []).forEach(b => { const em = (b.email || '').toLowerCase(); if (em && b.phone && !phoneByEmail[em]) phoneByEmail[em] = b.phone; });
     const activityRows = actFiltered.slice(actPage * ACT_PAGE, actPage * ACT_PAGE + ACT_PAGE).map(a => {
+      const actor = String(a.actor || '');
       const act = String(a.action || '').toLowerCase();
       let bg = '#eef1ea', fg = '#56664f';
       if (act.indexOf('approv') !== -1) { bg = '#e6efd6'; fg = '#4d7327'; }
@@ -4712,11 +4734,18 @@ class Component extends DCLogic {
         email: a.email || '', hasEmail: !!(a.email && String(a.email).trim()),
         phone: phone, hasPhone: !!phone, callHref: 'tel:' + phone.replace(/[^0-9+]/g, ''),
         actBg: bg, actFg: fg,
+        actor: actor,
+        hasActor: actor === 'client' || actor === 'admin',
+        actorText: actor === 'client' ? 'by client' : (actor === 'admin' ? 'by you' : ''),
+        actorBg: actor === 'client' ? '#dce9f5' : '#e6efd6',
+        actorFg: actor === 'client' ? '#2c5b86' : '#4d7327',
+        friendly: this.activityFriendly(a.action || '', actor),
       };
     });
     const actFilterOpts = [
       { id: 'all', name: 'All actions' }, { id: 'approved', name: 'Approved' },
       { id: 'cancelled', name: 'Cancelled' }, { id: 'coach', name: 'Coach changes' }, { id: 'scheduled', name: 'Scheduling' },
+      { id: 'actor:client', name: 'By client' }, { id: 'actor:admin', name: 'By you (admin)' },
     ];
 
     // ---------- ADMIN: COACHES TAB ----------

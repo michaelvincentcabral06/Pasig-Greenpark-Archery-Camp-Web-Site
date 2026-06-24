@@ -228,6 +228,24 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 
 ---
 
+## db-v17 deploy & verify
+
+### Deploy steps
+
+1. Open the Apps Script project in your browser.
+2. Paste the entire contents of `backend/Code.gs` (overwriting the old code), then click **Save** (💾).
+3. Click **Deploy → Manage deployments → edit (✏️) → Version: New version → Deploy.**
+   - This keeps the same `/exec` URL — no changes needed in the website.
+
+### Verification checklist
+
+- [ ] Open `…/exec?action=version` in a browser — confirm the response shows `"version":"db-v17"`, `"activityActor":true`, and all prior flags (`reschedule:true`, `contentStore:true`, etc.) still present.
+- [ ] **Admin action logged with actor:** On the live site, approve or cancel a booking as admin. Open the Activity tab and confirm the new row has a non-empty `Actor` column in the Google Sheet (column G).
+- [ ] **Client action logged with actor:** Simulate a client-side logAction call (e.g. a reschedule from My Bookings). Confirm the Activity tab shows `actor: 'client'` (or whatever the frontend passes) in column G.
+- [ ] Confirm the Activity tab column headers in the Sheet now read: `At | Ref | Action | Detail | Name | Email | Actor` (7 columns). If the sheet pre-exists with 6 columns, add the `Actor` header to G1 manually.
+
+---
+
 ## db-v16 deploy & verify
 
 ### Deploy steps
