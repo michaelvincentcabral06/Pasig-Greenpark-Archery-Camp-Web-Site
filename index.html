@@ -3652,8 +3652,14 @@ class Component extends DCLogic {
     }
     if (updated) {
       this.pushPlan(email, updated); // sync the change to the backend
-      // keep the admin's remote view in sync immediately
-      this.setState(s => ({ remotePlans: (s.remotePlans || []).map(p => ((p.email || '').toLowerCase() === (email || '').toLowerCase() && p.ts === ts) ? { ...updated, email: email } : p) }));
+      // keep the admin's remote view in sync immediately (upsert: replace if present, add if absent)
+      this.setState(s => {
+        const rp = s.remotePlans || [];
+        const key = (email || '').toLowerCase();
+        const exists = rp.some(p => (p.email || '').toLowerCase() === key && p.ts === ts);
+        const entry = { ...updated, email: email };
+        return { remotePlans: exists ? rp.map(p => ((p.email || '').toLowerCase() === key && p.ts === ts) ? entry : p) : rp.concat([entry]) };
+      });
     }
     this.forceUpdate();
   }
