@@ -206,3 +206,21 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 - [ ] In My Bookings on the website, log in using reference `PGA-260625-9RJD` (no email required) — confirm the booking appears.
 - [ ] While logged in, use the "Add email alias" flow: enter a second email address and one of its booking references — confirm the request succeeds (`ok:true`) and both addresses appear in the returned `emails` list.
 - [ ] Open My Bookings on a **different device** using the second email address — confirm all bookings from both addresses appear.
+
+---
+
+## db-v15 deploy & verify
+
+### Deploy steps
+
+1. Open the Apps Script project in your browser.
+2. Paste the entire contents of `backend/Code.gs` (overwriting the old code), then click **Save** (💾).
+3. Click **Deploy → Manage deployments → edit (✏️) → Version: New version → Deploy.**
+   - This keeps the same `/exec` URL — no changes needed in the website.
+
+### Verification checklist
+
+- [ ] Open `…/exec?action=version` in a browser — confirm the response shows `"version":"db-v15"` and `"contentStore":true` (all previous flags must still be present).
+- [ ] In the website's **admin Pricing tab**, edit a price (e.g. change a session rate) and save — the admin page should POST `{action:"setContent", content:{…}}` to the backend.
+- [ ] Open `…/exec?action=content` in a browser — confirm the response shows `{"content":{…}}` with the price you just edited.
+- [ ] Open the **public site on a different device** (or incognito window) — confirm the updated price is shown (the frontend fetches `?action=content` on load once Task 2 is wired up).

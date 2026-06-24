@@ -156,6 +156,20 @@ function dbRemovePass_(email, ts) {
   } catch (e) {}
 }
 
+// ---------- CONTENT STORE (db-v15) ----------
+// Admin-managed content (packages, rates, capacity, schedule) saved server-side
+// so every device and every customer reads the same values.
+function getContent_() {
+  var raw = PropertiesService.getScriptProperties().getProperty('CONTENT');
+  var c = {}; if (raw) { try { c = JSON.parse(raw); } catch (e) { c = {}; } }
+  return json_({ content: c });
+}
+function setContent_(body) {
+  var c = body.content || {};
+  PropertiesService.getScriptProperties().setProperty('CONTENT', JSON.stringify(c));
+  return json_({ ok: true });
+}
+
 // ---------- EMAIL GROUPS (db-v14) ----------
 function aliasKey_(email){ return 'aliases:' + (email || '').trim().toLowerCase(); }
 function groupFor_(email){
@@ -620,9 +634,10 @@ function doGet(e) {
     if (action === 'coaches') {
       return listCoaches_();
     }
+    if (action === 'content') return getContent_();
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v14', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true });
+      return json_({ version: 'db-v15', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -716,6 +731,7 @@ function doPost(e) {
     if (body.action === 'deleteCoach')       return deleteCoach_(body);
     if (body.action === 'clearAll')          return clearAll_(body);
     if (body.action === 'addEmailAlias')     return addEmailAlias_(body);
+    if (body.action === 'setContent')        return setContent_(body);
     return json_({ ok: false, reason: 'unknown action' });
   } catch (err) {
     return json_({ ok: false, reason: 'error', message: String(err) });
