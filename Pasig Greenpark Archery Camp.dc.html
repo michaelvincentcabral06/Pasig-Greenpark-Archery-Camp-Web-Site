@@ -2934,7 +2934,9 @@ class Component extends DCLogic {
       .then(data => {
         const cap = data.capacity || this.capacity();
         // Trust the backend's slot list — it already drops past slots in Asia/Manila.
-        const slots = (data.slots || []).map(s => ({ time: s.label || s.time, booked: s.booked, left: s.left != null ? s.left : (cap - s.booked), full: (s.left != null ? s.left : (cap - s.booked)) <= 0 }));
+        let slots = (data.slots || []).map(s => ({ time: s.label || s.time, booked: s.booked, left: s.left != null ? s.left : (cap - s.booked), full: (s.left != null ? s.left : (cap - s.booked)) <= 0 }));
+        // Defensive frontend filter: drop any past slots (handles clock drift / timezone edge cases).
+        slots = slots.filter(function (s) { return !this.isPastSlot(dateStr, s.time); }.bind(this));
         this.setState({ slots, slotsLoading: false });
       })
       .catch(() => this.setState({ slots: this.buildSampleSlots(dateStr), slotsLoading: false }));
@@ -3168,6 +3170,7 @@ class Component extends DCLogic {
     const payload = {
       action: 'planScheduleEmail', email: email, ts: ts,
       mode: opts.mode || 'scheduled', sessions: sessions, coachName: coachName || '',
+      holder: (plan.holder || ''), plan: (plan.name || ''),
     };
     if (opts.prevCoachName != null) payload.prevCoachName = opts.prevCoachName;
     try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }); } catch (e) {}
@@ -3434,7 +3437,9 @@ class Component extends DCLogic {
       .then(r => r.json())
       .then(data => {
         const cap = data.capacity || this.capacity();
-        const slots = (data.slots || []).map(s => ({ time: s.label || s.time, booked: s.booked, left: s.left != null ? s.left : (cap - s.booked), full: (s.left != null ? s.left : (cap - s.booked)) <= 0 }));
+        let slots = (data.slots || []).map(s => ({ time: s.label || s.time, booked: s.booked, left: s.left != null ? s.left : (cap - s.booked), full: (s.left != null ? s.left : (cap - s.booked)) <= 0 }));
+        // Defensive frontend filter: drop any past slots in the reschedule picker too.
+        slots = slots.filter(function (s) { return !this.isPastSlot(dateStr, s.time); }.bind(this));
         this.setState({ editSlots: slots, editLoading: false });
       })
       .catch(() => this.setState({ editSlots: this.buildSampleSlots(dateStr), editLoading: false }));
@@ -3479,17 +3484,13 @@ class Component extends DCLogic {
       this.setState({ editBusy: false, editTs: null, acctBookings: acct });
     };
     if (!ep) { applyLocal(entry.eventId, entry.ref); return; }
-    // Live: cancel the old event (silently — the customer gets one "rescheduled"
-    // receipt, not a cancellation notice), then create the new one.
-    this.cancelBooking(entry, false, 'reschedule').then(() => {
-      return fetch(ep, {
-        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'book', name: entry.name, phone: entry.phone, email: entry.email, program: program, date: date, times: [time], time: time, party: party, amount: amount, archers: entry.archers || [], concession: concession, coach: this.needsCoach(program) ? 'any' : '', ref: entry.ref })
-      }).then(r => r.json());
-    }).then(res => {
-      const ids = (res && res.eventIds) || [];
-      applyLocal(ids[0] || '', (res && res.ref) || entry.ref);
-    }).catch(() => applyLocal(entry.eventId, entry.ref));
+    fetch(ep, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'reschedule', eventId: entry.eventId || '', ref: entry.ref || '', date: entry.date || '', time: entry.time || '', newDate: date, newTime: time, name: entry.name || '', email: entry.email || '' })
+    }).then(function (r) { return r.json(); }).then(function (res) {
+      if (res && res.ok) { applyLocal((res.eventId || entry.eventId), (res.ref || entry.ref)); }
+      else { applyLocal(entry.eventId, entry.ref); }   // backend lacks reschedule → no-op move; keep one entry
+    }.bind(this)).catch(function () { applyLocal(entry.eventId, entry.ref); });
   }
   // ---------- PASS / MEMBERSHIP PURCHASE (public) ----------
   selectPlanToBuy(name) {
@@ -3651,8 +3652,14 @@ class Component extends DCLogic {
     }
     if (updated) {
       this.pushPlan(email, updated); // sync the change to the backend
-      // keep the admin's remote view in sync immediately
-      this.setState(s => ({ remotePlans: (s.remotePlans || []).map(p => ((p.email || '').toLowerCase() === (email || '').toLowerCase() && p.ts === ts) ? { ...updated, email: email } : p) }));
+      // keep the admin's remote view in sync immediately (upsert: replace if present, add if absent)
+      this.setState(s => {
+        const rp = s.remotePlans || [];
+        const key = (email || '').toLowerCase();
+        const exists = rp.some(p => (p.email || '').toLowerCase() === key && p.ts === ts);
+        const entry = { ...updated, email: email };
+        return { remotePlans: exists ? rp.map(p => ((p.email || '').toLowerCase() === key && p.ts === ts) ? entry : p) : rp.concat([entry]) };
+      });
     }
     this.forceUpdate();
   }
