@@ -1921,8 +1921,10 @@
             <sc-for list="{{ activityRows }}" as="a" hint-placeholder-count="0">
               <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
                 <span style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;background:{{ a.actBg }};color:{{ a.actFg }};padding:5px 11px;border-radius:999px;">{{ a.action }}</span>
+                <sc-if value="{{ a.hasActor }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:0.04em;background:{{ a.actorBg }};color:{{ a.actorFg }};padding:5px 11px;border-radius:999px;">{{ a.actorText }}</span></sc-if>
                 <div style="flex:1;min-width:180px;">
-                  <div style="font-size:14px;font-weight:700;color:#1b2a1f;"><sc-if value="{{ a.hasRef }}" hint-placeholder-val="{{ true }}">{{ a.ref }}</sc-if><sc-if value="{{ a.hasName }}" hint-placeholder-val="{{ false }}"> · {{ a.name }}</sc-if></div>
+                  <div style="font-size:14px;font-weight:700;color:#1b2a1f;">{{ a.friendly }}</div>
+                  <div style="font-size:12.5px;color:#56664f;font-family:'Spline Sans Mono',monospace;margin-top:2px;"><sc-if value="{{ a.hasRef }}" hint-placeholder-val="{{ true }}">{{ a.ref }}</sc-if><sc-if value="{{ a.hasName }}" hint-placeholder-val="{{ false }}"> · {{ a.name }}</sc-if></div>
                   <sc-if value="{{ a.hasDetail }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#56664f;font-family:'Spline Sans Mono',monospace;margin-top:2px;">{{ a.detail }}</div></sc-if>
                   <sc-if value="{{ a.hasPhone }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#3c6b48;font-family:'Spline Sans Mono',monospace;margin-top:2px;">📞 <a href="{{ a.callHref }}" style="color:#3c6b48;text-decoration:none;font-weight:700;">{{ a.phone }}</a></div></sc-if>
                 </div>
@@ -3370,6 +3372,21 @@ class Component extends DCLogic {
     if (!cv || cv === 'any' || /any available/i.test(cv)) return false;
     return this.coaches().some(c => c.id.toLowerCase() === cv || (c.name || '').toLowerCase() === cv);
   }
+  activityFriendly(action, actor) {
+    const map = {
+      'Session scheduled': { client: 'Client booked a session', admin: 'You booked a session' },
+      'Rescheduled': { client: 'Client rescheduled a session', admin: 'You rescheduled a session' },
+      'Pass purchased': { client: 'Client bought a pass', admin: 'You added a pass' },
+      'Pass removed': { client: 'Client removed a pass', admin: 'You removed a pass' },
+      'Session removed': { client: 'Client removed a session', admin: 'You removed a session' },
+      'Cancelled': { client: 'Client cancelled', admin: 'You cancelled a pass' },
+      'Approved': { admin: 'You approved a pass' },
+      'Coach changed': { admin: 'You changed the coach' },
+    };
+    const m = map[action];
+    if (m && actor && m[actor]) return m[actor];
+    return action || '';   // unknown action or blank actor → raw label
+  }
   // Record an admin action to the Activity log (shown in the Bookings tab).
   logAction(ref, label, detail, name, email, actor) {
     const ep = this.endpoint(); if (!ep) return;
@@ -4682,6 +4699,7 @@ class Component extends DCLogic {
     const actSearch = (this.state.bkSearch || '').trim().toLowerCase();
     const actFiltered = (this.state.activity || []).filter(a => {
       const act = String(a.action || '').toLowerCase();
+      if (actFilter.indexOf('actor:') === 0) { if (String(a.actor || '') !== actFilter.slice(6)) return false; }
       if (actFilter === 'approved' && act.indexOf('approv') === -1) return false;
       if (actFilter === 'cancelled' && act.indexOf('cancel') === -1) return false;
       if (actFilter === 'coach' && act.indexOf('coach') === -1) return false;
@@ -4701,6 +4719,7 @@ class Component extends DCLogic {
     (this.state.remotePlans || []).forEach(p => { const em = (p.email || '').toLowerCase(); if (em && p.phone && !phoneByEmail[em]) phoneByEmail[em] = p.phone; });
     (this.state.allBookings || []).forEach(b => { const em = (b.email || '').toLowerCase(); if (em && b.phone && !phoneByEmail[em]) phoneByEmail[em] = b.phone; });
     const activityRows = actFiltered.slice(actPage * ACT_PAGE, actPage * ACT_PAGE + ACT_PAGE).map(a => {
+      const actor = String(a.actor || '');
       const act = String(a.action || '').toLowerCase();
       let bg = '#eef1ea', fg = '#56664f';
       if (act.indexOf('approv') !== -1) { bg = '#e6efd6'; fg = '#4d7327'; }
@@ -4715,11 +4734,18 @@ class Component extends DCLogic {
         email: a.email || '', hasEmail: !!(a.email && String(a.email).trim()),
         phone: phone, hasPhone: !!phone, callHref: 'tel:' + phone.replace(/[^0-9+]/g, ''),
         actBg: bg, actFg: fg,
+        actor: actor,
+        hasActor: actor === 'client' || actor === 'admin',
+        actorText: actor === 'client' ? 'by client' : (actor === 'admin' ? 'by you' : ''),
+        actorBg: actor === 'client' ? '#dce9f5' : '#e6efd6',
+        actorFg: actor === 'client' ? '#2c5b86' : '#4d7327',
+        friendly: this.activityFriendly(a.action || '', actor),
       };
     });
     const actFilterOpts = [
       { id: 'all', name: 'All actions' }, { id: 'approved', name: 'Approved' },
       { id: 'cancelled', name: 'Cancelled' }, { id: 'coach', name: 'Coach changes' }, { id: 'scheduled', name: 'Scheduling' },
+      { id: 'actor:client', name: 'By client' }, { id: 'actor:admin', name: 'By you (admin)' },
     ];
 
     // ---------- ADMIN: COACHES TAB ----------
