@@ -4365,7 +4365,7 @@ class Component extends DCLogic {
         coachDot: c ? '#7fb43f' : '#caa84a',
         sessions: sess, hasSessions: sess.length > 0, canRemove: sess.length === 0,
         schedLabel: cap != null ? (sess.length + ' of ' + cap + ' scheduled') : (sess.length + ' scheduled'),
-        showSchedLabel: cap != null,
+        showSchedLabel: true,
         schedKey: schedKey,
         atCap: cap != null && sess.length >= cap,
         canSchedule: !(cap != null && sess.length >= cap) && String(p.status || '').toLowerCase() !== 'cancelled',
