@@ -3550,6 +3550,13 @@ class Component extends DCLogic {
       }, 70);
     }
   }
+  stampPassScope(name, ts) {
+    const pk = this.packageByName(name) || {};
+    const cap = (pk.sessions != null && pk.sessions !== '') ? (parseInt(pk.sessions, 10) || 1) : this.planCap({ name: name });
+    const validDays = (pk.validDays != null && pk.validDays !== '') ? (parseInt(pk.validDays, 10) || null) : null;
+    const expiry = (validDays != null) ? this.addDaysStr(this.tsToDateStr(ts), validDays) : '';
+    return { cap: cap, validDays: validDays, expiry: expiry };
+  }
   purchasePlan() {
     const pick = this.state.planPick;
     const name = (this.state.planName || '').trim();
@@ -3560,7 +3567,9 @@ class Component extends DCLogic {
     const key = this.acctPlansKey(email);
     let arr = [];
     try { arr = JSON.parse(localStorage.getItem(key) || '[]') || []; } catch (e) { arr = []; }
-    const newPlan = { name: pick, ts: Date.now(), holder: name, phone: (this.state.planPhone || '').trim(), price: this.passPrice(pick), ref: this.bookingRef(this.todayStr()), updatedAt: Date.now() };
+    const _pts = Date.now();
+    const _scope = this.stampPassScope(pick, _pts);
+    const newPlan = { name: pick, ts: _pts, holder: name, phone: (this.state.planPhone || '').trim(), price: this.passPrice(pick), ref: this.bookingRef(this.todayStr()), cap: _scope.cap, validDays: _scope.validDays, expiry: _scope.expiry, updatedAt: _pts };
     arr = arr.concat([newPlan]);
     try { localStorage.setItem(key, JSON.stringify(arr)); } catch (e) {}
     // Sync the pass + email the buyer a confirmation with the total.
@@ -3572,7 +3581,9 @@ class Component extends DCLogic {
   }
   addAcctPlan(name) {
     const email = (this.state.acctEmail || '').trim();
-    const newPlan = { name: name, ts: Date.now(), holder: this.state.acctName || '', price: this.passPrice(name), ref: this.bookingRef(this.todayStr()), updatedAt: Date.now() };
+    const _pts = Date.now();
+    const _scope = this.stampPassScope(name, _pts);
+    const newPlan = { name: name, ts: _pts, holder: this.state.acctName || '', price: this.passPrice(name), ref: this.bookingRef(this.todayStr()), cap: _scope.cap, validDays: _scope.validDays, expiry: _scope.expiry, updatedAt: _pts };
     const plans = (this.loadAcctPlans(email) || []).concat([newPlan]);
     this.saveAcctPlans(email, plans);
     this.pushPlan(email, newPlan);
