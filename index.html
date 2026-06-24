@@ -1686,6 +1686,7 @@
                     <span style="font-size:12.5px;color:{{ pl.coachColor }};font-family:'Spline Sans Mono',monospace;">{{ pl.coachLabel }}</span>
                   </div>
                   <sc-if value="{{ pl.showSchedLabel }}" hint-placeholder-val="{{ false }}"><div style="padding-left:25px;margin-top:2px;"><span style="font-size:11.5px;color:#8a9579;font-family:'Spline Sans Mono',monospace;">{{ pl.schedLabel }}</span></div></sc-if>
+                  <sc-if value="{{ pl.hasExpiry }}" hint-placeholder-val="{{ false }}"><div style="padding-left:25px;"><span style="font-size:11.5px;color:{{ pl.expired ? '#b4512f' : '#8a9579' }};font-family:'Spline Sans Mono',monospace;">{{ pl.expiryLabel }}</span></div></sc-if>
                   <sc-if value="{{ pl.hasSessions }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;flex-direction:column;gap:5px;padding-left:25px;margin-top:3px;">
                     <div style="display:flex;flex-wrap:wrap;gap:6px;">
@@ -1702,7 +1703,7 @@
                   <sc-if value="{{ pl.scheduling }}" hint-placeholder-val="{{ false }}">
                     <div style="margin-top:10px;width:100%;background:#fffdf6;border:1px solid rgba(36,66,50,0.14);border-radius:10px;padding:12px;">
                       <div style="font-size:12.5px;font-weight:700;color:#244232;margin-bottom:8px;">Pick a date, then an open time</div>
-                      <input value="{{ acctSchedDate }}" onInput="{{ onPickDate }}" min="{{ minDate }}" type="date" style="width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(36,66,50,0.2);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#1b2a1f;outline:none;" />
+                      <input value="{{ acctSchedDate }}" onInput="{{ onPickDate }}" min="{{ minDate }}" max="{{ acctSchedMax }}" type="date" style="width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(36,66,50,0.2);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#1b2a1f;outline:none;" />
                       <sc-if value="{{ acctSchedLoading }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#8a9579;margin-top:8px;">Checking availability…</div></sc-if>
                       <sc-if value="{{ acctSchedHasTimes }}" hint-placeholder-val="{{ false }}">
                         <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;">
@@ -1720,6 +1721,7 @@
                   </sc-if>
                 </sc-if>
                 <sc-if value="{{ pl.atCap }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;color:#8a9579;font-family:'Spline Sans Mono',monospace;">{{ pl.capFullLabel }}</span></sc-if>
+                <sc-if value="{{ pl.expired }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;color:#b4512f;font-family:'Spline Sans Mono',monospace;">{{ pl.expiredNote }}</span></sc-if>
               </div>
             </sc-for>
           </div>
@@ -2014,7 +2016,7 @@
                   </sc-if>
                   <sc-if value="{{ pr.canSchedule }}" hint-placeholder-val="{{ true }}">
                   <label style="display:block;font-size:12.5px;font-weight:700;color:#244232;margin-bottom:6px;">Add a session date</label>
-                  <input value="{{ pr.editDate }}" onInput="{{ pr.setEditDate }}" min="{{ pr.minDate }}" type="date" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.18);border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#1b2a1f;outline:none;" />
+                  <input value="{{ pr.editDate }}" onInput="{{ pr.setEditDate }}" min="{{ pr.minDate }}" max="{{ pr.maxDate }}" type="date" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.18);border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#1b2a1f;outline:none;" />
                   <sc-if value="{{ pr.editPrompt }}" hint-placeholder-val="{{ true }}"><div style="font-size:12.5px;color:#8a9579;font-family:'Spline Sans Mono',monospace;margin-top:10px;">{{ pr.editPrompt }}</div></sc-if>
                   <sc-if value="{{ pr.editClosed }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#b4512f;margin-top:10px;">No open hours that day for this coach. Pick another date, or open hours in the Coach portal.</div></sc-if>
                   <sc-if value="{{ pr.hasEditTimes }}" hint-placeholder-val="{{ false }}">
@@ -2180,9 +2182,25 @@
                   <input value="{{ p.unit }}" onInput="{{ p.setUnit }}" placeholder="/ unit" style="width:50%;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#56664f;outline:none;" />
                 </div>
                 <textarea value="{{ p.desc }}" onInput="{{ p.setDesc }}" rows="2" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#56664f;outline:none;resize:vertical;"></textarea>
+                <div style="display:flex;gap:10px;">
+                  <label style="flex:1;font-size:11.5px;font-weight:600;color:#56664f;">Max sessions<input value="{{ p.sessions }}" onInput="{{ p.setSessions }}" type="number" min="1" style="display:block;margin-top:4px;width:100%;box-sizing:border-box;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
+                  <label style="flex:1;font-size:11.5px;font-weight:600;color:#56664f;">Valid for (days)<input value="{{ p.validDays }}" onInput="{{ p.setValidDays }}" type="number" min="1" style="display:block;margin-top:4px;width:100%;box-sizing:border-box;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
+                </div>
+                <div style="font-size:11.5px;font-weight:700;color:#56664f;">Features</div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  <sc-for list="{{ p.featureRows }}" as="f" hint-placeholder-count="3">
+                    <div style="display:flex;gap:6px;align-items:center;">
+                      <input value="{{ f.value }}" onInput="{{ f.set }}" placeholder="Feature" style="flex:1;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:8px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;color:#1b2a1f;outline:none;" />
+                      <button onClick="{{ f.remove }}" aria-label="Remove feature" style="background:none;border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-size:13px;color:#8a9579;padding:6px 10px;border-radius:8px;">✕</button>
+                    </div>
+                  </sc-for>
+                  <button onClick="{{ p.addFeature }}" style="align-self:flex-start;background:#e6efd6;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;color:#4d7327;padding:6px 12px;border-radius:999px;">+ Add feature</button>
+                </div>
+                <button onClick="{{ p.removePass }}" style="align-self:flex-start;background:none;border:1px solid rgba(180,81,47,0.4);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;color:#b4512f;padding:7px 14px;border-radius:999px;">Remove this pass</button>
               </div>
             </sc-for>
           </div>
+          <button onClick="{{ addPass }}" style="margin-top:14px;background:#244232;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#f4efe4;padding:10px 18px;border-radius:999px;">+ Add a pass</button>
           <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:20px;margin-top:14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
             <span style="font-size:15px;font-weight:700;color:#1b2a1f;">Fun Shoot price</span>
             <input value="{{ funShootEdit }}" onInput="{{ setFunShoot }}" style="width:120px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;color:#1b2a1f;outline:none;" />
@@ -3185,6 +3203,74 @@ class Component extends DCLogic {
     const pk = pkgs.find(p => p.name === name);
     return pk ? (pk.price || '') : '';
   }
+  defaultPackages() {
+    return [
+      { name: 'Day Pass', price: '₱600', unit: '', desc: 'A single guided session with all gear included.', features: ['1 guided session', 'All equipment provided', 'Beginner-friendly'], sessions: 1, validDays: 30, popular: false, bg: '#fffdf6', fg: '#1b2a1f', border: 'rgba(36,66,50,0.12)', tick: '#3c6b48', btnBg: '#244232', btnFg: '#f4efe4' },
+      { name: 'Starter Pack', price: '₱2,000', unit: '/ 4 sessions', desc: 'Four sessions to build a real foundation.', features: ['4 sessions', 'Equipment included', 'Progress card', 'Valid for 2 months'], sessions: 4, validDays: 60, popular: true, bg: '#244232', fg: '#f4efe4', border: '#244232', tick: '#7fb43f', btnBg: '#7fb43f', btnFg: '#1b2a1f' },
+      { name: 'Monthly Member', price: '₱3,500', unit: '/ month', desc: 'Unlimited open range plus two classes a week.', features: ['Unlimited open range', '2 classes / week', 'Member events', '10% off pro-shop'], sessions: 10, validDays: 30, popular: false, bg: '#fffdf6', fg: '#1b2a1f', border: 'rgba(36,66,50,0.12)', tick: '#3c6b48', btnBg: '#244232', btnFg: '#f4efe4' },
+      { name: 'Private Coaching', price: '₱1,200', unit: '/ hour', desc: 'Personalized one-on-one coaching.', features: ['1:1 with a coach', 'Video form review', 'Custom training plan'], sessions: 1, validDays: 60, popular: false, bg: '#fffdf6', fg: '#1b2a1f', border: 'rgba(36,66,50,0.12)', tick: '#3c6b48', btnBg: '#244232', btnFg: '#f4efe4' },
+    ];
+  }
+  normalizePackages(pkgs) {
+    const defs = this.defaultPackages();
+    const byName = {};
+    defs.forEach(d => { byName[d.name] = d; });
+    return (pkgs || []).map(p => {
+      const d = byName[p.name] || {};
+      const out = { ...p };
+      if (out.sessions == null || out.sessions === '') out.sessions = (d.sessions != null ? d.sessions : 1);
+      if (out.validDays == null || out.validDays === '') out.validDays = (d.validDays != null ? d.validDays : 30);
+      return out;
+    });
+  }
+  mergedPackages() {
+    const c = this.state.content || {};
+    const raw = (c.packages && c.packages.length) ? c.packages : this.defaultPackages();
+    return this.normalizePackages(raw);
+  }
+  packageByName(name) {
+    return this.mergedPackages().filter(p => p.name === name)[0] || null;
+  }
+  tsToDateStr(ts) {
+    try { const d = new Date(ts); if (isNaN(d.getTime())) return ''; return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); } catch (e) { return ''; }
+  }
+  prettyDateStr(dateStr) {
+    try { return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }); } catch (e) { return dateStr; }
+  }
+  addDaysStr(dateStr, n) {
+    if (!dateStr) return '';
+    const p = String(dateStr).split('-'); if (p.length !== 3) return '';
+    const d = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+    d.setDate(d.getDate() + (parseInt(n, 10) || 0));
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
+  legacyCapFromName(name) {
+    const pk = this.packageByName(name);
+    const hay = ((pk && pk.unit) || '') + ' ' + (name || '');
+    const m = /(\d+)\s*(session|class|visit)/i.exec(hay);
+    if (m) return parseInt(m[1], 10);
+    if (/month|unlimited/i.test(hay)) return null;
+    return 1;
+  }
+  planCap(plan) {
+    if (plan && plan.cap != null && plan.cap !== '') { const c = parseInt(plan.cap, 10); return (c > 0) ? c : 1; }
+    if (plan && ('cap' in plan)) return null; // stamped explicitly (blank/null) → no cap; authoritative, don't re-read the live package
+    const pk = this.packageByName(plan && plan.name);
+    if (pk && pk.sessions != null && pk.sessions !== '') { const s = parseInt(pk.sessions, 10); return (s > 0) ? s : 1; }
+    return this.legacyCapFromName(plan && plan.name);
+  }
+  planExpiry(plan) {
+    if (!plan) return '';
+    if (plan.expiry) return plan.expiry;
+    // Only passes STAMPED at purchase (carrying their own validDays) get a validity window.
+    // Legacy passes (bought before stamping shipped) have no validDays key → no expiry enforced,
+    // so they're never retroactively locked out. This also keeps a stamped pass isolated from
+    // later admin edits to the live package.
+    const days = (plan.validDays != null && plan.validDays !== '') ? parseInt(plan.validDays, 10) : null;
+    if (days == null || isNaN(days) || !plan.ts) return '';
+    return this.addDaysStr(this.tsToDateStr(plan.ts), days);
+  }
+  isPlanExpired(plan) { const e = this.planExpiry(plan); return !!e && this.todayStr() > e; }
   pushRemovePlan(email, ts, by, notify) {
     const ep = this.endpoint(); if (!ep || !email) return;
     try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'removePlan', email: email, ts: ts, by: by || 'customer', notify: notify !== false }) }); } catch (e) {}
@@ -3502,6 +3588,13 @@ class Component extends DCLogic {
       }, 70);
     }
   }
+  stampPassScope(name, ts) {
+    const pk = this.packageByName(name) || {};
+    const cap = (pk.sessions != null && pk.sessions !== '') ? (parseInt(pk.sessions, 10) || 1) : this.planCap({ name: name });
+    const validDays = (pk.validDays != null && pk.validDays !== '') ? (parseInt(pk.validDays, 10) || null) : null;
+    const expiry = (validDays != null) ? this.addDaysStr(this.tsToDateStr(ts), validDays) : '';
+    return { cap: cap, validDays: validDays, expiry: expiry };
+  }
   purchasePlan() {
     const pick = this.state.planPick;
     const name = (this.state.planName || '').trim();
@@ -3512,7 +3605,9 @@ class Component extends DCLogic {
     const key = this.acctPlansKey(email);
     let arr = [];
     try { arr = JSON.parse(localStorage.getItem(key) || '[]') || []; } catch (e) { arr = []; }
-    const newPlan = { name: pick, ts: Date.now(), holder: name, phone: (this.state.planPhone || '').trim(), price: this.passPrice(pick), ref: this.bookingRef(this.todayStr()), updatedAt: Date.now() };
+    const _pts = Date.now();
+    const _scope = this.stampPassScope(pick, _pts);
+    const newPlan = { name: pick, ts: _pts, holder: name, phone: (this.state.planPhone || '').trim(), price: this.passPrice(pick), ref: this.bookingRef(this.todayStr()), cap: _scope.cap, validDays: _scope.validDays, expiry: _scope.expiry, updatedAt: _pts };
     arr = arr.concat([newPlan]);
     try { localStorage.setItem(key, JSON.stringify(arr)); } catch (e) {}
     // Sync the pass + email the buyer a confirmation with the total.
@@ -3524,7 +3619,9 @@ class Component extends DCLogic {
   }
   addAcctPlan(name) {
     const email = (this.state.acctEmail || '').trim();
-    const newPlan = { name: name, ts: Date.now(), holder: this.state.acctName || '', price: this.passPrice(name), ref: this.bookingRef(this.todayStr()), updatedAt: Date.now() };
+    const _pts = Date.now();
+    const _scope = this.stampPassScope(name, _pts);
+    const newPlan = { name: name, ts: _pts, holder: this.state.acctName || '', price: this.passPrice(name), ref: this.bookingRef(this.todayStr()), cap: _scope.cap, validDays: _scope.validDays, expiry: _scope.expiry, updatedAt: _pts };
     const plans = (this.loadAcctPlans(email) || []).concat([newPlan]);
     this.saveAcctPlans(email, plans);
     this.pushPlan(email, newPlan);
@@ -3714,6 +3811,8 @@ class Component extends DCLogic {
     const plan = this.findPlan(email, ts);
     const curCount = (plan && plan.sessions) ? plan.sessions.length : 0;
     if (cap != null && curCount >= cap) { this.setState({ acctSchedMsg: 'All sessions on this pass are scheduled.' }); return; }
+    const _exp2 = this.planExpiry(plan);
+    if (_exp2 && date > _exp2) { this.setState({ acctSchedMsg: 'This pass is valid through ' + this.prettyDateStr(_exp2) + '. Pick an earlier date.' }); return; }
     this.addPlanSession(email, ts, date, time, cap);                // add + reserve calendar slot + cap + activity log
     this.emailPlanSchedule(email, ts, { mode: 'scheduled', sessions: [{ date: date, time: time }] });
     this.setState({ slotDate: '', slots: [], acctSchedMsg: 'Scheduled — a confirmation is on its way.' });
@@ -3722,6 +3821,9 @@ class Component extends DCLogic {
   closeAcctSched() { this.setState({ acctSchedKey: '', slotDate: '', slots: [], acctSchedMsg: '' }); }
   addPlanSession(email, ts, date, time, cap) {
     if (!date || !time) return;
+    const _planForExp = this.findPlan(email, ts);
+    const _exp = this.planExpiry(_planForExp);
+    if (_exp && date > _exp) { this.setState({ acctSchedMsg: 'This pass is valid through ' + this.prettyDateStr(_exp) + '.' }); return; }
     const existing = this.findPlan(email, ts);
     const curCount = existing && existing.sessions ? existing.sessions.length : 0;
     if (cap != null && curCount >= cap) return; // enforce the plan's session limit
@@ -3807,12 +3909,7 @@ class Component extends DCLogic {
   renderVals() {
     const { page, scheduleDay, openFaq, form, submitted, formError, isMobile, navOpen } = this.state;
 
-    const defaultPackages = [
-      { name: 'Day Pass', price: '₱600', unit: '', desc: 'A single guided session with all gear included.', features: ['1 guided session', 'All equipment provided', 'Beginner-friendly'], popular: false, bg: '#fffdf6', fg: '#1b2a1f', border: 'rgba(36,66,50,0.12)', tick: '#3c6b48', btnBg: '#244232', btnFg: '#f4efe4' },
-      { name: 'Starter Pack', price: '₱2,000', unit: '/ 4 sessions', desc: 'Four sessions to build a real foundation.', features: ['4 sessions', 'Equipment included', 'Progress card', 'Valid for 2 months'], popular: true, bg: '#244232', fg: '#f4efe4', border: '#244232', tick: '#7fb43f', btnBg: '#7fb43f', btnFg: '#1b2a1f' },
-      { name: 'Monthly Member', price: '₱3,500', unit: '/ month', desc: 'Unlimited open range plus two classes a week.', features: ['Unlimited open range', '2 classes / week', 'Member events', '10% off pro-shop'], popular: false, bg: '#fffdf6', fg: '#1b2a1f', border: 'rgba(36,66,50,0.12)', tick: '#3c6b48', btnBg: '#244232', btnFg: '#f4efe4' },
-      { name: 'Private Coaching', price: '₱1,200', unit: '/ hour', desc: 'Personalized one-on-one coaching.', features: ['1:1 with a coach', 'Video form review', 'Custom training plan'], popular: false, bg: '#fffdf6', fg: '#1b2a1f', border: 'rgba(36,66,50,0.12)', tick: '#3c6b48', btnBg: '#244232', btnFg: '#f4efe4' },
-    ];
+    const defaultPackages = this.defaultPackages();
     const defaultScheduleNote = 'Our usual class times below. For holidays, special events, and any one-off changes, the live calendar further down is always the official source.';
     const defaultSchedule = {
       Tue: [ { time: '4:00 PM', name: 'Adult Beginners', level: 'beginner' }, { time: '5:30 PM', name: 'Open Range', level: 'all levels' } ],
@@ -3823,6 +3920,7 @@ class Component extends DCLogic {
       Sun: [ { time: '9:00 AM', name: 'Open Range', level: 'all levels' }, { time: '10:30 AM', name: 'Little Archers', level: 'ages 6–10' }, { time: '1:00 PM', name: 'Private Coaching', level: 'by appt' } ],
     };
     const cm = this.mergedContent({ packages: defaultPackages, scheduleNote: defaultScheduleNote, schedule: defaultSchedule, funShoot: '₱10', rates: { openRange: 400, session: 600, private: 1200 }, capacity: 6 });
+    cm.packages = this.normalizePackages(cm.packages);
     const packages = cm.packages.map(pk => ({ ...pk, choose: () => this.selectPlanToBuy(pk.name) }));
 
     const planPick = this.state.planPick || '';
@@ -4163,9 +4261,19 @@ class Component extends DCLogic {
     // ---------- ADMIN ----------
     const saveCM = (patch) => this.persistContent({ ...cm, ...patch });
     const updatePackage = (i, key) => (e) => { const v = e.target.value; const ps = cm.packages.map((p, idx) => idx === i ? { ...p, [key]: v } : p); saveCM({ packages: ps }); };
+    const setPkgNum = (i, key) => (e) => { const v = Math.max(1, parseInt(e.target.value, 10) || 1); const ps = cm.packages.map((p, idx) => idx === i ? { ...p, [key]: v } : p); saveCM({ packages: ps }); };
+    const setFeature = (i, fi) => (e) => { const v = e.target.value; const ps = cm.packages.map((p, idx) => idx === i ? { ...p, features: (p.features || []).map((f, k) => k === fi ? v : f) } : p); saveCM({ packages: ps }); };
+    const addFeature = (i) => () => { const ps = cm.packages.map((p, idx) => idx === i ? { ...p, features: (p.features || []).concat(['New feature']) } : p); saveCM({ packages: ps }); };
+    const removeFeature = (i, fi) => () => { const ps = cm.packages.map((p, idx) => idx === i ? { ...p, features: (p.features || []).filter((_, k) => k !== fi) } : p); saveCM({ packages: ps }); };
+    const removePass = (i) => () => { saveCM({ packages: cm.packages.filter((_, idx) => idx !== i) }); };
+    const addPass = () => { const np = { name: 'New pass', price: '₱0', unit: '', desc: '', features: ['1 session'], sessions: 1, validDays: 30, popular: false, bg: '#fffdf6', fg: '#1b2a1f', border: 'rgba(36,66,50,0.12)', tick: '#3c6b48', btnBg: '#244232', btnFg: '#f4efe4' }; saveCM({ packages: cm.packages.concat([np]) }); };
     const pkgEdits = cm.packages.map((p, i) => ({
       name: p.name, price: p.price, unit: p.unit, desc: p.desc,
+      sessions: (p.sessions != null ? p.sessions : ''), validDays: (p.validDays != null ? p.validDays : ''),
       setName: updatePackage(i, 'name'), setPrice: updatePackage(i, 'price'), setUnit: updatePackage(i, 'unit'), setDesc: updatePackage(i, 'desc'),
+      setSessions: setPkgNum(i, 'sessions'), setValidDays: setPkgNum(i, 'validDays'),
+      featureRows: (p.features || []).map((f, fi) => ({ value: f, set: setFeature(i, fi), remove: removeFeature(i, fi) })),
+      addFeature: addFeature(i), removePass: removePass(i),
     }));
     const updateClass = (day, i, key) => (e) => { const v = e.target.value; const arr = (cm.schedule[day] || []).map((c, idx) => idx === i ? { ...c, [key]: v } : c); saveCM({ schedule: { ...cm.schedule, [day]: arr } }); };
     const scheduleEdit = dayList.map(day => ({
@@ -4218,15 +4326,6 @@ class Component extends DCLogic {
       },
     }));
     const adminSetTab = (t) => () => { this.setState({ adminTab: t }); if (t === 'plans') this.loadRemotePlans(); if (t === 'dashboard') { this.loadAllBookings(); this.loadSettings(); } if (t === 'bookings') { this.loadActivity(); this.loadSettings(); } };
-    // Per-plan schedule limit: "N sessions/classes" → N; monthly/unlimited → no cap; otherwise 1 (Day Pass, hourly, single).
-    const capFor = (name) => {
-      const pk = cm.packages.find(p => p.name === name);
-      const hay = ((pk && pk.unit) || '') + ' ' + name;
-      const m = /(\d+)\s*(session|class|visit)/i.exec(hay);
-      if (m) return parseInt(m[1], 10);
-      if (/month|unlimited/i.test(hay)) return null;
-      return 1;
-    };
     const planEditKey = this.state.planEditKey || '';
     const planEditDate = this.state.planEditDate || '';
     const fmtSessionDate = (ds) => { try { return new Date(ds + 'T00:00:00').toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' }); } catch (e) { return ds; } };
@@ -4255,7 +4354,7 @@ class Component extends DCLogic {
     const adminPlanRows = allPlans.map(p => {
       const rowKey = p.email + '|' + p.ts;
       const isEditing = rowKey === planEditKey;
-      const cap = capFor(p.name);
+      const cap = this.planCap(p);
       const sessionList = (p.sessions || []).map((s, i) => ({
         date: s.date, time: s.time, label: fmtSessionDate(s.date) + ' · ' + s.time, onCalendar: !!s.eventId,
         remove: () => this.removePlanSession(p.email, p.ts, i),
@@ -4299,7 +4398,7 @@ class Component extends DCLogic {
         complete: atLimit, atLimit: atLimit,
         isEditing: isEditing, toggleEditor: () => this.openPlanEditor(rowKey),
         editLabel: isEditing ? 'Done' : (atLimit ? 'Review dates' : 'Schedule dates'),
-        editDate: planEditDate, minDate: todayStr,
+        editDate: planEditDate, minDate: todayStr, maxDate: this.planExpiry(p) || '',
         setEditDate: (e) => this.setState({ planEditDate: e.target.value }),
         editTimes: editTimes, hasEditTimes: editTimes.length > 0,
         editPrompt: planEditDate ? '' : ('Pick a date to see open times' + (p.coach ? (' for ' + (coachObj ? coachObj.name.split(' ')[0] : 'the coach')) : '')),
@@ -4374,14 +4473,6 @@ class Component extends DCLogic {
         pick: fits ? (() => this.setState({ editTime: s.time })) : (() => {}),
       };
     });
-    const planCapFor = (name) => {
-      const pk = cm.packages.find(p => p.name === name);
-      const hay = ((pk && pk.unit) || '') + ' ' + name;
-      const m = /(\d+)\s*(session|class|visit)/i.exec(hay);
-      if (m) return parseInt(m[1], 10);
-      if (/month|unlimited/i.test(hay)) return null;
-      return 1;
-    };
     const acctPlanRows = (this.state.acctPlans || []).filter(p => String(p.status || '').toLowerCase() !== 'cancelled').map(p => {
       const pEmail = (p.email || this.state.acctEmail || '').trim().toLowerCase();
       const schedKey = pEmail + '|' + p.ts;
@@ -4391,7 +4482,8 @@ class Component extends DCLogic {
         try { lbl = new Date(s.date + 'T00:00:00').toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' }); } catch (e) {}
         return { label: lbl + ' · ' + s.time, onCalendar: !!s.eventId };
       });
-      const cap = planCapFor(p.name);
+      const cap = this.planCap(p);
+      const expired = this.isPlanExpired(p); const expDate = this.planExpiry(p);
       return {
         name: p.name, ts: p.ts,
         holder: p.holder || '', hasHolder: !!(p.holder && p.holder.trim()),
@@ -4406,7 +4498,11 @@ class Component extends DCLogic {
         showSchedLabel: true,
         schedKey: schedKey,
         atCap: cap != null && sess.length >= cap,
-        canSchedule: !(cap != null && sess.length >= cap) && String(p.status || '').toLowerCase() !== 'cancelled',
+        expired: expired,
+        expiryLabel: expDate ? ((expired ? 'Expired ' : 'Expires ') + this.prettyDateStr(expDate)) : '',
+        hasExpiry: !!expDate,
+        expiredNote: expired ? ('This pass expired ' + this.prettyDateStr(expDate) + '.') : '',
+        canSchedule: !(cap != null && sess.length >= cap) && !expired && String(p.status || '').toLowerCase() !== 'cancelled',
         scheduling: this.state.acctSchedKey === schedKey,
         notScheduling: this.state.acctSchedKey !== schedKey,
         openSched: () => this.openAcctSched(schedKey),
@@ -4711,7 +4807,7 @@ class Component extends DCLogic {
     const _schedEmail = _schedParts[0] || '';
     const _schedTs = parseInt(_schedParts[1], 10) || 0;
     const _schedPlan = _schedOpen ? this.findPlan(_schedEmail, _schedTs) : null;
-    const _schedCap = _schedPlan ? planCapFor(_schedPlan.name) : null;
+    const _schedCap = _schedPlan ? this.planCap(_schedPlan) : null;
     const acctSchedTimes = (_schedOpen && this.state.slotDate)
       ? (this.state.slots || []).filter(s => !s.full && (s.left == null || s.left > 0)).map(s => ({
           time: s.time, leftLabel: (s.left != null ? (s.left + ' open') : 'open'),
@@ -4732,6 +4828,7 @@ class Component extends DCLogic {
       isMobile, isDesktop: !isMobile, navOpen,
       toggleNav: () => this.setState(s => ({ navOpen: !s.navOpen })),
       packages, testimonials, values, faqs,
+      addPass,
       scheduleDays, activeClasses, dayClosed: activeClasses.length === 0,
       calendarConnected: calConnected, calendarPending: !calConnected, calendarEmbedSrc: calEmbedSrc, calendarLink: calLink,
       hours,
@@ -4914,6 +5011,7 @@ class Component extends DCLogic {
       acctPlanRows: acctPassPaged, hasAcctPlans: acctPassAll.length > 0, planChoices: planChoices,
       acctSchedKey: this.state.acctSchedKey, acctSchedMsg: this.state.acctSchedMsg,
       acctSchedDate: this.state.slotDate || '', acctSchedLoading: !!this.state.slotsLoading,
+      acctSchedMax: this.planExpiry(_schedPlan) || '',
       closeAcctSched: () => this.closeAcctSched(),
       acctSchedTimes: acctSchedTimes, acctSchedHasTimes: acctSchedTimes.length > 0,
       // ----- PASSES & MEMBERSHIPS page -----
