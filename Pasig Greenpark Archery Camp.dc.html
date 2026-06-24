@@ -2182,9 +2182,25 @@
                   <input value="{{ p.unit }}" onInput="{{ p.setUnit }}" placeholder="/ unit" style="width:50%;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#56664f;outline:none;" />
                 </div>
                 <textarea value="{{ p.desc }}" onInput="{{ p.setDesc }}" rows="2" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#56664f;outline:none;resize:vertical;"></textarea>
+                <div style="display:flex;gap:10px;">
+                  <label style="flex:1;font-size:11.5px;font-weight:600;color:#56664f;">Max sessions<input value="{{ p.sessions }}" onInput="{{ p.setSessions }}" type="number" min="1" style="display:block;margin-top:4px;width:100%;box-sizing:border-box;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
+                  <label style="flex:1;font-size:11.5px;font-weight:600;color:#56664f;">Valid for (days)<input value="{{ p.validDays }}" onInput="{{ p.setValidDays }}" type="number" min="1" style="display:block;margin-top:4px;width:100%;box-sizing:border-box;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
+                </div>
+                <div style="font-size:11.5px;font-weight:700;color:#56664f;">Features</div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  <sc-for list="{{ p.featureRows }}" as="f" hint-placeholder-count="3">
+                    <div style="display:flex;gap:6px;align-items:center;">
+                      <input value="{{ f.value }}" onInput="{{ f.set }}" placeholder="Feature" style="flex:1;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:8px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;color:#1b2a1f;outline:none;" />
+                      <button onClick="{{ f.remove }}" aria-label="Remove feature" style="background:none;border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-size:13px;color:#8a9579;padding:6px 10px;border-radius:8px;">✕</button>
+                    </div>
+                  </sc-for>
+                  <button onClick="{{ p.addFeature }}" style="align-self:flex-start;background:#e6efd6;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;color:#4d7327;padding:6px 12px;border-radius:999px;">+ Add feature</button>
+                </div>
+                <button onClick="{{ p.removePass }}" style="align-self:flex-start;background:none;border:1px solid rgba(180,81,47,0.4);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;color:#b4512f;padding:7px 14px;border-radius:999px;">Remove this pass</button>
               </div>
             </sc-for>
           </div>
+          <button onClick="{{ addPass }}" style="margin-top:14px;background:#244232;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#f4efe4;padding:10px 18px;border-radius:999px;">+ Add a pass</button>
           <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:20px;margin-top:14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
             <span style="font-size:15px;font-weight:700;color:#1b2a1f;">Fun Shoot price</span>
             <input value="{{ funShootEdit }}" onInput="{{ setFunShoot }}" style="width:120px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;color:#1b2a1f;outline:none;" />
@@ -4227,9 +4243,19 @@ class Component extends DCLogic {
     // ---------- ADMIN ----------
     const saveCM = (patch) => this.persistContent({ ...cm, ...patch });
     const updatePackage = (i, key) => (e) => { const v = e.target.value; const ps = cm.packages.map((p, idx) => idx === i ? { ...p, [key]: v } : p); saveCM({ packages: ps }); };
+    const setPkgNum = (i, key) => (e) => { const v = Math.max(1, parseInt(e.target.value, 10) || 1); const ps = cm.packages.map((p, idx) => idx === i ? { ...p, [key]: v } : p); saveCM({ packages: ps }); };
+    const setFeature = (i, fi) => (e) => { const v = e.target.value; const ps = cm.packages.map((p, idx) => idx === i ? { ...p, features: (p.features || []).map((f, k) => k === fi ? v : f) } : p); saveCM({ packages: ps }); };
+    const addFeature = (i) => () => { const ps = cm.packages.map((p, idx) => idx === i ? { ...p, features: (p.features || []).concat(['New feature']) } : p); saveCM({ packages: ps }); };
+    const removeFeature = (i, fi) => () => { const ps = cm.packages.map((p, idx) => idx === i ? { ...p, features: (p.features || []).filter((_, k) => k !== fi) } : p); saveCM({ packages: ps }); };
+    const removePass = (i) => () => { saveCM({ packages: cm.packages.filter((_, idx) => idx !== i) }); };
+    const addPass = () => { const np = { name: 'New pass', price: '₱0', unit: '', desc: '', features: ['1 session'], sessions: 1, validDays: 30, popular: false, bg: '#fffdf6', fg: '#1b2a1f', border: 'rgba(36,66,50,0.12)', tick: '#3c6b48', btnBg: '#244232', btnFg: '#f4efe4' }; saveCM({ packages: cm.packages.concat([np]) }); };
     const pkgEdits = cm.packages.map((p, i) => ({
       name: p.name, price: p.price, unit: p.unit, desc: p.desc,
+      sessions: (p.sessions != null ? p.sessions : ''), validDays: (p.validDays != null ? p.validDays : ''),
       setName: updatePackage(i, 'name'), setPrice: updatePackage(i, 'price'), setUnit: updatePackage(i, 'unit'), setDesc: updatePackage(i, 'desc'),
+      setSessions: setPkgNum(i, 'sessions'), setValidDays: setPkgNum(i, 'validDays'),
+      featureRows: (p.features || []).map((f, fi) => ({ value: f, set: setFeature(i, fi), remove: removeFeature(i, fi) })),
+      addFeature: addFeature(i), removePass: removePass(i),
     }));
     const updateClass = (day, i, key) => (e) => { const v = e.target.value; const arr = (cm.schedule[day] || []).map((c, idx) => idx === i ? { ...c, [key]: v } : c); saveCM({ schedule: { ...cm.schedule, [day]: arr } }); };
     const scheduleEdit = dayList.map(day => ({
@@ -4784,6 +4810,7 @@ class Component extends DCLogic {
       isMobile, isDesktop: !isMobile, navOpen,
       toggleNav: () => this.setState(s => ({ navOpen: !s.navOpen })),
       packages, testimonials, values, faqs,
+      addPass,
       scheduleDays, activeClasses, dayClosed: activeClasses.length === 0,
       calendarConnected: calConnected, calendarPending: !calConnected, calendarEmbedSrc: calEmbedSrc, calendarLink: calLink,
       hours,
