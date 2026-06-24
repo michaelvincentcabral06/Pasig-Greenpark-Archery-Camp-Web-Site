@@ -3262,15 +3262,11 @@ class Component extends DCLogic {
   planExpiry(plan) {
     if (!plan) return '';
     if (plan.expiry) return plan.expiry;
-    // A stamped plan (carries its own validDays/expiry key) is authoritative — never re-derive
-    // from the live package, so later admin edits can't change an already-bought pass.
-    let days;
-    if (('validDays' in plan) || ('expiry' in plan)) {
-      days = (plan.validDays != null && plan.validDays !== '') ? parseInt(plan.validDays, 10) : null;
-    } else {
-      const pk = this.packageByName(plan.name);
-      days = (pk && pk.validDays != null && pk.validDays !== '') ? parseInt(pk.validDays, 10) : null;
-    }
+    // Only passes STAMPED at purchase (carrying their own validDays) get a validity window.
+    // Legacy passes (bought before stamping shipped) have no validDays key → no expiry enforced,
+    // so they're never retroactively locked out. This also keeps a stamped pass isolated from
+    // later admin edits to the live package.
+    const days = (plan.validDays != null && plan.validDays !== '') ? parseInt(plan.validDays, 10) : null;
     if (days == null || isNaN(days) || !plan.ts) return '';
     return this.addDaysStr(this.tsToDateStr(plan.ts), days);
   }
