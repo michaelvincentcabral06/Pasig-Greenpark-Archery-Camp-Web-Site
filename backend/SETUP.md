@@ -224,3 +224,4 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 - [ ] In the website's **admin Pricing tab**, edit a price (e.g. change a session rate) and save — the admin page should POST `{action:"setContent", content:{…}}` to the backend.
 - [ ] Open `…/exec?action=content` in a browser — confirm the response shows `{"content":{…}}` with the price you just edited.
 - [ ] Open the **public site on a different device** (or incognito window) — confirm the updated price is shown (the frontend fetches `?action=content` on load once Task 2 is wired up).
+- [ ] In the admin **Tweaks / Pricing tab**, edit the **Capacity / hour** field and save — then open `…/exec?action=availability&date=<any-open-date>` and confirm the returned `capacity` value and each slot's `left` count reflect the new number (not the hardcoded 6).

@@ -159,6 +159,13 @@ function dbRemovePass_(email, ts) {
 // ---------- CONTENT STORE (db-v15) ----------
 // Admin-managed content (packages, rates, capacity, schedule) saved server-side
 // so every device and every customer reads the same values.
+function cap_() {
+  try {
+    var raw = PropertiesService.getScriptProperties().getProperty('CONTENT');
+    if (raw) { var c = JSON.parse(raw); var n = Number(c && c.capacity); if (n > 0) return n; }
+  } catch (e) {}
+  return CAPACITY;
+}
 function getContent_() {
   var raw = PropertiesService.getScriptProperties().getProperty('CONTENT');
   var c = {}; if (raw) { try { c = JSON.parse(raw); } catch (e) { c = {}; } }
@@ -327,6 +334,7 @@ function hoursForRequest_(dateStr, dow, coachId) {
 }
 
 function buildSlots_(dateStr, coachId) {
+  var cap = cap_();
   var parts = dateStr.split('-');
   var dow = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10)).getDay();
   var hours = hoursForRequest_(dateStr, dow, coachId);
@@ -339,8 +347,8 @@ function buildSlots_(dateStr, coachId) {
     hours = hours.filter(function (h) { return h * 60 > nowH * 60 + nowM; });
   }
   return hours.map(function (h) {
-    var booked = Math.min(CAPACITY, counts[h] || 0);
-    return { time: fmtLabel_(h), hour: h, booked: booked, left: CAPACITY - booked };
+    var booked = Math.min(cap, counts[h] || 0);
+    return { time: fmtLabel_(h), hour: h, booked: booked, left: cap - booked };
   });
 }
 
@@ -608,7 +616,7 @@ function doGet(e) {
     if (action === 'availability') {
       var date = e.parameter.date;
       if (!date) return json_({ error: 'Missing date' });
-      return json_({ date: date, capacity: CAPACITY, slots: buildSlots_(date, e.parameter.coach) });
+      return json_({ date: date, capacity: cap_(), slots: buildSlots_(date, e.parameter.coach) });
     }
     if (action === 'lookup') {
       return lookup_(e.parameter.email, e.parameter.ref);
