@@ -601,31 +601,18 @@
     <section style="padding:clamp(48px,6vw,80px) clamp(20px,5vw,64px);max-width:1320px;margin:0 auto;width:100%;">
       <div style="font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#3c6b48;margin-bottom:12px;">The team</div>
       <h2 style="font-size:clamp(26px,3.5vw,40px);font-weight:800;letter-spacing:-0.02em;margin:0 0 40px;color:#1b2a1f;">Coaches who'll know your name</h2>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;">
-        <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:10px;overflow:hidden;">
-          <div style="aspect-ratio:4/5;overflow:hidden;"><img src="assets/coach-michael-o.jpg" alt="Coach Michael Cabral" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;" /></div>
-          <div style="padding:22px;">
-            <h3 style="font-size:19px;font-weight:800;margin:0 0 3px;color:#1b2a1f;">Michael Cabral</h3>
-            <div style="font-family:'Spline Sans Mono',monospace;font-size:11.5px;letter-spacing:0.06em;text-transform:uppercase;color:#7fb43f;margin-bottom:12px;">Head Coach</div>
-            <p style="font-size:14.5px;line-height:1.55;color:#56664f;margin:0;">Seasoned recurve coach with a knack for first-timers — patient, precise, and great at turning nerves into bullseyes.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;">
+        <sc-for list="{{ aboutCoaches }}" as="co" hint-placeholder-count="3">
+          <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:14px;padding:28px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;">
+            <sc-if value="{{ co.hasPhoto }}" hint-placeholder-val="{{ false }}"><img src="{{ co.photo }}" alt="{{ co.name }}" style="width:108px;height:108px;border-radius:50%;object-fit:cover;" /></sc-if>
+            <sc-if value="{{ co.noPhoto }}" hint-placeholder-val="{{ true }}"><span style="width:108px;height:108px;border-radius:50%;background:#244232;color:#f4efe4;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:38px;font-family:'Hanken Grotesk',sans-serif;">{{ co.initials }}</span></sc-if>
+            <div>
+              <div style="font-size:19px;font-weight:800;color:#1b2a1f;">{{ co.name }}</div>
+              <div style="font-size:13.5px;color:#3c6b48;font-family:'Spline Sans Mono',monospace;margin-top:3px;">{{ co.role }}</div>
+            </div>
+            <sc-if value="{{ co.hasBio }}" hint-placeholder-val="{{ false }}"><p style="font-size:14.5px;line-height:1.55;color:#46563f;margin:0;">{{ co.bio }}</p></sc-if>
           </div>
-        </div>
-        <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:10px;overflow:hidden;">
-          <div style="aspect-ratio:4/5;overflow:hidden;"><img src="assets/coach-james-o.jpg" alt="Coach James Victoria" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;" /></div>
-          <div style="padding:22px;">
-            <h3 style="font-size:19px;font-weight:800;margin:0 0 3px;color:#1b2a1f;">James Victoria</h3>
-            <div style="font-family:'Spline Sans Mono',monospace;font-size:11.5px;letter-spacing:0.06em;text-transform:uppercase;color:#7fb43f;margin-bottom:12px;">Youth Program Lead</div>
-            <p style="font-size:14.5px;line-height:1.55;color:#56664f;margin:0;">Leads our junior squad and competition prep — calm, encouraging, and a favorite with the younger archers.</p>
-          </div>
-        </div>
-        <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:10px;overflow:hidden;">
-          <div style="aspect-ratio:4/5;overflow:hidden;"><img src="assets/coach-rotsen-o.jpg" alt="Coach Rotsen Vinluan" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;" /></div>
-          <div style="padding:22px;">
-            <h3 style="font-size:19px;font-weight:800;margin:0 0 3px;color:#1b2a1f;">Rotsen Vinluan</h3>
-            <div style="font-family:'Spline Sans Mono',monospace;font-size:11.5px;letter-spacing:0.06em;text-transform:uppercase;color:#7fb43f;margin-bottom:12px;">Range Coach</div>
-            <p style="font-size:14.5px;line-height:1.55;color:#56664f;margin:0;">Form specialist and safety-obsessed range coach who keeps every lane running smoothly and every shot dialed in.</p>
-          </div>
-        </div>
+        </sc-for>
       </div>
     </section>
   </div>
@@ -4915,6 +4902,10 @@ class Component extends DCLogic {
       isMobile, isDesktop: !isMobile, navOpen,
       toggleNav: () => this.setState(s => ({ navOpen: !s.navOpen })),
       packages, testimonials, values, faqs,
+      aboutCoaches: this.coaches().map(c => {
+        const av = this.coachAvatar(c);
+        return { name: c.name, role: c.role || 'Coach', bio: c.bio || '', hasBio: !!(c.bio && String(c.bio).trim()), hasPhoto: av.hasPhoto, noPhoto: !av.hasPhoto, photo: av.photo, initials: av.initials };
+      }),
       addPass,
       scheduleDays, activeClasses, dayClosed: activeClasses.length === 0,
       calendarConnected: calConnected, calendarPending: !calConnected, calendarEmbedSrc: calEmbedSrc, calendarLink: calLink,
