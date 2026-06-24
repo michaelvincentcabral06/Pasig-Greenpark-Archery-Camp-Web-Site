@@ -3256,14 +3256,15 @@ class Component extends DCLogic {
     this.setState({ acctLoading: true, acctError: '' });
     const ep = this.endpoint();
     const qs = (hasEmail ? ('&email=' + encodeURIComponent(email)) : '') + (ref ? ('&ref=' + encodeURIComponent(ref)) : '');
-    const finish = (list, name) => {
-      const plans = this.loadAcctPlans(email);
+    const finish = (list, name, em) => {
+      em = em || email;
+      const plans = this.loadAcctPlans(em);
       if ((!list || !list.length) && (!plans || !plans.length)) {
-        this.setState({ acctLoading: false, acctError: 'No bookings or plans found for that email. Use the address from your confirmation.' });
+        this.setState({ acctLoading: false, acctError: 'No bookings or plans found. Check the email or reference from your confirmation.' });
         return;
       }
       this.setState({ acctIn: true, acctLoading: false, acctError: '', acctBookings: list || [], acctName: name || (list && list[0] && list[0].name) || (plans && plans[0] && plans[0].holder) || '', acctPlans: plans });
-      this.fetchPlansForEmail(email); // refresh passes from the backend (cross-device)
+      this.fetchPlansForEmail(em); // refresh passes from the backend (cross-device)
     };
     if (!ep) { setTimeout(() => finish(this.localAcctMatches(email, ref)), 250); return; }
     fetch(ep + '?action=lookup' + qs)
@@ -3274,7 +3275,7 @@ class Component extends DCLogic {
         try { localStorage.setItem('pgac_acct_emails', JSON.stringify(emails)); } catch (e) {}
         this.setState({ acctEmail: primary, acctEmails: emails });
         const remote = (data && data.bookings) ? data.bookings : [];
-        const local = this.localAcctMatches(email, ref);
+        const local = this.localAcctMatches(primary || email, ref);
         // merge remote + any device-only rows (dedupe by eventId/ts/date+time)
         const seen = {}, merged = [];
         // Dedupe by the slot itself (date + time). The same booking can arrive once from
@@ -3286,7 +3287,7 @@ class Component extends DCLogic {
           const k = (b.date && b.time) ? (b.date + '|' + b.time) : ('x|' + (b.eventId || b.ref || b.ts || ''));
           if (!seen[k]) { seen[k] = 1; merged.push(b); }
         });
-        finish(merged, (data && data.name));
+        finish(merged, (data && data.name), primary);
       })
       .catch(() => finish(this.localAcctMatches(email, ref)));
   }
