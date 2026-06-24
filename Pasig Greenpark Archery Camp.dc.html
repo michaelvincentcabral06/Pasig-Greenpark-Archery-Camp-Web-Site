@@ -2056,6 +2056,16 @@
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:18px 0 18px;">
             <sc-for list="{{ adminCoachCards }}" as="cc" hint-placeholder-count="3">
               <div style="background:{{ cc.bg }};border:1px solid rgba(36,66,50,0.12);border-radius:14px;padding:18px 20px;">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                  <sc-if value="{{ cc.hasPhoto }}" hint-placeholder-val="{{ false }}"><img src="{{ cc.photo }}" alt="{{ cc.name }}" style="width:54px;height:54px;border-radius:50%;object-fit:cover;flex:none;" /></sc-if>
+                  <sc-if value="{{ cc.noPhoto }}" hint-placeholder-val="{{ true }}"><span style="width:54px;height:54px;border-radius:50%;flex:none;background:#244232;color:#f4efe4;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;font-family:'Hanken Grotesk',sans-serif;">{{ cc.initials }}</span></sc-if>
+                  <div style="display:flex;flex-direction:column;gap:6px;">
+                    <label style="background:#f4efe4;border:1px solid rgba(36,66,50,0.18);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;color:#244232;padding:7px 12px;border-radius:999px;">Change photo<input type="file" accept="image/*" onChange="{{ cc.onPhotoFile }}" style="display:none;" /></label>
+                    <sc-if value="{{ cc.hasPhoto }}" hint-placeholder-val="{{ false }}"><button onClick="{{ cc.removePhoto }}" style="background:none;border:none;cursor:pointer;color:#b4512f;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:0;text-align:left;">Remove photo</button></sc-if>
+                  </div>
+                </div>
+                <label style="font-size:11.5px;font-weight:700;color:#244232;">Bio<textarea value="{{ cc.bioValue }}" onInput="{{ cc.setBio }}" rows="2" placeholder="A short line shown on the About page" style="display:block;width:100%;box-sizing:border-box;margin-top:3px;padding:9px 11px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:13px;font-family:'Hanken Grotesk',sans-serif;resize:vertical;"></textarea></label>
+                <button onClick="{{ cc.saveBio }}" style="align-self:flex-start;background:#4d7327;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;margin:8px 0 4px;">Save bio</button>
                 <sc-if value="{{ cc.notEditing }}" hint-placeholder-val="{{ true }}">
                   <div style="font-size:17px;font-weight:800;color:{{ cc.fg }};">{{ cc.name }}</div>
                   <div style="font-size:13px;color:{{ cc.sub }};margin-top:2px;">{{ cc.role }}</div>
@@ -4819,6 +4829,12 @@ class Component extends DCLogic {
       setEditPass: (e) => this.setState({ coachEditPass: e.target.value }),
       saveEdit: () => this.saveEditCoach(c.id),
       cancelEdit: () => this.cancelEditCoach(),
+      hasPhoto: !!c.photo, noPhoto: !c.photo, photo: c.photo || '', initials: this.coachInitials(c.name),
+      bioValue: (this.state.coachBioDrafts[c.id] != null ? this.state.coachBioDrafts[c.id] : (c.bio || '')),
+      setBio: (e) => { const v = e.target.value; this.setState(s => ({ coachBioDrafts: { ...s.coachBioDrafts, [c.id]: v } })); },
+      saveBio: () => this.saveCoachProfile(c.id, { bio: (this.state.coachBioDrafts[c.id] != null ? this.state.coachBioDrafts[c.id] : (c.bio || '')) }),
+      onPhotoFile: (e) => { const f = e.target.files && e.target.files[0]; if (f) this.resizeImageFile(f, (url) => this.saveCoachProfile(c.id, { photo: url })); },
+      removePhoto: () => this.saveCoachProfile(c.id, { photo: '' }),
     }));
     const adminCoachPicked = !!this.state.coachId;
     const adminCoachName = (this.coachById(this.state.coachId) || {}).name || '';
