@@ -3203,6 +3203,9 @@ class Component extends DCLogic {
   tsToDateStr(ts) {
     try { const d = new Date(ts); if (isNaN(d.getTime())) return ''; return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); } catch (e) { return ''; }
   }
+  prettyDateStr(dateStr) {
+    try { return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }); } catch (e) { return dateStr; }
+  }
   addDaysStr(dateStr, n) {
     if (!dateStr) return '';
     const p = String(dateStr).split('-'); if (p.length !== 3) return '';
@@ -3773,6 +3776,8 @@ class Component extends DCLogic {
     const plan = this.findPlan(email, ts);
     const curCount = (plan && plan.sessions) ? plan.sessions.length : 0;
     if (cap != null && curCount >= cap) { this.setState({ acctSchedMsg: 'All sessions on this pass are scheduled.' }); return; }
+    const _exp2 = this.planExpiry(plan);
+    if (_exp2 && date > _exp2) { this.setState({ acctSchedMsg: 'This pass is valid through ' + this.prettyDateStr(_exp2) + '. Pick an earlier date.' }); return; }
     this.addPlanSession(email, ts, date, time, cap);                // add + reserve calendar slot + cap + activity log
     this.emailPlanSchedule(email, ts, { mode: 'scheduled', sessions: [{ date: date, time: time }] });
     this.setState({ slotDate: '', slots: [], acctSchedMsg: 'Scheduled — a confirmation is on its way.' });
@@ -3781,6 +3786,9 @@ class Component extends DCLogic {
   closeAcctSched() { this.setState({ acctSchedKey: '', slotDate: '', slots: [], acctSchedMsg: '' }); }
   addPlanSession(email, ts, date, time, cap) {
     if (!date || !time) return;
+    const _planForExp = this.findPlan(email, ts);
+    const _exp = this.planExpiry(_planForExp);
+    if (_exp && date > _exp) { this.setState({ acctSchedMsg: 'This pass is valid through ' + this.prettyDateStr(_exp) + '.' }); return; }
     const existing = this.findPlan(email, ts);
     const curCount = existing && existing.sessions ? existing.sessions.length : 0;
     if (cap != null && curCount >= cap) return; // enforce the plan's session limit
@@ -4272,15 +4280,6 @@ class Component extends DCLogic {
       },
     }));
     const adminSetTab = (t) => () => { this.setState({ adminTab: t }); if (t === 'plans') this.loadRemotePlans(); if (t === 'dashboard') { this.loadAllBookings(); this.loadSettings(); } if (t === 'bookings') { this.loadActivity(); this.loadSettings(); } };
-    // Per-plan schedule limit: "N sessions/classes" → N; monthly/unlimited → no cap; otherwise 1 (Day Pass, hourly, single).
-    const capFor = (name) => {
-      const pk = cm.packages.find(p => p.name === name);
-      const hay = ((pk && pk.unit) || '') + ' ' + name;
-      const m = /(\d+)\s*(session|class|visit)/i.exec(hay);
-      if (m) return parseInt(m[1], 10);
-      if (/month|unlimited/i.test(hay)) return null;
-      return 1;
-    };
     const planEditKey = this.state.planEditKey || '';
     const planEditDate = this.state.planEditDate || '';
     const fmtSessionDate = (ds) => { try { return new Date(ds + 'T00:00:00').toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' }); } catch (e) { return ds; } };
@@ -4309,7 +4308,7 @@ class Component extends DCLogic {
     const adminPlanRows = allPlans.map(p => {
       const rowKey = p.email + '|' + p.ts;
       const isEditing = rowKey === planEditKey;
-      const cap = capFor(p.name);
+      const cap = this.planCap(p);
       const sessionList = (p.sessions || []).map((s, i) => ({
         date: s.date, time: s.time, label: fmtSessionDate(s.date) + ' · ' + s.time, onCalendar: !!s.eventId,
         remove: () => this.removePlanSession(p.email, p.ts, i),
@@ -4428,14 +4427,6 @@ class Component extends DCLogic {
         pick: fits ? (() => this.setState({ editTime: s.time })) : (() => {}),
       };
     });
-    const planCapFor = (name) => {
-      const pk = cm.packages.find(p => p.name === name);
-      const hay = ((pk && pk.unit) || '') + ' ' + name;
-      const m = /(\d+)\s*(session|class|visit)/i.exec(hay);
-      if (m) return parseInt(m[1], 10);
-      if (/month|unlimited/i.test(hay)) return null;
-      return 1;
-    };
     const acctPlanRows = (this.state.acctPlans || []).filter(p => String(p.status || '').toLowerCase() !== 'cancelled').map(p => {
       const pEmail = (p.email || this.state.acctEmail || '').trim().toLowerCase();
       const schedKey = pEmail + '|' + p.ts;
@@ -4445,7 +4436,7 @@ class Component extends DCLogic {
         try { lbl = new Date(s.date + 'T00:00:00').toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' }); } catch (e) {}
         return { label: lbl + ' · ' + s.time, onCalendar: !!s.eventId };
       });
-      const cap = planCapFor(p.name);
+      const cap = this.planCap(p);
       return {
         name: p.name, ts: p.ts,
         holder: p.holder || '', hasHolder: !!(p.holder && p.holder.trim()),
@@ -4765,7 +4756,7 @@ class Component extends DCLogic {
     const _schedEmail = _schedParts[0] || '';
     const _schedTs = parseInt(_schedParts[1], 10) || 0;
     const _schedPlan = _schedOpen ? this.findPlan(_schedEmail, _schedTs) : null;
-    const _schedCap = _schedPlan ? planCapFor(_schedPlan.name) : null;
+    const _schedCap = _schedPlan ? this.planCap(_schedPlan) : null;
     const acctSchedTimes = (_schedOpen && this.state.slotDate)
       ? (this.state.slots || []).filter(s => !s.full && (s.left == null || s.left > 0)).map(s => ({
           time: s.time, leftLabel: (s.left != null ? (s.left + ' open') : 'open'),
