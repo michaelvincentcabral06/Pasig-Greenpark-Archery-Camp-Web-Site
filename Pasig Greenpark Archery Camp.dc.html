@@ -2214,6 +2214,23 @@
               <label style="font-size:12.5px;font-weight:600;color:#56664f;">Capacity / hour<input value="{{ capacityEdit }}" onInput="{{ setCapacity }}" type="number" min="1" max="20" style="display:block;margin-top:4px;width:120px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
             </div>
           </div>
+          <div style="margin-top:26px;">
+            <div style="font-size:15px;font-weight:800;color:#1b2a1f;margin-bottom:4px;">Testimonials</div>
+            <p style="font-size:13px;color:#56664f;margin:0 0 12px;">The "What our archers say" cards on your home page.</p>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <sc-for list="{{ testimonialEdits }}" as="tm" hint-placeholder-count="3">
+                <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;">
+                  <textarea value="{{ tm.quote }}" onInput="{{ tm.setQuote }}" rows="2" placeholder="Quote" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#1b2a1f;outline:none;resize:vertical;"></textarea>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <input value="{{ tm.name }}" onInput="{{ tm.setName }}" placeholder="Name" style="flex:1;min-width:120px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#1b2a1f;outline:none;" />
+                    <input value="{{ tm.role }}" onInput="{{ tm.setRole }}" placeholder="Role (e.g. parent)" style="flex:1;min-width:120px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#56664f;outline:none;" />
+                    <button onClick="{{ tm.remove }}" style="background:none;border:1px solid rgba(180,81,47,0.4);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;color:#b4512f;padding:8px 14px;border-radius:999px;">Remove</button>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            <button onClick="{{ addTestimonial }}" style="margin-top:12px;background:#244232;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#f4efe4;padding:10px 18px;border-radius:999px;">+ Add testimonial</button>
+          </div>
           <button onClick="{{ resetContent }}" style="margin-top:18px;background:none;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#8a9579;padding:9px 16px;border-radius:999px;">Reset all content to defaults</button>
         </div>
         </sc-if>
@@ -2764,6 +2781,7 @@ class Component extends DCLogic {
       funShoot: c.funShoot != null ? c.funShoot : defaults.funShoot,
       rates: c.rates || defaults.rates,
       capacity: c.capacity != null ? c.capacity : defaults.capacity,
+      testimonials: c.testimonials || defaults.testimonials,
     };
   }
   componentWillUnmount() { if (this._onResize) window.removeEventListener('resize', this._onResize); }
@@ -3990,7 +4008,11 @@ class Component extends DCLogic {
       Sat: [ { time: '9:00 AM', name: 'Little Archers', level: 'ages 6–10' }, { time: '10:30 AM', name: 'Adult Beginners', level: 'beginner' }, { time: '1:00 PM', name: 'Open Range', level: 'all levels' }, { time: '3:00 PM', name: 'Youth Squad', level: 'ages 11–17' } ],
       Sun: [ { time: '9:00 AM', name: 'Open Range', level: 'all levels' }, { time: '10:30 AM', name: 'Little Archers', level: 'ages 6–10' }, { time: '1:00 PM', name: 'Private Coaching', level: 'by appt' } ],
     };
-    const cm = this.mergedContent({ packages: defaultPackages, scheduleNote: defaultScheduleNote, schedule: defaultSchedule, funShoot: '₱10', rates: { openRange: 400, session: 600, private: 1200 }, capacity: 6 });
+    const cm = this.mergedContent({ packages: defaultPackages, scheduleNote: defaultScheduleNote, schedule: defaultSchedule, funShoot: '₱10', rates: { openRange: 400, session: 600, private: 1200 }, capacity: 6, testimonials: [
+        { quote: 'My two kids beg to come back every weekend. The coaches make it safe and genuinely fun.', name: 'Liza M.', role: 'parent' },
+        { quote: "Walked in never having held a bow. Six weeks later I'm hooked and hitting golds.", name: 'Daniel R.', role: 'adult beginner' },
+        { quote: 'Cleanest, friendliest range in the metro. The Greenpark setting is unbeatable.', name: 'Coach Pia', role: 'visiting club' },
+      ] });
     cm.packages = this.normalizePackages(cm.packages);
     const packages = cm.packages.map(pk => ({ ...pk, choose: () => this.selectPlanToBuy(pk.name) }));
 
@@ -4008,11 +4030,7 @@ class Component extends DCLogic {
       pick: () => this.selectPlanToBuy(pk.name),
     }));
 
-    const testimonials = [
-      { quote: 'My two kids beg to come back every weekend. The coaches make it safe and genuinely fun.', name: 'Liza M.', role: 'parent' },
-      { quote: "Walked in never having held a bow. Six weeks later I'm hooked and hitting golds.", name: 'Daniel R.', role: 'adult beginner' },
-      { quote: 'Cleanest, friendliest range in the metro. The Greenpark setting is unbeatable.', name: 'Coach Pia', role: 'visiting club' },
-    ];
+    const testimonials = (cm.testimonials || []).map(t => ({ quote: t.quote, name: t.name, role: t.role }));
 
     const values = [
       { icon: '🍃', title: 'Calm over force', body: 'Archery rewards breath and posture, not muscle. We teach the quiet discipline that makes the rest fall into place.' },
@@ -4345,6 +4363,13 @@ class Component extends DCLogic {
       setSessions: setPkgNum(i, 'sessions'), setValidDays: setPkgNum(i, 'validDays'),
       featureRows: (p.features || []).map((f, fi) => ({ value: f, set: setFeature(i, fi), remove: removeFeature(i, fi) })),
       addFeature: addFeature(i), removePass: removePass(i),
+    }));
+    const setTestimonial = (i, key) => (e) => { const v = e.target.value; const ts = cm.testimonials.map((t, idx) => idx === i ? { ...t, [key]: v } : t); saveCM({ testimonials: ts }); };
+    const removeTestimonial = (i) => () => saveCM({ testimonials: cm.testimonials.filter((_, idx) => idx !== i) });
+    const addTestimonial = () => saveCM({ testimonials: cm.testimonials.concat([{ quote: 'New testimonial', name: 'Name', role: 'role' }]) });
+    const testimonialEdits = cm.testimonials.map((t, i) => ({
+      quote: t.quote, name: t.name, role: t.role,
+      setQuote: setTestimonial(i, 'quote'), setName: setTestimonial(i, 'name'), setRole: setTestimonial(i, 'role'), remove: removeTestimonial(i),
     }));
     const updateClass = (day, i, key) => (e) => { const v = e.target.value; const arr = (cm.schedule[day] || []).map((c, idx) => idx === i ? { ...c, [key]: v } : c); saveCM({ schedule: { ...cm.schedule, [day]: arr } }); };
     const scheduleEdit = dayList.map(day => ({
@@ -5197,7 +5222,7 @@ class Component extends DCLogic {
       actHasPrev: actPage > 0, actHasNext: actPage < actPageCount - 1, actMultiPage: actPageCount > 1,
       actPrev: () => this.setState(s => ({ bkPage: Math.max(0, (s.bkPage || 0) - 1) })),
       actNext: () => this.setState(s => ({ bkPage: (s.bkPage || 0) + 1 })),
-      pkgEdits, scheduleEdit,
+      pkgEdits, scheduleEdit, testimonialEdits, addTestimonial,
       funShootEdit: cm.funShoot,
       setFunShoot: (e) => saveCM({ funShoot: e.target.value }),
       rateOpenEdit: String((cm.rates && cm.rates.openRange) != null ? cm.rates.openRange : 400),
