@@ -1709,7 +1709,7 @@
                     <button onClick="{{ pl.openSched }}" style="background:#7fb43f;color:#1b2a1f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;">Schedule a session</button>
                   </sc-if>
                 </sc-if>
-                <sc-if value="{{ pl.atCap }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;color:#8a9579;font-family:'Spline Sans Mono',monospace;">{{ pl.capFullLabel }}</span></sc-if>
+                <sc-if value="{{ pl.showCapNote }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;color:#8a9579;font-family:'Spline Sans Mono',monospace;">{{ pl.capFullLabel }}</span></sc-if>
                 <sc-if value="{{ pl.expired }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;color:#b4512f;font-family:'Spline Sans Mono',monospace;">{{ pl.expiredNote }}</span></sc-if>
               </div>
             </sc-for>
@@ -4617,6 +4617,7 @@ class Component extends DCLogic {
         showSchedLabel: true,
         schedKey: schedKey,
         atCap: cap != null && sess.length >= cap,
+        showCapNote: (cap != null && sess.length >= cap) && !expired,
         expired: expired,
         expiryLabel: expDate ? ((expired ? 'Expired ' : 'Expires ') + this.prettyDateStr(expDate)) : '',
         hasExpiry: !!expDate,
