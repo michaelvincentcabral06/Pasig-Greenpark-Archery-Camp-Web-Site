@@ -1035,7 +1035,7 @@ function addCoach_(body) {
   };
   list.push(coach);
   saveCoaches_(list);
-  dbLog_('', 'Coach added', coach.name + (coach.role ? (' · ' + coach.role) : ''), coach.name, '');
+  dbLog_('', 'Coach added', coach.name + (coach.role ? (' · ' + coach.role) : ''), coach.name, '', 'admin');
   return json_({ ok: true, coach: coach, coaches: list });
 }
 function updateCoach_(body) {
@@ -1050,7 +1050,7 @@ function updateCoach_(body) {
   c.bio = (body.bio != null ? body.bio : c.bio);
   list[i] = c;
   saveCoaches_(list);
-  dbLog_('', 'Coach updated', c.name + (c.role ? (' · ' + c.role) : ''), c.name, '');
+  dbLog_('', 'Coach updated', c.name + (c.role ? (' · ' + c.role) : ''), c.name, '', 'admin');
   return json_({ ok: true, coach: c, coaches: list });
 }
 function deleteCoach_(body) {
@@ -1061,7 +1061,7 @@ function deleteCoach_(body) {
   if (!removed) return json_({ ok: false, reason: 'not found' });
   saveCoaches_(next);
   setCoachPhotoCell_(id, '');
-  dbLog_('', 'Coach removed', removed.name, removed.name, '');
+  dbLog_('', 'Coach removed', removed.name, removed.name, '', 'admin');
   return json_({ ok: true, coaches: next });
 }
 
@@ -1497,7 +1497,7 @@ function cancel_(body) {
   dbMarkCancelled_(evId, ref, dateStr, time);
   dbAppend_('cancels', [nowStr_(), ref, dateStr, time, program, body.name || '', custEmail, (body.by || 'customer'), evId]);
   // Log real cancellations to the activity feed (skip silent plan-session swaps where notify===false).
-  if (body.notify !== false) dbLog_(ref, 'Cancelled', (program || '') + (dateStr ? (' · ' + dateStr + (time ? ' ' + time : '')) : ''), body.name || '', custEmail);
+  if (body.notify !== false) dbLog_(ref, 'Cancelled', (program || '') + (dateStr ? (' · ' + dateStr + (time ? ' ' + time : '')) : ''), body.name || '', custEmail, (body.by === 'admin' ? 'admin' : 'client'));
 
   var emailed = false;
   if (body.notify !== false && custEmail) {
