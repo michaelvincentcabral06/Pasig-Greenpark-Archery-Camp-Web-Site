@@ -534,9 +534,9 @@
         </div>
         <div style="border-radius:12px;border:1px solid rgba(127,180,63,0.28);background:#fffdf6;padding:clamp(16px,3vw,24px);">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-            <button onClick="{{ calViewPrev }}" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-size:18px;font-weight:800;color:#244232;width:36px;height:36px;border-radius:8px;">‹</button>
+            <button onClick="{{ calViewPrev }}" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-size:18px;font-weight:800;color:#244232;width:40px;height:40px;border-radius:8px;">‹</button>
             <span style="font-size:16px;font-weight:800;color:#1b2a1f;">{{ calMonthLabel }}</span>
-            <button onClick="{{ calViewNext }}" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-size:18px;font-weight:800;color:#244232;width:36px;height:36px;border-radius:8px;">›</button>
+            <button onClick="{{ calViewNext }}" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-size:18px;font-weight:800;color:#244232;width:40px;height:40px;border-radius:8px;">›</button>
           </div>
           <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;">
             <sc-for list="{{ calDowHeads }}" as="dh" hint-placeholder-count="7"><div style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:11px;color:#8a9579;padding-bottom:4px;">{{ dh }}</div></sc-for>
@@ -897,9 +897,9 @@
               <div>
                 <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">How many sessions?</label>
                 <div style="display:flex;align-items:center;justify-content:space-between;background:#244232;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:7px 10px;">
-                  <button onClick="{{ decSession }}" aria-label="Fewer sessions" style="width:38px;height:38px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;">−</button>
+                  <button onClick="{{ decSession }}" aria-label="Fewer sessions" style="width:44px;height:44px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;">−</button>
                   <div data-test="session-target" style="font-size:17px;font-weight:800;color:#f4efe4;">{{ sessionTargetLabel }}</div>
-                  <button onClick="{{ incSession }}" aria-label="More sessions" style="width:38px;height:38px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;">+</button>
+                  <button onClick="{{ incSession }}" aria-label="More sessions" style="width:44px;height:44px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;">+</button>
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px;">
                   <button onClick="{{ setSession1 }}" style="padding:9px;background:#244232;border:1px solid rgba(244,239,228,0.18);border-radius:8px;color:#cdd6c5;font-family:'Hanken Grotesk',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;">1</button>
@@ -981,9 +981,9 @@
                 <p style="font-size:11.5px;color:#8a9579;margin:0 0 10px;line-height:1.5;">Open Range lets you book several days at once. Tap days below, then choose a time for each.</p>
                 <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:12px;padding:14px;">
                   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                    <button onClick="{{ calPrev }}" aria-label="Previous month" style="width:34px;height:34px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.08);color:#f4efe4;font-size:18px;font-weight:700;line-height:1;opacity:{{ calPrevOpacity }};cursor:{{ calPrevCursor }};">‹</button>
+                    <button onClick="{{ calPrev }}" aria-label="Previous month" style="width:40px;height:40px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.08);color:#f4efe4;font-size:18px;font-weight:700;line-height:1;opacity:{{ calPrevOpacity }};cursor:{{ calPrevCursor }};">‹</button>
                     <span style="font-size:15px;font-weight:800;color:#f4efe4;letter-spacing:-0.01em;">{{ calLabel }}</span>
-                    <button onClick="{{ calNext }}" aria-label="Next month" style="width:34px;height:34px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.08);color:#f4efe4;font-size:18px;font-weight:700;line-height:1;cursor:pointer;">›</button>
+                    <button onClick="{{ calNext }}" aria-label="Next month" style="width:40px;height:40px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.08);color:#f4efe4;font-size:18px;font-weight:700;line-height:1;cursor:pointer;">›</button>
                   </div>
                   <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:6px;">
                     <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.04em;color:#8a9579;">Su</span>
@@ -1061,12 +1061,12 @@
               <div>
                 <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">How many archers?</label>
                 <div style="display:flex;align-items:center;justify-content:space-between;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:7px 10px;">
-                  <button onClick="{{ decParty }}" aria-label="Fewer archers" style="width:38px;height:38px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;" style-hover="background:rgba(244,239,228,0.2);">−</button>
+                  <button onClick="{{ decParty }}" aria-label="Fewer archers" style="width:44px;height:44px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;" style-hover="background:rgba(244,239,228,0.2);">−</button>
                   <div style="text-align:center;">
                     <div style="font-size:17px;font-weight:800;color:#f4efe4;">{{ partyLabel }}</div>
                     <sc-if value="{{ isGroup }}" hint-placeholder-val="{{ false }}"><div style="font-size:11px;color:#7fb43f;font-family:'Spline Sans Mono',monospace;margin-top:1px;">group · takes {{ party }} seats</div></sc-if>
                   </div>
-                  <button onClick="{{ incParty }}" aria-label="More archers" style="width:38px;height:38px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;" style-hover="background:rgba(244,239,228,0.2);">+</button>
+                  <button onClick="{{ incParty }}" aria-label="More archers" style="width:44px;height:44px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;" style-hover="background:rgba(244,239,228,0.2);">+</button>
                 </div>
                 <p style="font-size:11.5px;color:#8a9579;margin:6px 2px 0;">Booking for a group? Each archer takes one of the {{ capacity }} hourly spots.</p>
               </div>
@@ -1317,12 +1317,12 @@
             <div>
               <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">How many archers?</label>
               <div style="display:flex;align-items:center;justify-content:space-between;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:7px 10px;">
-                <button onClick="{{ decParty }}" aria-label="Fewer archers" style="width:38px;height:38px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;" style-hover="background:rgba(244,239,228,0.2);">−</button>
+                <button onClick="{{ decParty }}" aria-label="Fewer archers" style="width:44px;height:44px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;" style-hover="background:rgba(244,239,228,0.2);">−</button>
                 <div style="text-align:center;">
                   <div style="font-size:17px;font-weight:800;color:#f4efe4;">{{ partyLabel }}</div>
                   <sc-if value="{{ isGroup }}" hint-placeholder-val="{{ false }}"><div style="font-size:11px;color:#7fb43f;font-family:'Spline Sans Mono',monospace;margin-top:1px;">group · takes {{ party }} seats</div></sc-if>
                 </div>
-                <button onClick="{{ incParty }}" aria-label="More archers" style="width:38px;height:38px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;" style-hover="background:rgba(244,239,228,0.2);">+</button>
+                <button onClick="{{ incParty }}" aria-label="More archers" style="width:44px;height:44px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;" style-hover="background:rgba(244,239,228,0.2);">+</button>
               </div>
               <p style="font-size:11.5px;color:#8a9579;margin:6px 2px 0;">Booking for a group? Each archer takes one of the {{ capacity }} hourly spots.</p>
             </div>
@@ -1440,9 +1440,9 @@
               <p style="font-size:11.5px;color:#8a9579;margin:0 0 10px;line-height:1.5;">Open Range lets you book several days at once. Tap days below, then choose a time for each.</p>
               <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:12px;padding:14px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                  <button onClick="{{ calPrev }}" aria-label="Previous month" style="width:34px;height:34px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.08);color:#f4efe4;font-size:18px;font-weight:700;line-height:1;opacity:{{ calPrevOpacity }};cursor:{{ calPrevCursor }};">‹</button>
+                  <button onClick="{{ calPrev }}" aria-label="Previous month" style="width:40px;height:40px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.08);color:#f4efe4;font-size:18px;font-weight:700;line-height:1;opacity:{{ calPrevOpacity }};cursor:{{ calPrevCursor }};">‹</button>
                   <span style="font-size:15px;font-weight:800;color:#f4efe4;letter-spacing:-0.01em;">{{ calLabel }}</span>
-                  <button onClick="{{ calNext }}" aria-label="Next month" style="width:34px;height:34px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.08);color:#f4efe4;font-size:18px;font-weight:700;line-height:1;cursor:pointer;">›</button>
+                  <button onClick="{{ calNext }}" aria-label="Next month" style="width:40px;height:40px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.08);color:#f4efe4;font-size:18px;font-weight:700;line-height:1;cursor:pointer;">›</button>
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:6px;">
                   <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.04em;color:#8a9579;">Su</span>
@@ -1619,9 +1619,9 @@
                   <div>
                     <label style="display:block;font-size:12.5px;font-weight:600;color:#cdd6c5;margin-bottom:6px;">Archers</label>
                     <div style="display:flex;align-items:center;justify-content:space-between;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:6px 9px;max-width:180px;">
-                      <button onClick="{{ editDec }}" aria-label="Fewer" style="width:34px;height:34px;border-radius:7px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:20px;font-weight:700;">−</button>
+                      <button onClick="{{ editDec }}" aria-label="Fewer" style="width:44px;height:44px;border-radius:7px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:20px;font-weight:700;">−</button>
                       <span style="font-size:15px;font-weight:800;color:#f4efe4;">{{ editPartyLabel }}</span>
-                      <button onClick="{{ editInc }}" aria-label="More" style="width:34px;height:34px;border-radius:7px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:20px;font-weight:700;">+</button>
+                      <button onClick="{{ editInc }}" aria-label="More" style="width:44px;height:44px;border-radius:7px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:20px;font-weight:700;">+</button>
                     </div>
                   </div>
                   <sc-if value="{{ editIsOpen }}" hint-placeholder-val="{{ false }}">
@@ -2554,8 +2554,8 @@
   <!-- STICKY MOBILE CALL/BOOK BAR -->
   <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
   <div>
-    <div style="height:74px;"></div>
-    <div style="position:fixed;bottom:0;left:0;right:0;z-index:60;display:flex;gap:10px;padding:12px 16px;background:rgba(244,239,228,0.96);backdrop-filter:blur(10px);border-top:1px solid rgba(36,66,50,0.14);box-shadow:0 -6px 20px rgba(27,42,31,0.1);">
+    <div style="height:calc(74px + env(safe-area-inset-bottom, 0px));"></div>
+    <div style="position:fixed;bottom:0;left:0;right:0;z-index:60;display:flex;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom, 0px));background:rgba(244,239,228,0.96);backdrop-filter:blur(10px);border-top:1px solid rgba(36,66,50,0.14);box-shadow:0 -6px 20px rgba(27,42,31,0.1);">
       <a href="tel:09171276677" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:#fffdf6;color:#244232;text-decoration:none;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;padding:14px;border-radius:999px;border:1.5px solid rgba(36,66,50,0.2);">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#244232" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
         Call
