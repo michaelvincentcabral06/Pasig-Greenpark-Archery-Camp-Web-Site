@@ -2356,6 +2356,11 @@
           <div style="margin-top:26px;">
             <div style="font-size:15px;font-weight:800;color:#1b2a1f;margin-bottom:4px;">Testimonials</div>
             <p style="font-size:13px;color:#56664f;margin:0 0 12px;">The "What our archers say" cards on your home page.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+              <input value="{{ reviewsRating }}" onInput="{{ setReviewsRating }}" placeholder="Overall rating (e.g. 4.9)" style="width:160px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#1b2a1f;outline:none;" />
+              <input value="{{ reviewsCount }}" onInput="{{ setReviewsCount }}" placeholder="# of reviews (e.g. 23)" style="width:160px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#1b2a1f;outline:none;" />
+              <input value="{{ reviewsUrl }}" onInput="{{ setReviewsUrl }}" placeholder="Google Maps reviews link" style="flex:1;min-width:160px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#1b2a1f;outline:none;" />
+            </div>
             <div style="display:flex;flex-direction:column;gap:12px;">
               <sc-for list="{{ testimonialEdits }}" as="tm" hint-placeholder-count="3">
                 <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;">
@@ -2363,6 +2368,8 @@
                   <div style="display:flex;gap:8px;flex-wrap:wrap;">
                     <input value="{{ tm.name }}" onInput="{{ tm.setName }}" placeholder="Name" style="flex:1;min-width:120px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#1b2a1f;outline:none;" />
                     <input value="{{ tm.role }}" onInput="{{ tm.setRole }}" placeholder="Role (e.g. parent)" style="flex:1;min-width:120px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#56664f;outline:none;" />
+                    <input type="number" min="1" max="5" value="{{ tm.rating }}" onInput="{{ tm.setRating }}" placeholder="&#9733; 1-5" title="Star rating 1-5" style="width:72px;flex:none;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#1b2a1f;outline:none;" />
+                    <input value="{{ tm.date }}" onInput="{{ tm.setDate }}" placeholder="Date (e.g. May 2026)" style="flex:1;min-width:120px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#56664f;outline:none;" />
                     <button onClick="{{ tm.remove }}" style="background:none;border:1px solid rgba(180,81,47,0.4);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;color:#b4512f;padding:8px 14px;border-radius:999px;">Remove</button>
                   </div>
                 </div>
@@ -4616,12 +4623,17 @@ class Component extends DCLogic {
       addFeature: addFeature(i), removePass: removePass(i),
     }));
     const setTestimonial = (i, key) => (e) => { const v = e.target.value; const ts = cm.testimonials.map((t, idx) => idx === i ? { ...t, [key]: v } : t); saveCM({ testimonials: ts }); };
+    const setTestimonialRating = (i) => (e) => { const v = Math.max(1, Math.min(5, parseInt(e.target.value, 10) || 5)); const ts = cm.testimonials.map((t, idx) => idx === i ? { ...t, rating: v } : t); saveCM({ testimonials: ts }); };
     const removeTestimonial = (i) => () => saveCM({ testimonials: cm.testimonials.filter((_, idx) => idx !== i) });
-    const addTestimonial = () => saveCM({ testimonials: cm.testimonials.concat([{ quote: 'New testimonial', name: 'Name', role: 'role' }]) });
+    const addTestimonial = () => saveCM({ testimonials: cm.testimonials.concat([{ quote: 'New review', name: 'Name', role: '', rating: 5, date: '' }]) });
     const testimonialEdits = cm.testimonials.map((t, i) => ({
-      quote: t.quote, name: t.name, role: t.role,
-      setQuote: setTestimonial(i, 'quote'), setName: setTestimonial(i, 'name'), setRole: setTestimonial(i, 'role'), remove: removeTestimonial(i),
+      quote: t.quote, name: t.name, role: t.role, rating: (t.rating == null ? 5 : t.rating), date: t.date || '',
+      setQuote: setTestimonial(i, 'quote'), setName: setTestimonial(i, 'name'), setRole: setTestimonial(i, 'role'),
+      setRating: setTestimonialRating(i), setDate: setTestimonial(i, 'date'), remove: removeTestimonial(i),
     }));
+    const setReviewsRating = (e) => saveCM({ reviewsRating: e.target.value });
+    const setReviewsCount = (e) => saveCM({ reviewsCount: e.target.value });
+    const setReviewsUrl = (e) => saveCM({ reviewsUrl: e.target.value });
     const updateClass = (day, i, key) => (e) => { const v = e.target.value; const arr = (cm.schedule[day] || []).map((c, idx) => idx === i ? { ...c, [key]: v } : c); saveCM({ schedule: { ...cm.schedule, [day]: arr } }); };
     const scheduleEdit = dayList.map(day => ({
       day,
@@ -5666,7 +5678,7 @@ class Component extends DCLogic {
       clearSessFilters: clearSessFilters,
       sessMultiPage: sessPageCount > 1, sessHasPrev: sessPage > 0, sessHasNext: sessPage < sessPageCount - 1,
       sessPageLabel: ('Page ' + (sessPage + 1) + ' of ' + sessPageCount), sessPrev: sessPrev, sessNext: sessNext,
-      pkgEdits, scheduleEdit, testimonialEdits, addTestimonial,
+      pkgEdits, scheduleEdit, testimonialEdits, addTestimonial, setReviewsRating, setReviewsCount, setReviewsUrl,
       funShootEdit: cm.funShoot,
       setFunShoot: (e) => saveCM({ funShoot: e.target.value }),
       rateOpenEdit: String((cm.rates && cm.rates.openRange) != null ? cm.rates.openRange : 400),
