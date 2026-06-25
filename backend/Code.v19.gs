@@ -1031,15 +1031,18 @@ function setSplit_(body) {
 // ---------- COACHES: admin add / edit / remove (stored in Script Properties) ----------
 // The list (incl. passcodes) is returned so the website behaves the same on any device —
 // this matches the existing model where coach passcodes already live in the public site.
-function listCoaches_() {
-  var list = getCoaches_();
+// Browser-safe projection of the coach roster — NEVER includes the passcode.
+function coachesPublic_(list) {
   var photos = coachPhotoMap_();
   var out = [];
   for (var i = 0; i < list.length; i++) {
     var c = list[i];
     out.push({ id: c.id, name: c.name, first: c.first || '', role: c.role || '', bio: c.bio || '', photo: photos[c.id] || '' });
   }
-  return json_({ coaches: out });
+  return out;
+}
+function listCoaches_() {
+  return json_({ coaches: coachesPublic_(getCoaches_()) });
 }
 function slugifyCoachId_(name) {
   var base = String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'coach';
@@ -1062,7 +1065,7 @@ function addCoach_(body) {
   list.push(coach);
   saveCoaches_(list);
   dbLog_('', 'Coach added', coach.name + (coach.role ? (' · ' + coach.role) : ''), coach.name, '', 'admin');
-  return json_({ ok: true, coach: coach, coaches: list });
+  return json_({ ok: true, coach: coachesPublic_([coach])[0], coaches: coachesPublic_(list) });
 }
 function updateCoach_(body) {
   var id = (body.id || '').trim();
@@ -1077,7 +1080,7 @@ function updateCoach_(body) {
   list[i] = c;
   saveCoaches_(list);
   dbLog_('', 'Coach updated', c.name + (c.role ? (' · ' + c.role) : ''), c.name, '', 'admin');
-  return json_({ ok: true, coach: c, coaches: list });
+  return json_({ ok: true, coach: coachesPublic_([c])[0], coaches: coachesPublic_(list) });
 }
 function deleteCoach_(body) {
   var id = (body.id || '').trim();
@@ -1088,7 +1091,7 @@ function deleteCoach_(body) {
   saveCoaches_(next);
   setCoachPhotoCell_(id, '');
   dbLog_('', 'Coach removed', removed.name, removed.name, '', 'admin');
-  return json_({ ok: true, coaches: next });
+  return json_({ ok: true, coaches: coachesPublic_(next) });
 }
 
 function setCoachProfile_(body) {
