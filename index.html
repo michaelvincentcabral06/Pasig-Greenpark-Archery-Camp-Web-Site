@@ -3012,6 +3012,19 @@ class Component extends DCLogic {
     const h = this.slotHour24(label); if (h == null) return false;
     return h * 60 <= now.hour * 60 + now.minute;
   }
+  isSessionUsed(dateStr, timeLabel) {
+    if (!dateStr) return false;
+    const now = this.nowManila();
+    if (dateStr < now.date) return true;
+    if (dateStr > now.date) return false;
+    const h = this.slotHour24(timeLabel);
+    return (h != null) ? (h * 60 <= now.hour * 60 + now.minute) : false;
+  }
+  sessionEditableByCustomer(dateStr, timeLabel, plan) {
+    if (this.isSessionUsed(dateStr, timeLabel)) return false;
+    if (plan && this.isPlanExpired(plan)) return false;
+    return true;
+  }
   // deterministic pseudo-random booked count for demo mode
   sampleBooked(dateStr, h) {
     let s = 0; const str = dateStr + ':' + h;
@@ -3611,6 +3624,10 @@ class Component extends DCLogic {
     this.setState({ acctBookings: merged.concat(remoteOnly) });
   }
   cancelAcctBooking(entry) {
+    if (!this.sessionEditableByCustomer(entry.date, entry.time, null)) {
+      if (typeof alert !== 'undefined') alert('This session has already taken place — please contact us to change it.');
+      return;
+    }
     if (typeof confirm !== 'undefined' && !confirm('Cancel this session? This frees the slot for others.')) return;
     this.setState({ editBusy: true });
     this.cancelBooking(entry, true, 'customer').then(() => {
@@ -3642,6 +3659,10 @@ class Component extends DCLogic {
       .catch(() => this.setState({ editSlots: this.buildSampleSlots(dateStr), editLoading: false }));
   }
   startEdit(entry) {
+    if (!this.sessionEditableByCustomer(entry.date, entry.time, null)) {
+      if (typeof alert !== 'undefined') alert('This session has already taken place — please contact us to change it.');
+      return;
+    }
     const c = entry.concession || {};
     this.setState({
       editTs: entry.ts, editDate: entry.date || '', editTime: entry.time || '', editParty: Math.max(1, entry.party || 1),
@@ -3659,6 +3680,10 @@ class Component extends DCLogic {
     return Math.max(0, Math.round(gross - elig * party));
   }
   saveEdit(entry) {
+    if (!this.sessionEditableByCustomer(entry.date, entry.time, null)) {
+      if (typeof alert !== 'undefined') alert('This session has already taken place — please contact us to change it.');
+      return;
+    }
     const date = this.state.editDate, time = this.state.editTime, party = Math.max(1, this.state.editParty || 1);
     if (!date || !time) { return; }
     const program = entry.program || '';
@@ -4532,14 +4557,7 @@ class Component extends DCLogic {
     });
 
     // ---------- ACCOUNT VIEW MODEL ----------
-    const acctNow = todayStr;
-    const acctNowMin = (new Date()).getHours() * 60 + (new Date()).getMinutes();
-    const sessionIsPast = (b) => {
-      if (!b.date) return false;
-      if (b.date < acctNow) return true;
-      if (b.date > acctNow) return false;
-      const h = this.slotHour24(b.time); return h != null ? (h * 60 <= acctNowMin) : false;
-    };
+    const sessionIsPast = (b) => this.isSessionUsed(b.date, b.time);
     const fmtSession = (b) => {
       let pretty = b.date; try { pretty = new Date(b.date + 'T00:00:00').toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' }); } catch (e) {}
       const cl = b.concession ? [b.concession.pasig ? 'Pasig' : '', b.concession.local ? 'Greenpark/RHS' : '', b.concession.pac ? 'PAC' : ''].filter(Boolean).join(' + ') : '';
