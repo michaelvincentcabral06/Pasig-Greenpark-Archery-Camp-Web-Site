@@ -1962,6 +1962,7 @@
           <div style="display:flex;gap:8px;margin-bottom:18px;">
             <button onClick="{{ goSessions }}" style="background:{{ bkSessTabBg }};color:{{ bkSessTabFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;padding:9px 18px;border-radius:999px;">Sessions</button>
             <button onClick="{{ goPasses }}" style="background:{{ bkPassTabBg }};color:{{ bkPassTabFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;padding:9px 18px;border-radius:999px;">Passes</button>
+            <button onClick="{{ goCalendar }}" style="background:{{ bkCalTabBg }};color:{{ bkCalTabFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;padding:9px 18px;border-radius:999px;">Calendar</button>
           </div>
           <sc-if value="{{ bkViewSessions }}" hint-placeholder-val="{{ true }}">
           <div>
@@ -2105,6 +2106,38 @@
             <sc-if value="{{ plHasNext }}" hint-placeholder-val="{{ true }}"><button onClick="{{ plNext }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">Next →</button></sc-if>
           </div>
           </sc-if>
+          </div>
+          </sc-if>
+          <sc-if value="{{ bkViewCalendar }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;max-width:520px;">
+              <button onClick="{{ calPrev }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-size:18px;font-weight:800;color:#244232;width:36px;height:36px;border-radius:8px;">‹</button>
+              <span style="font-size:16px;font-weight:800;color:#1b2a1f;">{{ calMonthLabel }}</span>
+              <button onClick="{{ calNext }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-size:18px;font-weight:800;color:#244232;width:36px;height:36px;border-radius:8px;">›</button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;max-width:520px;">
+              <sc-for list="{{ calDowHeads }}" as="dh" hint-placeholder-count="7"><div style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:11px;color:#8a9579;padding-bottom:4px;">{{ dh }}</div></sc-for>
+              <sc-for list="{{ calAdminCells }}" as="cc" hint-placeholder-count="35">
+                <sc-if value="{{ cc.blank }}" hint-placeholder-val="{{ false }}"><div></div></sc-if>
+                <sc-if value="{{ cc.date }}" hint-placeholder-val="{{ true }}"><button onClick="{{ cc.pick }}" style="position:relative;min-height:46px;background:{{ cc.cellBg }};border:1px solid {{ cc.cellBorder }};border-radius:8px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;padding:5px;text-align:left;"><span style="font-size:13px;font-weight:700;color:#1b2a1f;">{{ cc.day }}</span><sc-if value="{{ cc.hasCount }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:4px;right:5px;font-size:10.5px;font-weight:800;color:#4d7327;font-family:'Spline Sans Mono',monospace;">{{ cc.count }}</span></sc-if></button></sc-if>
+              </sc-for>
+            </div>
+            <sc-if value="{{ calHasSel }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:16px;max-width:520px;">
+              <div style="font-size:15px;font-weight:800;color:#1b2a1f;margin-bottom:10px;">{{ calSelLabel }}</div>
+              <sc-if value="{{ calAdminDay }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <sc-for list="{{ calAdminDay }}" as="r" hint-placeholder-count="0">
+                    <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:10px;padding:11px 15px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                      <span style="min-width:74px;font-weight:800;color:#244232;font-family:'Spline Sans Mono',monospace;font-size:13px;">{{ r.time }}</span>
+                      <div style="flex:1;min-width:140px;"><div style="font-weight:700;color:#1b2a1f;">{{ r.name }}</div><div style="font-size:12.5px;color:#56664f;">{{ r.program }} · {{ r.coachName }}</div></div>
+                      <span style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;font-weight:700;text-transform:uppercase;background:{{ r.statusBg }};color:{{ r.statusFg }};padding:5px 11px;border-radius:999px;">{{ r.statusLabel }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+            </sc-if>
           </div>
           </sc-if>
         </div>
@@ -2590,6 +2623,7 @@ class Component extends DCLogic {
     acctUpPage: 0, acctPastPage: 0, acctPassPage: 0,
     acctUpSearch: '', acctUpProgram: 'all', acctUpRange: 'all', acctUpEmailF: 'all',
     bkView: 'sessions',
+    calSel: '', calDayAvail: [], calAvailLoading: false,
     sessSearch: '', sessStatus: 'all', sessCoach: 'all', sessRange: 'all', sessPage: 0,
     acctReschedIdx: null,
     acctLoading: false,
@@ -4423,8 +4457,8 @@ class Component extends DCLogic {
     }
     const calThisStr = calYear + '-' + String(calMon + 1).padStart(2, '0');
     const calCanPrev = calThisStr > todayStr.slice(0, 7);
-    const calPrev = () => { if (calCanPrev) this.shiftCalMonth(-1); };
-    const calNext = () => this.shiftCalMonth(1);
+    const _bkgCalPrev = () => { if (calCanPrev) this.shiftCalMonth(-1); };
+    const _bkgCalNext = () => this.shiftCalMonth(1);
     const calPrevOpacity = calCanPrev ? '1' : '0.3';
     const calPrevCursor = calCanPrev ? 'pointer' : 'default';
     const multiPicks = selDates.map(d => {
@@ -4663,7 +4697,35 @@ class Component extends DCLogic {
     const clearSessFilters = () => this.setState({ sessSearch: '', sessStatus: 'all', sessCoach: 'all', sessRange: 'all', sessPage: 0 });
     const goSessions = () => this.setState({ bkView: 'sessions' });
     const goPasses = () => this.setState({ bkView: 'passes' });
-    const bkViewSessions = this.state.bkView !== 'passes';
+    const bkViewSessions = (this.state.bkView || 'sessions') === 'sessions';
+    const bkViewPasses = this.state.bkView === 'passes';
+    const bkViewCalendar = this.state.bkView === 'calendar';
+    const goCalendar = () => this.setState({ bkView: 'calendar' });
+    // ----- Shared month-grid builder (used by admin calendar; Task 2 reuses) -----
+    const calCur = this.state.calMonth || this.todayStr().slice(0, 7);
+    const calY = parseInt(calCur.slice(0, 4), 10), calM = parseInt(calCur.slice(5, 7), 10);
+    const calFirstDow = new Date(calY, calM - 1, 1).getDay();
+    const calDaysInMonth = new Date(calY, calM, 0).getDate();
+    const calTodayStr = this.todayStr();
+    const calPad2 = (n) => ('0' + n).slice(-2);
+    const calGrid = [];
+    for (let i = 0; i < calFirstDow; i++) calGrid.push({ blank: true });
+    for (let d = 1; d <= calDaysInMonth; d++) {
+      const ds = calY + '-' + calPad2(calM) + '-' + calPad2(d);
+      calGrid.push({ blank: false, date: ds, day: d, isToday: ds === calTodayStr, selected: ds === this.state.calSel });
+    }
+    const calMonthLabel = new Date(calY, calM - 1, 1).toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
+    const calShift = (delta) => { let y = calY, m = calM + delta; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } this.setState({ calMonth: y + '-' + calPad2(m), calSel: '', calDayAvail: [] }); };
+    const calPrev = () => calShift(-1), calNext = () => calShift(1);
+    const calSelLabel = this.state.calSel ? (() => { try { return new Date(this.state.calSel + 'T00:00:00').toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' }); } catch (e) { return this.state.calSel; } })() : '';
+    const calDowHeads = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+    // ----- Admin calendar cells + day detail -----
+    const calCountByDate = {};
+    (this.state.allBookings || []).forEach(b => { if (b.date && String(b.status || '').toLowerCase() !== 'cancelled') calCountByDate[b.date] = (calCountByDate[b.date] || 0) + 1; });
+    const calAdminCells = calGrid.map(c => c.blank ? c : ({ ...c, count: calCountByDate[c.date] || 0, hasCount: (calCountByDate[c.date] || 0) > 0, pick: () => this.setState({ calSel: c.date }), cellBg: c.selected ? '#e6efd6' : '#fffdf6', cellBorder: c.isToday ? '#7fb43f' : 'rgba(36,66,50,0.12)' }));
+    const calAdminDay = (this.state.calSel ? (this.state.allBookings || []).filter(b => b.date === this.state.calSel) : [])
+      .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
+      .map(b => { const c = b.coach ? this.coachById(b.coach) : null; const si = sessStatusInfo(b.status); return { time: b.time || '', name: b.name || 'Guest', program: b.program || '', coachName: c ? c.name : 'Any coach', statusLabel: si.label, statusBg: si.bg, statusFg: si.fg }; });
     const PL_PAGE = 8;
     const plTotal = plFiltered.length;
     const plPageCount = Math.max(1, Math.ceil(plTotal / PL_PAGE));
@@ -5290,7 +5352,7 @@ class Component extends DCLogic {
       dateChosen: !!this.state.slotDate, slotChosen: effSlotChosen,
       chosenLabel: effChosenLabel, chosenCount: slotCount, multiChosen: slotCount > 1,
       multiDateMode, singleDateMode: !multiDateMode,
-      calLabel, calCells, calPrev, calNext, calPrevOpacity, calPrevCursor,
+      calLabel, calCells, calPrev: _bkgCalPrev, calNext: _bkgCalNext, calPrevOpacity, calPrevCursor,
       multiPicks, multiHasDates,
       costTotalLabel, costBreakdown,
       hasDiscount, discountPctLabel, discountAmountLabel, costSubtotalLabel, savedLabel,
@@ -5524,11 +5586,14 @@ class Component extends DCLogic {
       actHasPrev: actPage > 0, actHasNext: actPage < actPageCount - 1, actMultiPage: actPageCount > 1,
       actPrev: () => this.setState(s => ({ bkPage: Math.max(0, (s.bkPage || 0) - 1) })),
       actNext: () => this.setState(s => ({ bkPage: (s.bkPage || 0) + 1 })),
-      // ----- Sessions list (Bookings tab → Sessions view) -----
-      bkView: this.state.bkView || 'sessions', bkViewSessions: bkViewSessions, bkViewPasses: !bkViewSessions,
-      goSessions: goSessions, goPasses: goPasses,
+      // ----- Sessions list (Bookings tab → Sessions/Passes/Calendar view) -----
+      bkView: this.state.bkView || 'sessions', bkViewSessions: bkViewSessions, bkViewPasses: bkViewPasses, bkViewCalendar: bkViewCalendar,
+      goSessions: goSessions, goPasses: goPasses, goCalendar: goCalendar,
       bkSessTabBg: bkViewSessions ? '#244232' : '#fffdf6', bkSessTabFg: bkViewSessions ? '#f4efe4' : '#244232',
-      bkPassTabBg: !bkViewSessions ? '#244232' : '#fffdf6', bkPassTabFg: !bkViewSessions ? '#f4efe4' : '#244232',
+      bkPassTabBg: bkViewPasses ? '#244232' : '#fffdf6', bkPassTabFg: bkViewPasses ? '#f4efe4' : '#244232',
+      bkCalTabBg: bkViewCalendar ? '#244232' : '#fffdf6', bkCalTabFg: bkViewCalendar ? '#f4efe4' : '#244232',
+      calMonthLabel: calMonthLabel, calPrev: calPrev, calNext: calNext, calSel: this.state.calSel || '', calHasSel: !!this.state.calSel, calSelLabel: calSelLabel, calDowHeads: calDowHeads,
+      calAdminCells: calAdminCells, calAdminDay: calAdminDay,
       sessionRows: sessionRows, sessCount: sessTotal, sessNone: sessTotal === 0,
       sessFiltered: sessFilteredActive,
       sessEmptyLabel: sessFilteredActive ? 'No sessions match these filters.' : 'No sessions booked yet.',
