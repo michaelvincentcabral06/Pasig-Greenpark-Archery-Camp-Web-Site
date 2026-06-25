@@ -532,19 +532,35 @@
           </div>
           <a href="{{ calendarLink }}" target="_blank" rel="noopener" style="background:#7fb43f;color:#1b2a1f;text-decoration:none;font-size:14px;font-weight:700;padding:11px 20px;border-radius:999px;white-space:nowrap;" style-hover="background:#93c75c;">Add to your calendar →</a>
         </div>
-        <sc-if value="{{ calendarConnected }}" hint-placeholder-val="{{ false }}">
-          <div style="border-radius:12px;overflow:hidden;border:1px solid rgba(127,180,63,0.28);background:#fffdf6;box-shadow:0 1px 0 rgba(127,180,63,0.1) inset;padding:6px;">
-            <iframe title="Pasig Greenpark Archery Camp calendar" src="{{ calendarEmbedSrc }}" style="width:100%;height:600px;border:0;display:block;border-radius:8px;" loading="lazy"></iframe>
+        <div style="border-radius:12px;border:1px solid rgba(127,180,63,0.28);background:#fffdf6;padding:clamp(16px,3vw,24px);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <button onClick="{{ calViewPrev }}" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-size:18px;font-weight:800;color:#244232;width:36px;height:36px;border-radius:8px;">‹</button>
+            <span style="font-size:16px;font-weight:800;color:#1b2a1f;">{{ calMonthLabel }}</span>
+            <button onClick="{{ calViewNext }}" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-size:18px;font-weight:800;color:#244232;width:36px;height:36px;border-radius:8px;">›</button>
           </div>
-        </sc-if>
-        <sc-if value="{{ calendarPending }}" hint-placeholder-val="{{ true }}">
-          <div style="border-radius:12px;border:1px dashed rgba(127,180,63,0.4);background:#1b3325;padding:clamp(32px,5vw,56px);text-align:center;">
-            <div style="width:52px;height:52px;border-radius:50%;background:rgba(127,180,63,0.16);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7fb43f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="8" y1="2.5" x2="8" y2="6.5"></line><line x1="16" y1="2.5" x2="16" y2="6.5"></line></svg>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;">
+            <sc-for list="{{ calDowHeads }}" as="dh" hint-placeholder-count="7"><div style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:11px;color:#8a9579;padding-bottom:4px;">{{ dh }}</div></sc-for>
+            <sc-for list="{{ calPubCells }}" as="co" hint-placeholder-count="35">
+              <sc-if value="{{ co.blank }}" hint-placeholder-val="{{ false }}"><div></div></sc-if>
+              <sc-if value="{{ co.date }}" hint-placeholder-val="{{ true }}"><button onClick="{{ co.pick }}" style="position:relative;min-height:46px;background:{{ co.cellBg }};border:1px solid {{ co.cellBorder }};border-radius:8px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;padding:5px;text-align:left;opacity:{{ co.cellOpacity }};"><span style="font-size:13px;font-weight:700;color:#1b2a1f;">{{ co.day }}</span><sc-if value="{{ co.open }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;bottom:5px;right:6px;width:7px;height:7px;border-radius:50%;background:#7fb43f;"></span></sc-if></button></sc-if>
+            </sc-for>
+          </div>
+          <sc-if value="{{ calHasSel }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:16px;">
+            <div style="font-size:15px;font-weight:800;color:#1b2a1f;margin-bottom:10px;">{{ calSelLabel }}</div>
+            <sc-if value="{{ calAvailLoading }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:#8a9579;">Checking availability…</div></sc-if>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <sc-for list="{{ calPubDay }}" as="s" hint-placeholder-count="0">
+                <div style="background:#f4efe4;border-radius:10px;padding:11px 15px;display:flex;align-items:center;gap:12px;">
+                  <span style="min-width:74px;font-weight:800;color:#244232;font-family:'Spline Sans Mono',monospace;font-size:13px;">{{ s.time }}</span>
+                  <span style="flex:1;font-family:'Spline Sans Mono',monospace;font-size:10.5px;font-weight:700;text-transform:uppercase;"><span style="background:{{ s.statusBg }};color:{{ s.statusFg }};padding:4px 11px;border-radius:999px;">{{ s.statusLabel }}</span></span>
+                  <sc-if value="{{ s.isOpen }}" hint-placeholder-val="{{ true }}"><button onClick="{{ s.book }}" style="background:#7fb43f;color:#1b2a1f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12.5px;font-weight:700;padding:7px 14px;border-radius:999px;">Book</button></sc-if>
+                </div>
+              </sc-for>
             </div>
-            <p style="font-size:16px;line-height:1.55;color:#cdd6c5;margin:0 auto;max-width:30em;">The live Google Calendar will appear here once it's connected. Until then, use the weekly schedule above — or tap "Add to your calendar" to follow us.</p>
           </div>
-        </sc-if>
+          </sc-if>
+        </div>
       </div>
     </section>
 
@@ -3042,6 +3058,14 @@ class Component extends DCLogic {
     this.loadCoachAvailRemote(id);
   }
 
+  pickCalDayPublic(date) {
+    this.setState({ calSel: date, calDayAvail: [], calAvailLoading: true });
+    const ep = this.endpoint(); if (!ep) { this.setState({ calAvailLoading: false }); return; }
+    fetch(ep + '?action=availability&date=' + encodeURIComponent(date)).then(r => r.json()).then(res => {
+      this.setState({ calDayAvail: (res && res.slots) || [], calAvailLoading: false });
+    }).catch(() => this.setState({ calAvailLoading: false }));
+  }
+
   // ---------- BOOKING ENGINE (capacity-aware) ----------
   // NOTE: prop defaults only seed the editor, not the runtime — so the deployed
   // Apps Script URL must live here as a real fallback, or the site silently runs
@@ -4726,6 +4750,15 @@ class Component extends DCLogic {
     const calAdminDay = (this.state.calSel ? (this.state.allBookings || []).filter(b => b.date === this.state.calSel) : [])
       .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
       .map(b => { const c = b.coach ? this.coachById(b.coach) : null; const si = sessStatusInfo(b.status); return { time: b.time || '', name: b.name || 'Guest', program: b.program || '', coachName: c ? c.name : 'Any coach', statusLabel: si.label, statusBg: si.bg, statusFg: si.fg }; });
+    // ----- Public calendar cells + day detail -----
+    const calPubCells = calGrid.map(c => { if (c.blank) return c; const dow = new Date(c.date + 'T00:00:00').getDay(); const isOpen = this.startHours(dow).length > 0; const past = c.date < calTodayStr; return { ...c, open: isOpen && !past, closed: !isOpen, past: past, pick: () => this.pickCalDayPublic(c.date), cellBg: c.selected ? '#e6efd6' : '#fffdf6', cellBorder: c.isToday ? '#7fb43f' : 'rgba(36,66,50,0.12)', cellOpacity: past ? '0.45' : '1' }; });
+    const calPubDay = ((this.state.calDayAvail) || []).map(s => {
+      const left = (s.left != null) ? s.left : (s.full ? 0 : this.capacity());
+      const st = (s.full || left <= 0) ? { label: 'Full', bg: '#f3e2e0', fg: '#b4512f' }
+               : (left <= 2) ? { label: left + ' left', bg: '#fff1cf', fg: '#8a6a1f' }
+               : { label: 'Open', bg: '#e6efd6', fg: '#4d7327' };
+      return { time: s.time || '', statusLabel: st.label, statusBg: st.bg, statusFg: st.fg, isOpen: !(s.full || left <= 0), book: () => this.go('book') };
+    });
     const PL_PAGE = 8;
     const plTotal = plFiltered.length;
     const plPageCount = Math.max(1, Math.ceil(plTotal / PL_PAGE));
@@ -5594,6 +5627,7 @@ class Component extends DCLogic {
       bkCalTabBg: bkViewCalendar ? '#244232' : '#fffdf6', bkCalTabFg: bkViewCalendar ? '#f4efe4' : '#244232',
       calMonthLabel: calMonthLabel, calViewPrev: calPrev, calViewNext: calNext, calSel: this.state.calSel || '', calHasSel: !!this.state.calSel, calSelLabel: calSelLabel, calDowHeads: calDowHeads,
       calAdminCells: calAdminCells, calAdminDay: calAdminDay,
+      calPubCells: calPubCells, calPubDay: calPubDay, calAvailLoading: this.state.calAvailLoading,
       sessionRows: sessionRows, sessCount: sessTotal, sessNone: sessTotal === 0,
       sessFiltered: sessFilteredActive,
       sessEmptyLabel: sessFilteredActive ? 'No sessions match these filters.' : 'No sessions booked yet.',
