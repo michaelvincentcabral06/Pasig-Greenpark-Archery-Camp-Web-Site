@@ -10,3 +10,6 @@ desktop.ini
 
 # Temp test scripts
 _*.mjs
+
+# Superpowers scratch (ledgers, briefs, reports, brainstorm mockups)
+.superpowers/
