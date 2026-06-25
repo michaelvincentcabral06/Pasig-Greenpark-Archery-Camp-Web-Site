@@ -601,16 +601,18 @@
     <section style="padding:clamp(48px,6vw,80px) clamp(20px,5vw,64px);max-width:1320px;margin:0 auto;width:100%;">
       <div style="font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#3c6b48;margin-bottom:12px;">The team</div>
       <h2 style="font-size:clamp(26px,3.5vw,40px);font-weight:800;letter-spacing:-0.02em;margin:0 0 40px;color:#1b2a1f;">Coaches who'll know your name</h2>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;">
         <sc-for list="{{ aboutCoaches }}" as="co" hint-placeholder-count="3">
-          <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:14px;padding:28px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;">
-            <sc-if value="{{ co.hasPhoto }}" hint-placeholder-val="{{ false }}"><img src="{{ co.photo }}" alt="{{ co.name }}" style="width:108px;height:108px;border-radius:50%;object-fit:cover;" /></sc-if>
-            <sc-if value="{{ co.noPhoto }}" hint-placeholder-val="{{ true }}"><span style="width:108px;height:108px;border-radius:50%;background:#244232;color:#f4efe4;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:38px;font-family:'Hanken Grotesk',sans-serif;">{{ co.initials }}</span></sc-if>
-            <div>
-              <div style="font-size:19px;font-weight:800;color:#1b2a1f;">{{ co.name }}</div>
-              <div style="font-size:13.5px;color:#3c6b48;font-family:'Spline Sans Mono',monospace;margin-top:3px;">{{ co.role }}</div>
+          <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:10px;overflow:hidden;">
+            <div style="aspect-ratio:4/5;overflow:hidden;">
+              <sc-if value="{{ co.hasPhoto }}" hint-placeholder-val="{{ false }}"><img src="{{ co.photo }}" alt="{{ co.name }}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;" /></sc-if>
+              <sc-if value="{{ co.noPhoto }}" hint-placeholder-val="{{ true }}"><span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#244232;color:#f4efe4;font-weight:800;font-size:56px;font-family:'Hanken Grotesk',sans-serif;">{{ co.initials }}</span></sc-if>
             </div>
-            <sc-if value="{{ co.hasBio }}" hint-placeholder-val="{{ false }}"><p style="font-size:14.5px;line-height:1.55;color:#46563f;margin:0;">{{ co.bio }}</p></sc-if>
+            <div style="padding:22px;">
+              <h3 style="font-size:19px;font-weight:800;margin:0 0 3px;color:#1b2a1f;">{{ co.name }}</h3>
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:11.5px;letter-spacing:0.06em;text-transform:uppercase;color:#7fb43f;margin-bottom:12px;">{{ co.role }}</div>
+              <sc-if value="{{ co.hasBio }}" hint-placeholder-val="{{ false }}"><p style="font-size:14.5px;line-height:1.55;color:#56664f;margin:0;">{{ co.bio }}</p></sc-if>
+            </div>
           </div>
         </sc-for>
       </div>
@@ -1867,7 +1869,17 @@
           <!-- UPCOMING SCHEDULE -->
           <h3 style="font-size:16px;font-weight:800;color:#1b2a1f;margin:28px 0 4px;">Upcoming schedule</h3>
           <p style="font-size:13px;color:#56664f;margin:0 0 14px;">The next sessions across all coaches.</p>
-          <sc-if value="{{ noUpcoming }}" hint-placeholder-val="{{ true }}"><div style="background:#fffdf6;border:1px dashed rgba(36,66,50,0.2);border-radius:12px;padding:24px;text-align:center;color:#8a9579;font-size:14px;">No upcoming sessions.</div></sc-if>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+            <select value="{{ dashUpCoach }}" onChange="{{ setDashUpCoach }}" style="padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;background:#fffdf6;">
+              <sc-for list="{{ dashUpCoachOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o.id }}">{{ o.name }}</option></sc-for>
+            </select>
+            <select value="{{ dashUpRange }}" onChange="{{ setDashUpRange }}" style="padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;background:#fffdf6;">
+              <sc-for list="{{ dashUpRangeOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o.id }}">{{ o.name }}</option></sc-for>
+            </select>
+            <input type="text" value="{{ dashUpSearch }}" onInput="{{ setDashUpSearch }}" placeholder="Search name or program…" style="flex:1;min-width:180px;padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;">
+          </div>
+          <div style="font-size:13px;color:#56664f;margin-bottom:12px;">{{ upCount }} upcoming<sc-if value="{{ upFiltered }}" hint-placeholder-val="{{ false }}"> · <button onClick="{{ clearDashUpFilters }}" style="background:none;border:none;cursor:pointer;color:#4d7327;font-weight:700;font-size:13px;font-family:'Hanken Grotesk',sans-serif;text-decoration:underline;padding:0;">clear filters</button></sc-if></div>
+          <sc-if value="{{ noUpcoming }}" hint-placeholder-val="{{ true }}"><div style="background:#fffdf6;border:1px dashed rgba(36,66,50,0.2);border-radius:12px;padding:24px;text-align:center;color:#8a9579;font-size:14px;">{{ upEmptyLabel }}</div></sc-if>
           <div style="display:flex;flex-direction:column;gap:8px;">
             <sc-for list="{{ upcoming }}" as="u" hint-placeholder-count="0">
               <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
@@ -1883,6 +1895,13 @@
               </div>
             </sc-for>
           </div>
+          <sc-if value="{{ upMultiPage }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:16px;">
+            <sc-if value="{{ upHasPrev }}" hint-placeholder-val="{{ true }}"><button onClick="{{ dashUpPrev }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">← Prev</button></sc-if>
+            <span style="font-size:13px;color:#56664f;font-family:'Spline Sans Mono',monospace;">{{ upPageLabel }}</span>
+            <sc-if value="{{ upHasNext }}" hint-placeholder-val="{{ true }}"><button onClick="{{ dashUpNext }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">Next →</button></sc-if>
+          </div>
+          </sc-if>
         </div>
         </sc-if>
 
@@ -2502,6 +2521,10 @@ class Component extends DCLogic {
     coachSplits: {},
     splitDefault: { coach: 80, equip: 10, range: 10 },
     splitDraft: {},
+    dashUpCoach: 'all',
+    dashUpRange: 'all',
+    dashUpSearch: '',
+    dashUpPage: 0,
     bkFilter: 'all',
     bkCoach: 'all',
     bkSearch: '',
@@ -4689,10 +4712,27 @@ class Component extends DCLogic {
         sumOk: sum === 100, sumBad: sum !== 100, sumLabel: sum + '%',
       };
     });
-    const upcoming = dashBookings
+    const dashUpCoach = this.state.dashUpCoach || 'all';
+    const dashUpRange = this.state.dashUpRange || 'all';
+    const dashUpSearch = (this.state.dashUpSearch || '').trim().toLowerCase();
+    const dashUpMax = (dashUpRange === '7') ? this.addDaysStr(todayStr, 7)
+                    : (dashUpRange === '30') ? this.addDaysStr(todayStr, 30) : '';
+    const upAllFiltered = dashBookings
       .filter(b => String(b.status || '').toLowerCase() !== 'cancelled' && b.date && b.date >= todayStr)
-      .sort((a, b) => ((a.date || '') + (a.time || '')).localeCompare((b.date || '') + (b.time || '')))
-      .slice(0, 14)
+      .filter(b => dashUpCoach === 'all' ? true : (String(b.coach || '') === dashUpCoach))
+      .filter(b => !dashUpMax ? true : (b.date <= dashUpMax))
+      .filter(b => {
+        if (!dashUpSearch) return true;
+        const hay = ((b.name || '') + ' ' + (b.program || '')).toLowerCase();
+        return hay.indexOf(dashUpSearch) !== -1;
+      })
+      .sort((a, b) => ((a.date || '') + (a.time || '')).localeCompare((b.date || '') + (b.time || '')));
+    const UP_PAGE = 8;
+    const upTotal = upAllFiltered.length;
+    const upPageCount = Math.max(1, Math.ceil(upTotal / UP_PAGE));
+    const upPage = Math.min(Math.max(0, this.state.dashUpPage || 0), upPageCount - 1);
+    const upcoming = upAllFiltered
+      .slice(upPage * UP_PAGE, upPage * UP_PAGE + UP_PAGE)
       .map(b => {
         const c = matchCoach(b.coach);
         return {
@@ -4703,6 +4743,18 @@ class Component extends DCLogic {
           status: String(b.status || 'booked').toLowerCase(),
         };
       });
+    const dashUpCoachOpts = [{ id: 'all', name: 'All coaches' }].concat(
+      this.coaches().map(c => ({ id: c.id, name: c.name })));
+    const dashUpRangeOpts = [
+      { id: 'all', name: 'All upcoming' }, { id: '7', name: 'Next 7 days' }, { id: '30', name: 'Next 30 days' },
+    ];
+    const dashUpIsFiltered = (dashUpCoach !== 'all' || dashUpRange !== 'all' || !!dashUpSearch);
+    const setDashUpCoach = (e) => this.setState({ dashUpCoach: e.target.value, dashUpPage: 0 });
+    const setDashUpRange = (e) => this.setState({ dashUpRange: e.target.value, dashUpPage: 0 });
+    const setDashUpSearch = (e) => this.setState({ dashUpSearch: e.target.value, dashUpPage: 0 });
+    const clearDashUpFilters = () => this.setState({ dashUpCoach: 'all', dashUpRange: 'all', dashUpSearch: '', dashUpPage: 0 });
+    const dashUpPrev = () => this.setState({ dashUpPage: Math.max(0, upPage - 1) });
+    const dashUpNext = () => this.setState({ dashUpPage: Math.min(upPageCount - 1, upPage + 1) });
 
     // ---------- ADMIN: BOOKINGS TAB (database, all devices) ----------
     const BK_PAGE = 10;
@@ -5193,7 +5245,17 @@ class Component extends DCLogic {
       coachUnassignedLabel: pesoRound(coachUnassigned), hasUnassignedPay: coachUnassigned > 0,
       coachCount: dashCoaches.length,
       coachPayRows: coachPayRows,
-      upcoming: upcoming, hasUpcoming: upcoming.length > 0, noUpcoming: upcoming.length === 0,
+      upcoming: upcoming,
+      noUpcoming: upTotal === 0,
+      upCount: upTotal,
+      upFiltered: dashUpIsFiltered,
+      upEmptyLabel: dashUpIsFiltered ? 'No sessions match these filters.' : 'No upcoming sessions.',
+      dashUpCoach: dashUpCoach, dashUpRange: dashUpRange, dashUpSearch: this.state.dashUpSearch || '',
+      dashUpCoachOpts: dashUpCoachOpts, dashUpRangeOpts: dashUpRangeOpts,
+      setDashUpCoach: setDashUpCoach, setDashUpRange: setDashUpRange, setDashUpSearch: setDashUpSearch, clearDashUpFilters: clearDashUpFilters,
+      upMultiPage: upPageCount > 1, upHasPrev: upPage > 0, upHasNext: upPage < upPageCount - 1,
+      upPageLabel: ('Page ' + (upPage + 1) + ' of ' + upPageCount),
+      dashUpPrev: dashUpPrev, dashUpNext: dashUpNext,
       tabPlansBg: this.state.adminTab === 'plans' ? '#244232' : '#fffdf6', tabPlansFg: this.state.adminTab === 'plans' ? '#f4efe4' : '#244232',
       tabPricingBg: this.state.adminTab === 'pricing' ? '#244232' : '#fffdf6', tabPricingFg: this.state.adminTab === 'pricing' ? '#f4efe4' : '#244232',
       tabScheduleBg: this.state.adminTab === 'schedule' ? '#244232' : '#fffdf6', tabScheduleFg: this.state.adminTab === 'schedule' ? '#f4efe4' : '#244232',
