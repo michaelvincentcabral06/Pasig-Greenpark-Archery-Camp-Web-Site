@@ -2537,6 +2537,8 @@ class Component extends DCLogic {
     plSearch: '',
     plPage: 0,
     acctUpPage: 0, acctPastPage: 0, acctPassPage: 0,
+    bkView: 'sessions',
+    sessSearch: '', sessStatus: 'all', sessCoach: 'all', sessRange: 'all', sessPage: 0,
     acctReschedIdx: null,
     acctLoading: false,
     acctError: '',
@@ -3528,6 +3530,14 @@ class Component extends DCLogic {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'setBookingCoach', eventId: b.eventId || '', ref: b.ref || '', date: b.date || '', time: b.time || '', coach: coachId }),
     }).then(r => r.json()).then(() => this.loadAllBookings()).catch(() => {});
+  }
+  cancelSessionBooking(b) {
+    const msg = b.eventId
+      ? ('Cancel this booking? This removes the calendar event' + (b.email ? ' and emails ' + b.email : '') + '.')
+      : 'Cancel this booking?';
+    if (typeof confirm !== 'undefined' && !confirm(msg)) return;
+    this.cancelBooking({ eventId: b.eventId, ref: b.ref, date: b.date, time: b.time, name: b.name, email: b.email }, true, 'admin')
+      .then(() => this.loadAllBookings());
   }
   // Cancel a booking from the database list (removes the calendar event + emails the customer).
   adminCancelDbBooking(b) {
@@ -4521,7 +4531,7 @@ class Component extends DCLogic {
         });
       },
     }));
-    const adminSetTab = (t) => () => { this.setState({ adminTab: t }); if (t === 'plans') this.loadRemotePlans(); if (t === 'dashboard') { this.loadAllBookings(); this.loadSettings(); } if (t === 'bookings') { this.loadActivity(); this.loadSettings(); } };
+    const adminSetTab = (t) => () => { this.setState({ adminTab: t }); if (t === 'plans') { this.loadRemotePlans(); this.loadAllBookings(); } if (t === 'dashboard') { this.loadAllBookings(); this.loadSettings(); } if (t === 'bookings') { this.loadActivity(); this.loadSettings(); } };
     const planEditKey = this.state.planEditKey || '';
     const planEditDate = this.state.planEditDate || '';
     const fmtSessionDate = (ds) => { try { return new Date(ds + 'T00:00:00').toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' }); } catch (e) { return ds; } };
@@ -4542,6 +4552,64 @@ class Component extends DCLogic {
       }
       return true;
     });
+    // ---- Sessions list builder (Bookings tab → Sessions view) ----
+    const sessStatusInfo = (st) => {
+      st = String(st || 'booked').toLowerCase();
+      if (st === 'approved') return { label: 'Approved', bg: '#e6efd6', fg: '#4d7327' };
+      if (st === 'cancelled') return { label: 'Cancelled', bg: '#f3e2e0', fg: '#b4512f' };
+      return { label: 'Pending', bg: '#fff1cf', fg: '#8a6a1f' };
+    };
+    const sessSearch = (this.state.sessSearch || '').trim().toLowerCase();
+    const sessStatus = this.state.sessStatus || 'all';
+    const sessCoach = this.state.sessCoach || 'all';
+    const sessRange = this.state.sessRange || 'all';
+    const sessFiltered = (this.state.allBookings || []).filter(b => {
+      const st = String(b.status || 'booked').toLowerCase();
+      if (sessStatus !== 'all') {
+        if (sessStatus === 'pending') { if (st === 'approved' || st === 'cancelled') return false; }
+        else if (st !== sessStatus) return false;
+      }
+      if (sessCoach !== 'all' && String(b.coach || '') !== sessCoach) return false;
+      if (sessRange === 'upcoming' && this.isSessionUsed(b.date, b.time)) return false;
+      if (sessRange === 'past' && !this.isSessionUsed(b.date, b.time)) return false;
+      if (sessSearch) {
+        const hay = ((b.name || '') + ' ' + (b.program || '') + ' ' + (b.ref || '') + ' ' + (b.email || '')).toLowerCase();
+        if (hay.indexOf(sessSearch) === -1) return false;
+      }
+      return true;
+    }).sort((a, b) => (((b.date || '') + (b.time || '')).localeCompare((a.date || '') + (a.time || ''))));
+    const SESS_PAGE = 10;
+    const sessTotal = sessFiltered.length;
+    const sessPageCount = Math.max(1, Math.ceil(sessTotal / SESS_PAGE));
+    const sessPage = Math.min(Math.max(0, this.state.sessPage || 0), sessPageCount - 1);
+    const sessionRows = sessFiltered.slice(sessPage * SESS_PAGE, sessPage * SESS_PAGE + SESS_PAGE).map(b => {
+      const c = b.coach ? this.coachById(b.coach) : null;
+      const si = sessStatusInfo(b.status);
+      let when = b.date; try { when = new Date(b.date + 'T00:00:00').toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' }); } catch (e) {}
+      return {
+        when: when, time: b.time || '', name: b.name || 'Guest', program: b.program || '',
+        coachName: c ? c.name : 'Any coach', coachId: b.coach || '',
+        amountLabel: b.amount ? ('₱' + Number(b.amount).toLocaleString('en-PH')) : '', hasAmount: !!b.amount,
+        statusLabel: si.label, statusBg: si.bg, statusFg: si.fg,
+        ref: b.ref || '', hasRef: !!b.ref,
+        phone: b.phone || '', hasPhone: !!b.phone, callHref: 'tel:' + (b.phone || '').replace(/[^0-9+]/g, ''),
+        setCoach: (e) => this.assignBookingCoach(b, e.target.value),
+        cancel: () => this.cancelSessionBooking(b),
+        isCancelled: String(b.status || '').toLowerCase() === 'cancelled',
+      };
+    });
+    const sessFilteredActive = (sessStatus !== 'all' || sessCoach !== 'all' || sessRange !== 'all' || !!sessSearch);
+    const sessStatusOpts = [{ id: 'all', name: 'All statuses' }, { id: 'approved', name: 'Approved' }, { id: 'pending', name: 'Pending' }, { id: 'cancelled', name: 'Cancelled' }];
+    const sessRangeOpts = [{ id: 'all', name: 'All time' }, { id: 'upcoming', name: 'Upcoming' }, { id: 'past', name: 'Past' }];
+    const sessCoachOpts = [{ id: 'all', name: 'All coaches' }].concat(this.coaches().map(c => ({ id: c.id, name: c.name })));
+    const sessAssignOpts = [{ id: '', name: 'Any coach' }].concat(this.coaches().map(c => ({ id: c.id, name: c.name })));
+    const setSess = (key) => (e) => this.setState({ [key]: e.target.value, sessPage: 0 });
+    const sessPrev = () => this.setState({ sessPage: Math.max(0, sessPage - 1) });
+    const sessNext = () => this.setState({ sessPage: Math.min(sessPageCount - 1, sessPage + 1) });
+    const clearSessFilters = () => this.setState({ sessSearch: '', sessStatus: 'all', sessCoach: 'all', sessRange: 'all', sessPage: 0 });
+    const goSessions = () => this.setState({ bkView: 'sessions' });
+    const goPasses = () => this.setState({ bkView: 'passes' });
+    const bkViewSessions = this.state.bkView !== 'passes';
     const PL_PAGE = 8;
     const plTotal = plFiltered.length;
     const plPageCount = Math.max(1, Math.ceil(plTotal / PL_PAGE));
@@ -5361,6 +5429,20 @@ class Component extends DCLogic {
       actHasPrev: actPage > 0, actHasNext: actPage < actPageCount - 1, actMultiPage: actPageCount > 1,
       actPrev: () => this.setState(s => ({ bkPage: Math.max(0, (s.bkPage || 0) - 1) })),
       actNext: () => this.setState(s => ({ bkPage: (s.bkPage || 0) + 1 })),
+      // ----- Sessions list (Bookings tab → Sessions view) -----
+      bkView: this.state.bkView || 'sessions', bkViewSessions: bkViewSessions, bkViewPasses: !bkViewSessions,
+      goSessions: goSessions, goPasses: goPasses,
+      bkSessTabBg: bkViewSessions ? '#244232' : '#fffdf6', bkSessTabFg: bkViewSessions ? '#f4efe4' : '#244232',
+      bkPassTabBg: !bkViewSessions ? '#244232' : '#fffdf6', bkPassTabFg: !bkViewSessions ? '#f4efe4' : '#244232',
+      sessionRows: sessionRows, sessCount: sessTotal, sessNone: sessTotal === 0,
+      sessFiltered: sessFilteredActive,
+      sessEmptyLabel: sessFilteredActive ? 'No sessions match these filters.' : 'No sessions booked yet.',
+      sessSearch: this.state.sessSearch || '', sessStatus: sessStatus, sessCoach: sessCoach, sessRange: sessRange,
+      sessStatusOpts: sessStatusOpts, sessRangeOpts: sessRangeOpts, sessCoachOpts: sessCoachOpts, sessAssignOpts: sessAssignOpts,
+      setSessSearch: setSess('sessSearch'), setSessStatus: setSess('sessStatus'), setSessCoach: setSess('sessCoach'), setSessRange: setSess('sessRange'),
+      clearSessFilters: clearSessFilters,
+      sessMultiPage: sessPageCount > 1, sessHasPrev: sessPage > 0, sessHasNext: sessPage < sessPageCount - 1,
+      sessPageLabel: ('Page ' + (sessPage + 1) + ' of ' + sessPageCount), sessPrev: sessPrev, sessNext: sessNext,
       pkgEdits, scheduleEdit, testimonialEdits, addTestimonial,
       funShootEdit: cm.funShoot,
       setFunShoot: (e) => saveCM({ funShoot: e.target.value }),
