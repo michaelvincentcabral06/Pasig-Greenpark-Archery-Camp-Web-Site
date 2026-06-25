@@ -4911,7 +4911,7 @@ class Component extends DCLogic {
       setBio: (e) => { const v = e.target.value; this.setState(s => ({ coachBioDrafts: { ...s.coachBioDrafts, [c.id]: v } })); },
       saveBio: () => this.saveCoachProfile(c.id, { bio: (this.state.coachBioDrafts[c.id] != null ? this.state.coachBioDrafts[c.id] : (c.bio || '')) }),
       onPhotoFile: (e) => { const f = e.target.files && e.target.files[0]; if (f) this.resizeImageFile(f, (url) => this.saveCoachProfile(c.id, { photo: url })); },
-      removePhoto: () => this.saveCoachProfile(c.id, { photo: '' }),
+      removePhoto: () => { if (typeof confirm !== 'undefined' && !confirm('Remove ' + (c.name || 'this coach') + '’s photo? You can upload a new one anytime.')) return; this.saveCoachProfile(c.id, { photo: '' }); },
     }));
     const adminCoachPicked = !!this.state.coachId;
     const adminCoachName = (this.coachById(this.state.coachId) || {}).name || '';
@@ -5108,7 +5108,7 @@ class Component extends DCLogic {
       portalSetBio: (e) => { const v = e.target.value; this.setState(s => ({ coachBioDrafts: { ...s.coachBioDrafts, [_pcId]: v } })); },
       portalSaveBio: () => this.saveCoachProfile(_pcId, { bio: (this.state.coachBioDrafts[_pcId] != null ? this.state.coachBioDrafts[_pcId] : (_pc.bio || '')) }),
       portalOnPhotoFile: (e) => { const f = e.target.files && e.target.files[0]; if (f) this.resizeImageFile(f, (url) => this.saveCoachProfile(_pcId, { photo: url })); },
-      portalRemovePhoto: () => this.saveCoachProfile(_pcId, { photo: '' }),
+      portalRemovePhoto: () => { if (typeof confirm !== 'undefined' && !confirm('Remove your photo? You can upload a new one anytime.')) return; this.saveCoachProfile(_pcId, { photo: '' }); },
       coachCalLabel: coachCalLabel,
       coachCalCells: coachCalCells,
       coachCalPrev: () => { if (ccCanPrev) this.coachShiftMonth(-1); },
