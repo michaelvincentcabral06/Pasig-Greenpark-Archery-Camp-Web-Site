@@ -376,6 +376,20 @@ function json_(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+// ---------- AUTH HELPERS ----------
+function adminSecret_() {
+  return PropertiesService.getScriptProperties().getProperty('ADMIN_SECRET') || '';
+}
+function assertAdmin_(body) {
+  var s = adminSecret_();
+  return !!s && String((body && body.secret) || '') === s;
+}
+function unauthorized_() { return json_({ ok: false, reason: 'unauthorized' }); }
+function coachPassOk_(coachId, pass) {
+  var c = coachById_(coachId);
+  return !!c && c.pass === String(pass || '');
+}
+
 function makeRef_(dateStr) {
   var compact = (dateStr || '').replace(/-/g, '').slice(2); // YYMMDD
   var rnd = '';
@@ -628,6 +642,21 @@ function sendPlanCancellation_(o) {
   return true;
 }
 
+// ---------- STAFF LOGIN ----------
+function staffLogin_(body) {
+  var s = adminSecret_();
+  if (!s) return json_({ ok: false, reason: 'not-configured' });
+  var code = String((body && body.code) || '');
+  if (code && code === s) return json_({ ok: true, role: 'admin' });
+  var list = getCoaches_();
+  for (var i = 0; i < list.length; i++) {
+    if (code && list[i].pass && code === list[i].pass) {
+      return json_({ ok: true, role: 'coach', id: list[i].id, name: list[i].name });
+    }
+  }
+  return json_({ ok: false, reason: 'bad-credentials' });
+}
+
 // ---------- AVAILABILITY (GET) ----------
 function doGet(e) {
   try {
@@ -641,22 +670,9 @@ function doGet(e) {
       return lookup_(e.parameter.email, e.parameter.ref);
     }
     if (action === 'plans') {
-      return listPlans_(e.parameter.email);
-    }
-    if (action === 'cancellations') {
-      return listCancellations_();
-    }
-    if (action === 'bookings') {
-      return listBookings_();
-    }
-    if (action === 'settings') {
-      return getSettings_();
-    }
-    if (action === 'coachavail') {
-      return listCoachAvail_(e.parameter.coach);
-    }
-    if (action === 'activity') {
-      return listActivity_();
+      var em = (e.parameter.email || '').trim();
+      if (!em) return json_({ ok: false, reason: 'unauthorized' });
+      return listPlans_(em);
     }
     if (action === 'coaches') {
       return listCoaches_();
@@ -664,7 +680,7 @@ function doGet(e) {
     if (action === 'content') return getContent_();
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v18', database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true });
+      return json_({ version: 'db-v19', auth: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -740,27 +756,37 @@ function coachTitle_(body) {
 function doPost(e) {
   try {
     var body = JSON.parse(e.postData.contents);
-    if (body.action === 'cancel') return cancel_(body);
-    if (body.action === 'reschedule') return reschedule_(body);
-    if (body.action === 'book')   return book_(body);
-    if (body.action === 'setCoachAvail') return setCoachAvail_(body);
+    // --- Public / customer actions (no admin secret required) ---
+    if (body.action === 'staffLogin')    return staffLogin_(body);
+    if (body.action === 'cancel')        return cancel_(body);
+    if (body.action === 'reschedule')    return reschedule_(body);
+    if (body.action === 'book')          return book_(body);
     if (body.action === 'coachLogin')    return coachLogin_(body);
-    if (body.action === 'savePlan')      return savePlan_(body);
-    if (body.action === 'removePlan')    return removePlan_(body);
-    if (body.action === 'planScheduleEmail') return planScheduleEmail_(body);
-    if (body.action === 'setSplit')          return setSplit_(body);
-    if (body.action === 'setBookingStatus')  return setBookingStatus_(body);
-    if (body.action === 'approveSession')    return approveSession_(body);
-    if (body.action === 'setBookingCoach')   return setBookingCoach_(body);
-    if (body.action === 'logAction')         return logAction_(body);
-    if (body.action === 'planCancelEmail')   return planCancelEmail_(body);
-    if (body.action === 'addCoach')          return addCoach_(body);
-    if (body.action === 'updateCoach')       return updateCoach_(body);
-    if (body.action === 'deleteCoach')       return deleteCoach_(body);
-    if (body.action === 'setCoachProfile')   return setCoachProfile_(body);
-    if (body.action === 'clearAll')          return clearAll_(body);
-    if (body.action === 'addEmailAlias')     return addEmailAlias_(body);
-    if (body.action === 'setContent')        return setContent_(body);
+    if (body.action === 'setCoachAvail') return setCoachAvail_(body);
+    // --- Gated sensitive reads (moved to POST) ---
+    if (body.action === 'bookings')      return assertAdmin_(body) ? listBookings_()      : unauthorized_();
+    if (body.action === 'activity')      return assertAdmin_(body) ? listActivity_()      : unauthorized_();
+    if (body.action === 'cancellations') return assertAdmin_(body) ? listCancellations_() : unauthorized_();
+    if (body.action === 'settings')      return assertAdmin_(body) ? getSettings_()       : unauthorized_();
+    if (body.action === 'plans')         return assertAdmin_(body) ? listPlans_('')       : unauthorized_();
+    if (body.action === 'coachavail')    return (assertAdmin_(body) || coachPassOk_(body.coach, body.pass)) ? listCoachAvail_(body.coach) : unauthorized_();
+    // --- Admin writes (all gated) ---
+    if (body.action === 'setContent')        return assertAdmin_(body) ? setContent_(body)        : unauthorized_();
+    if (body.action === 'clearAll')          return assertAdmin_(body) ? clearAll_(body)          : unauthorized_();
+    if (body.action === 'savePlan')          return assertAdmin_(body) ? savePlan_(body)          : unauthorized_();
+    if (body.action === 'removePlan')        return assertAdmin_(body) ? removePlan_(body)        : unauthorized_();
+    if (body.action === 'setSplit')          return assertAdmin_(body) ? setSplit_(body)          : unauthorized_();
+    if (body.action === 'setBookingStatus')  return assertAdmin_(body) ? setBookingStatus_(body)  : unauthorized_();
+    if (body.action === 'approveSession')    return assertAdmin_(body) ? approveSession_(body)    : unauthorized_();
+    if (body.action === 'setBookingCoach')   return assertAdmin_(body) ? setBookingCoach_(body)   : unauthorized_();
+    if (body.action === 'logAction')         return assertAdmin_(body) ? logAction_(body)         : unauthorized_();
+    if (body.action === 'planScheduleEmail') return assertAdmin_(body) ? planScheduleEmail_(body) : unauthorized_();
+    if (body.action === 'planCancelEmail')   return assertAdmin_(body) ? planCancelEmail_(body)   : unauthorized_();
+    if (body.action === 'addCoach')          return assertAdmin_(body) ? addCoach_(body)          : unauthorized_();
+    if (body.action === 'updateCoach')       return assertAdmin_(body) ? updateCoach_(body)       : unauthorized_();
+    if (body.action === 'deleteCoach')       return assertAdmin_(body) ? deleteCoach_(body)       : unauthorized_();
+    if (body.action === 'setCoachProfile')   return assertAdmin_(body) ? setCoachProfile_(body)   : unauthorized_();
+    if (body.action === 'addEmailAlias')     return assertAdmin_(body) ? addEmailAlias_(body)     : unauthorized_();
     return json_({ ok: false, reason: 'unknown action' });
   } catch (err) {
     return json_({ ok: false, reason: 'error', message: String(err) });
@@ -1011,7 +1037,7 @@ function listCoaches_() {
   var out = [];
   for (var i = 0; i < list.length; i++) {
     var c = list[i];
-    out.push({ id: c.id, name: c.name, first: c.first || '', role: c.role || '', pass: c.pass || '', bio: c.bio || '', photo: photos[c.id] || '' });
+    out.push({ id: c.id, name: c.name, first: c.first || '', role: c.role || '', bio: c.bio || '', photo: photos[c.id] || '' });
   }
   return json_({ coaches: out });
 }
