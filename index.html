@@ -2111,9 +2111,9 @@
           <sc-if value="{{ bkViewCalendar }}" hint-placeholder-val="{{ false }}">
           <div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;max-width:520px;">
-              <button onClick="{{ calPrev }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-size:18px;font-weight:800;color:#244232;width:36px;height:36px;border-radius:8px;">‹</button>
+              <button onClick="{{ calViewPrev }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-size:18px;font-weight:800;color:#244232;width:36px;height:36px;border-radius:8px;">‹</button>
               <span style="font-size:16px;font-weight:800;color:#1b2a1f;">{{ calMonthLabel }}</span>
-              <button onClick="{{ calNext }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-size:18px;font-weight:800;color:#244232;width:36px;height:36px;border-radius:8px;">›</button>
+              <button onClick="{{ calViewNext }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-size:18px;font-weight:800;color:#244232;width:36px;height:36px;border-radius:8px;">›</button>
             </div>
             <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;max-width:520px;">
               <sc-for list="{{ calDowHeads }}" as="dh" hint-placeholder-count="7"><div style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:11px;color:#8a9579;padding-bottom:4px;">{{ dh }}</div></sc-for>
@@ -2623,7 +2623,7 @@ class Component extends DCLogic {
     acctUpPage: 0, acctPastPage: 0, acctPassPage: 0,
     acctUpSearch: '', acctUpProgram: 'all', acctUpRange: 'all', acctUpEmailF: 'all',
     bkView: 'sessions',
-    calSel: '', calDayAvail: [], calAvailLoading: false,
+    calSel: '', calViewMonth: '', calDayAvail: [], calAvailLoading: false,
     sessSearch: '', sessStatus: 'all', sessCoach: 'all', sessRange: 'all', sessPage: 0,
     acctReschedIdx: null,
     acctLoading: false,
@@ -4702,7 +4702,7 @@ class Component extends DCLogic {
     const bkViewCalendar = this.state.bkView === 'calendar';
     const goCalendar = () => this.setState({ bkView: 'calendar' });
     // ----- Shared month-grid builder (used by admin calendar; Task 2 reuses) -----
-    const calCur = this.state.calMonth || this.todayStr().slice(0, 7);
+    const calCur = this.state.calViewMonth || this.todayStr().slice(0, 7);
     const calY = parseInt(calCur.slice(0, 4), 10), calM = parseInt(calCur.slice(5, 7), 10);
     const calFirstDow = new Date(calY, calM - 1, 1).getDay();
     const calDaysInMonth = new Date(calY, calM, 0).getDate();
@@ -4715,7 +4715,7 @@ class Component extends DCLogic {
       calGrid.push({ blank: false, date: ds, day: d, isToday: ds === calTodayStr, selected: ds === this.state.calSel });
     }
     const calMonthLabel = new Date(calY, calM - 1, 1).toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
-    const calShift = (delta) => { let y = calY, m = calM + delta; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } this.setState({ calMonth: y + '-' + calPad2(m), calSel: '', calDayAvail: [] }); };
+    const calShift = (delta) => { let y = calY, m = calM + delta; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } this.setState({ calViewMonth: y + '-' + calPad2(m), calSel: '', calDayAvail: [] }); };
     const calPrev = () => calShift(-1), calNext = () => calShift(1);
     const calSelLabel = this.state.calSel ? (() => { try { return new Date(this.state.calSel + 'T00:00:00').toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' }); } catch (e) { return this.state.calSel; } })() : '';
     const calDowHeads = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
@@ -5592,7 +5592,7 @@ class Component extends DCLogic {
       bkSessTabBg: bkViewSessions ? '#244232' : '#fffdf6', bkSessTabFg: bkViewSessions ? '#f4efe4' : '#244232',
       bkPassTabBg: bkViewPasses ? '#244232' : '#fffdf6', bkPassTabFg: bkViewPasses ? '#f4efe4' : '#244232',
       bkCalTabBg: bkViewCalendar ? '#244232' : '#fffdf6', bkCalTabFg: bkViewCalendar ? '#f4efe4' : '#244232',
-      calMonthLabel: calMonthLabel, calPrev: calPrev, calNext: calNext, calSel: this.state.calSel || '', calHasSel: !!this.state.calSel, calSelLabel: calSelLabel, calDowHeads: calDowHeads,
+      calMonthLabel: calMonthLabel, calViewPrev: calPrev, calViewNext: calNext, calSel: this.state.calSel || '', calHasSel: !!this.state.calSel, calSelLabel: calSelLabel, calDowHeads: calDowHeads,
       calAdminCells: calAdminCells, calAdminDay: calAdminDay,
       sessionRows: sessionRows, sessCount: sessTotal, sessNone: sessTotal === 0,
       sessFiltered: sessFilteredActive,
