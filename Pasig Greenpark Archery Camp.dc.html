@@ -1547,6 +1547,14 @@
         <sc-if value="{{ acctHasUpcoming }}" hint-placeholder-val="{{ false }}">
         <div style="margin-bottom:32px;">
           <h2 style="font-size:18px;font-weight:800;color:#1b2a1f;margin:0 0 14px;">Upcoming sessions</h2>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+            <input type="text" value="{{ acctUpSearch }}" onInput="{{ setAcctUpSearch }}" placeholder="Search program, coach, reference…" style="flex:1;min-width:180px;padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;">
+            <select value="{{ acctUpProgram }}" onChange="{{ setAcctUpProgram }}" style="padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;background:#fffdf6;"><sc-for list="{{ acctUpProgramOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o.id }}">{{ o.name }}</option></sc-for></select>
+            <select value="{{ acctUpRange }}" onChange="{{ setAcctUpRange }}" style="padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;background:#fffdf6;"><sc-for list="{{ acctUpRangeOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o.id }}">{{ o.name }}</option></sc-for></select>
+            <sc-if value="{{ acctUpShowEmailFilter }}" hint-placeholder-val="{{ false }}"><select value="{{ acctUpEmailF }}" onChange="{{ setAcctUpEmail }}" style="padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;background:#fffdf6;"><sc-for list="{{ acctUpEmailOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o.id }}">{{ o.name }}</option></sc-for></select></sc-if>
+          </div>
+          <div style="font-size:13px;color:#56664f;margin-bottom:12px;">{{ acctUpCount }} upcoming<sc-if value="{{ acctUpFilterActive }}" hint-placeholder-val="{{ false }}"> · <button onClick="{{ clearAcctUpFilters }}" style="background:none;border:none;cursor:pointer;color:#4d7327;font-weight:700;font-size:13px;font-family:'Hanken Grotesk',sans-serif;text-decoration:underline;padding:0;">clear filters</button></sc-if></div>
+          <sc-if value="{{ acctUpNoneFiltered }}" hint-placeholder-val="{{ false }}"><div style="background:#fffdf6;border:1px dashed rgba(36,66,50,0.2);border-radius:12px;padding:24px;text-align:center;color:#8a9579;font-size:14px;">No upcoming sessions match these filters.</div></sc-if>
           <div style="display:flex;flex-direction:column;gap:12px;">
             <sc-for list="{{ acctUpcoming }}" as="b" hint-placeholder-count="1">
               <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:18px 20px;">
@@ -2586,6 +2594,7 @@ class Component extends DCLogic {
     plSearch: '',
     plPage: 0,
     acctUpPage: 0, acctPastPage: 0, acctPassPage: 0,
+    acctUpSearch: '', acctUpProgram: 'all', acctUpRange: 'all', acctUpEmailF: 'all',
     bkView: 'sessions',
     sessSearch: '', sessStatus: 'all', sessCoach: 'all', sessRange: 'all', sessPage: 0,
     acctReschedIdx: null,
@@ -3634,7 +3643,8 @@ class Component extends DCLogic {
         this.setState({ acctLoading: false, acctError: 'No bookings or plans found. Check the email or reference from your confirmation.' });
         return;
       }
-      this.setState({ acctIn: true, acctLoading: false, acctError: '', acctBookings: list || [], acctName: name || (list && list[0] && list[0].name) || (plans && plans[0] && plans[0].holder) || '', acctPlans: plans, acctUpPage: 0, acctPastPage: 0, acctPassPage: 0 });
+      this.setState({ acctIn: true, acctLoading: false, acctError: '', acctBookings: list || [], acctName: name || (list && list[0] && list[0].name) || (plans && plans[0] && plans[0].holder) || '', acctPlans: plans, acctUpPage: 0, acctPastPage: 0, acctPassPage: 0,
+        acctUpSearch: '', acctUpProgram: 'all', acctUpRange: 'all', acctUpEmailF: 'all' });
       this.fetchPlansForEmail(em); // refresh passes from the backend (cross-device)
     };
     if (!ep) { setTimeout(() => finish(this.localAcctMatches(email, ref)), 250); return; }
@@ -3678,7 +3688,8 @@ class Component extends DCLogic {
       })
       .catch(() => this.setState({ mergeMsg: 'Something went wrong. Please try again.' }));
   }
-  accountLogout() { this.setState({ acctIn: false, acctBookingOpen: false, acctBookings: [], acctPlans: [], acctRef: '', acctError: '', editTs: null, acctUpPage: 0, acctPastPage: 0, acctPassPage: 0 }); }
+  accountLogout() { this.setState({ acctIn: false, acctBookingOpen: false, acctBookings: [], acctPlans: [], acctRef: '', acctError: '', editTs: null, acctUpPage: 0, acctPastPage: 0, acctPassPage: 0,
+    acctUpSearch: '', acctUpProgram: 'all', acctUpRange: 'all', acctUpEmailF: 'all' }); }
   refreshAcctLocal() {
     // after an edit, rebuild the visible list from device bookings (keeps UI instant)
     const merged = this.localAcctMatches(this.state.acctEmail, this.state.acctRef);
@@ -4730,6 +4741,7 @@ class Component extends DCLogic {
       const cl = b.concession ? [b.concession.pasig ? 'Pasig' : '', b.concession.local ? 'Greenpark/RHS' : '', b.concession.pac ? 'PAC' : ''].filter(Boolean).join(' + ') : '';
       return {
         ts: b.ts, date: b.date, time: b.time || '', program: b.program || '', pretty: pretty,
+        coachName: (b.coach ? ((this.coachById(b.coach) || {}).name || '') : ''),
         partyLabel: (b.party || 1) + ((b.party || 1) === 1 ? ' archer' : ' archers'),
         amountLabel: b.amount ? ('\u20B1' + Number(b.amount).toLocaleString('en-PH')) : '',
         ref: b.ref || '', hasRef: !!b.ref, concLabel: cl, hasConc: !!cl,
@@ -4825,7 +4837,33 @@ class Component extends DCLogic {
     });
     const planChoices = cm.packages.map(pk => ({ name: pk.name, price: pk.price, unit: pk.unit, desc: pk.desc, add: () => this.addAcctPlan(pk.name) }));
     const ACCT_PAGE = 5;
-    const acctUpAll = acctUpcoming, acctPastAll = acctPast, acctPassAll = acctPlanRows;
+    const acctUpSearch = (this.state.acctUpSearch || '').trim().toLowerCase();
+    const acctUpProgram = this.state.acctUpProgram || 'all';
+    const acctUpRange = this.state.acctUpRange || 'all';
+    const acctUpEmailF = this.state.acctUpEmailF || 'all';
+    const acctUpMax = (acctUpRange === '7') ? this.addDaysStr(this.todayStr(), 7)
+                    : (acctUpRange === '30') ? this.addDaysStr(this.todayStr(), 30) : '';
+    const acctUpFiltered = acctUpcoming.filter(u => {
+      if (acctUpProgram !== 'all' && (u.program || '') !== acctUpProgram) return false;
+      if (acctUpEmailF !== 'all' && (u.underEmail || '') !== acctUpEmailF) return false;
+      if (acctUpMax && (u.date || '') > acctUpMax) return false;
+      if (acctUpSearch) {
+        const hay = ((u.program || '') + ' ' + (u.coachName || '') + ' ' + (u.ref || '') + ' ' + (u.date || '') + ' ' + (u.pretty || '')).toLowerCase();
+        if (hay.indexOf(acctUpSearch) === -1) return false;
+      }
+      return true;
+    });
+    const acctUpPrograms = [];
+    acctUpcoming.forEach(u => { if (u.program && acctUpPrograms.indexOf(u.program) === -1) acctUpPrograms.push(u.program); });
+    const acctUpProgramOpts = [{ id: 'all', name: 'All programs' }].concat(acctUpPrograms.map(p => ({ id: p, name: p })));
+    const acctUpRangeOpts = [{ id: 'all', name: 'All upcoming' }, { id: '7', name: 'Next 7 days' }, { id: '30', name: 'Next 30 days' }];
+    const acctEmailsList = (this.state.acctEmails || []);
+    const acctUpEmailOpts = [{ id: 'all', name: 'All emails' }].concat(acctEmailsList.map(e => ({ id: e, name: e })));
+    const acctUpShowEmailFilter = acctEmailsList.length > 1;
+    const acctUpFilterActive = (acctUpProgram !== 'all' || acctUpRange !== 'all' || acctUpEmailF !== 'all' || !!acctUpSearch);
+    const setAcctUp = (key) => (e) => this.setState({ [key]: e.target.value, acctUpPage: 0 });
+    const clearAcctUpFilters = () => this.setState({ acctUpSearch: '', acctUpProgram: 'all', acctUpRange: 'all', acctUpEmailF: 'all', acctUpPage: 0 });
+    const acctUpAll = acctUpFiltered, acctPastAll = acctPast, acctPassAll = acctPlanRows;
     const acctUpPageCount = Math.max(1, Math.ceil(acctUpAll.length / ACCT_PAGE));
     const acctUpPage = Math.min(Math.max(0, this.state.acctUpPage || 0), acctUpPageCount - 1);
     const acctUpPaged = acctUpAll.slice(acctUpPage * ACCT_PAGE, acctUpPage * ACCT_PAGE + ACCT_PAGE);
@@ -5335,8 +5373,13 @@ class Component extends DCLogic {
       acctError: this.state.acctError, hasAcctError: !!this.state.acctError,
       acctName: this.state.acctName, acctFirst: (this.state.acctName || '').trim().split(' ')[0],
       acctUpcoming: acctUpPaged, acctPast: acctPastPaged,
-      acctHasUpcoming: acctUpAll.length > 0, hasUpcoming: acctUpAll.length > 0, hasPast: acctPastAll.length > 0,
-      acctEmpty: acctUpAll.length === 0 && acctPastAll.length === 0,
+      acctHasUpcoming: acctUpcoming.length > 0, hasUpcoming: acctUpcoming.length > 0, hasPast: acctPastAll.length > 0,
+      acctUpSearch: this.state.acctUpSearch || '', acctUpProgram: acctUpProgram, acctUpRange: acctUpRange, acctUpEmailF: acctUpEmailF,
+      acctUpProgramOpts: acctUpProgramOpts, acctUpRangeOpts: acctUpRangeOpts, acctUpEmailOpts: acctUpEmailOpts,
+      setAcctUpSearch: setAcctUp('acctUpSearch'), setAcctUpProgram: setAcctUp('acctUpProgram'), setAcctUpRange: setAcctUp('acctUpRange'), setAcctUpEmail: setAcctUp('acctUpEmailF'),
+      clearAcctUpFilters: clearAcctUpFilters, acctUpShowEmailFilter: acctUpShowEmailFilter, acctUpFilterActive: acctUpFilterActive,
+      acctUpCount: acctUpFiltered.length, acctUpNoneFiltered: acctUpFiltered.length === 0,
+      acctEmpty: acctUpcoming.length === 0 && acctPastAll.length === 0,
       acctUpPageLabel: 'Page ' + (acctUpPage + 1) + ' of ' + acctUpPageCount, acctUpHasPrev: acctUpPage > 0, acctUpHasNext: acctUpPage < acctUpPageCount - 1, acctUpMultiPage: acctUpPageCount > 1,
       acctUpPrev: () => this.setState(s => ({ acctUpPage: Math.max(0, (s.acctUpPage || 0) - 1) })), acctUpNext: () => this.setState(s => ({ acctUpPage: (s.acctUpPage || 0) + 1 })),
       acctPastPageLabel: 'Page ' + (acctPastPage + 1) + ' of ' + acctPastPageCount, acctPastHasPrev: acctPastPage > 0, acctPastHasNext: acctPastPage < acctPastPageCount - 1, acctPastMultiPage: acctPastPageCount > 1,
