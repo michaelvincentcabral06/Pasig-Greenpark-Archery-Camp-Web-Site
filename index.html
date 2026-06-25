@@ -1572,7 +1572,7 @@
         </sc-if>
 
         <sc-if value="{{ acctEmpty }}" hint-placeholder-val="{{ false }}">
-          <div style="background:#fffdf6;border:1px dashed rgba(36,66,50,0.2);border-radius:14px;padding:48px 24px;text-align:center;color:#8a9579;font-size:15px;">No sessions on this account yet. Tap “Book a session” to get started.</div>
+          <div style="background:#fffdf6;border:1px dashed rgba(36,66,50,0.2);border-radius:14px;padding:48px 24px;text-align:center;color:#8a9579;font-size:15px;">No sessions on this account yet. Tap "Book a session" to get started.</div>
         </sc-if>
 
         <!-- UPCOMING -->
@@ -2605,6 +2605,7 @@ class Component extends DCLogic {
     isMobile: false,
     navOpen: false,
     authed: false,
+    authSecret: '',
     adminTab: 'dashboard',
     adminPass: '',
     adminError: false,
@@ -2759,13 +2760,13 @@ class Component extends DCLogic {
     reader.readAsDataURL(file);
   }
   saveCoachProfile(id, patch) {
-    const ep = this.endpoint(); if (!ep || !id) return;
+    if (!id) return;
     const body = { action: 'setCoachProfile', id: id };
     if (patch.bio != null) body.bio = patch.bio;
     if (patch.photo != null) body.photo = patch.photo;
     this.setState({ coachBusy: true });
-    fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
-      .then(r => r.json()).then(res => { if (res && res.coaches) this.applyCoaches(res.coaches); this.setState({ coachBusy: false }); })
+    this.adminPost(body)
+      .then(res => { if (res && res.coaches) this.applyCoaches(res.coaches); this.setState({ coachBusy: false }); })
       .catch(() => this.setState({ coachBusy: false }));
   }
   // Pull the coach roster from the backend (cross-device) and cache it.
@@ -2788,13 +2789,10 @@ class Component extends DCLogic {
     const name = (this.state.newCoachName || '').trim();
     const role = (this.state.newCoachRole || '').trim();
     const pass = (this.state.newCoachPass || '').trim();
-    if (!name) { if (typeof alert !== 'undefined') alert('Enter the coach’s name.'); return; }
-    const ep = this.endpoint();
-    if (!ep) { if (typeof alert !== 'undefined') alert('Connect the booking backend to manage coaches.'); return; }
+    if (!name) { if (typeof alert !== 'undefined') alert("Enter the coach's name."); return; }
     this.setState({ coachBusy: true });
-    fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'addCoach', name: name, role: role, pass: pass }) })
-      .then(r => r.json()).then(res => {
+    this.adminPost({ action: 'addCoach', name: name, role: role, pass: pass })
+      .then(res => {
         if (res && res.ok && res.coaches) { this.applyCoaches(res.coaches); this.setState({ newCoachName: '', newCoachRole: '', newCoachPass: '' }); }
         else if (typeof alert !== 'undefined') alert('Could not add coach' + (res && res.reason ? (': ' + res.reason) : '') + '.');
         this.setState({ coachBusy: false });
@@ -2807,11 +2805,9 @@ class Component extends DCLogic {
   }
   cancelEditCoach() { this.setState({ coachEditId: '', coachEditName: '', coachEditRole: '', coachEditPass: '' }); }
   saveEditCoach(id) {
-    const ep = this.endpoint(); if (!ep) { if (typeof alert !== 'undefined') alert('Connect the backend first.'); return; }
     this.setState({ coachBusy: true });
-    fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'updateCoach', id: id, name: (this.state.coachEditName || '').trim(), role: (this.state.coachEditRole || '').trim(), pass: (this.state.coachEditPass || '').trim() }) })
-      .then(r => r.json()).then(res => {
+    this.adminPost({ action: 'updateCoach', id: id, name: (this.state.coachEditName || '').trim(), role: (this.state.coachEditRole || '').trim(), pass: (this.state.coachEditPass || '').trim() })
+      .then(res => {
         if (res && res.ok && res.coaches) this.applyCoaches(res.coaches);
         else if (typeof alert !== 'undefined') alert('Could not save coach' + (res && res.reason ? (': ' + res.reason) : '') + '.');
         this.setState({ coachBusy: false, coachEditId: '' });
@@ -2821,11 +2817,9 @@ class Component extends DCLogic {
   deleteCoach(id) {
     const c = this.coachById(id) || {};
     if (typeof confirm !== 'undefined' && !confirm('Remove coach ' + (c.name || id) + '? Existing bookings keep their recorded coach; this just takes them off the roster.')) return;
-    const ep = this.endpoint(); if (!ep) { if (typeof alert !== 'undefined') alert('Connect the backend first.'); return; }
     this.setState({ coachBusy: true });
-    fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'deleteCoach', id: id }) })
-      .then(r => r.json()).then(res => {
+    this.adminPost({ action: 'deleteCoach', id: id })
+      .then(res => {
         if (res && res.ok && res.coaches) this.applyCoaches(res.coaches);
         else if (typeof alert !== 'undefined') alert('Could not remove coach' + (res && res.reason ? (': ' + res.reason) : '') + '.');
         this.setState({ coachBusy: false, coachEditId: this.state.coachEditId === id ? '' : this.state.coachEditId, coachId: this.state.coachId === id ? '' : this.state.coachId });
@@ -2834,13 +2828,11 @@ class Component extends DCLogic {
   }
   // Admin: wipe every booking/plan so the owner can test from scratch.
   resetAllBookings() {
-    if (typeof confirm !== 'undefined' && !confirm('Delete ALL bookings, plans, and history? This removes the website’s calendar events and the database records. This cannot be undone.')) return;
+    if (typeof confirm !== 'undefined' && !confirm("Delete ALL bookings, plans, and history? This removes the website's calendar events and the database records. This cannot be undone.")) return;
     if (typeof confirm !== 'undefined' && !confirm('Are you absolutely sure? Coaches and payment splits are kept; everything else is cleared.')) return;
-    const ep = this.endpoint();
-    if (!ep) { if (typeof alert !== 'undefined') alert('Connect the booking backend to reset.'); return; }
     this.setState({ resetting: true });
-    fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'clearAll' }) })
-      .then(r => r.json()).then(res => {
+    this.adminPost({ action: 'clearAll' })
+      .then(res => {
         try {
           const keys = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k) keys.push(k); }
           keys.forEach(k => { if (k.indexOf('pgac_plans_') === 0 || k === 'pgac_bookings') localStorage.removeItem(k); });
@@ -2919,11 +2911,22 @@ class Component extends DCLogic {
     }.bind(this)).catch(function () {});
   }
 
+  adminPost(bodyObj) {
+    var ep = this.endpoint();
+    if (!ep) return Promise.resolve({ ok: false, reason: 'no-endpoint' });
+    var body = Object.assign({ secret: this.state.authSecret || '' }, bodyObj);
+    return fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json(); })
+      .then(function (res) { if (res && res.ok === false && res.reason === 'unauthorized') { this.handleUnauthorized(); } return res; }.bind(this))
+      .catch(function () { return { ok: false, reason: 'network' }; });
+  }
+  handleUnauthorized() {
+    this.setState({ authed: false, authSecret: '', adminError: true });
+  }
   persistContent(content) {
     try { localStorage.setItem('pgac_content', JSON.stringify(content)); } catch (e) {}
     this.setState({ content });
-    var ep = this.endpoint();
-    if (ep) { try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'setContent', content: content }) }).catch(function () {}); } catch (e) {} }
+    this.adminPost({ action: 'setContent', content: content }).catch(function () {});
   }
   persistBookings(bookings) {
     try { localStorage.setItem('pgac_bookings', JSON.stringify(bookings)); } catch (e) {}
@@ -2965,30 +2968,24 @@ class Component extends DCLogic {
   // One staff sign-in: the admin code opens the admin console; a coach's personal
   // code opens that coach's portal. (Coaches can also sign in from the Coach portal link.)
   tryLogin() {
-    const pass = (this.state.adminPass || '').trim();
-    if (pass === 'greenpark2026') {
-      this.setState({ authed: true, adminError: false, adminPass: '' });
-      this.loadRemotePlans(); // pull every customer's passes from the backend
-      this.loadCancellations(); // pull the cancellation history for the admin
-      this.loadAllBookings(); // every booking across the business (dashboard stats)
-      this.loadActivity(); // the activity log shown in the Bookings tab
-      this.loadSettings(); // per-coach payment splits + coach list
-      this.loadCoaches(); // refresh the editable coach roster
-      return;
-    }
-    const coach = this.coaches().find(c => c.pass === pass);
-    if (coach) {
-      this.setState({
-        adminPass: '', adminError: false,
-        coachAuthed: true, coachId: coach.id,
-        coachEditDate: this.todayStr(), coachCalMonth: this.todayStr().slice(0, 7),
-        coachAvail: this.loadAllCoachAvail(),
-      });
-      this.loadCoachAvailRemote(coach.id);
-      this.go('coach');
-      return;
-    }
-    this.setState({ adminError: true });
+    var code = (this.state.adminPass || '').trim();
+    var ep = this.endpoint();
+    if (!ep || !code) { this.setState({ adminError: true }); return; }
+    fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'staffLogin', code: code }) })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res && res.ok && res.role === 'admin') {
+          this.setState({ authed: true, authSecret: code, adminError: false, adminPass: '' });
+          this.loadRemotePlans(); this.loadCancellations(); this.loadAllBookings(); this.loadActivity(); this.loadSettings(); this.loadCoaches();
+        } else if (res && res.ok && res.role === 'coach') {
+          this.setState({ adminPass: '', adminError: false, coachAuthed: true, coachId: res.id, authSecret: code,
+            coachEditDate: this.todayStr(), coachCalMonth: this.todayStr().slice(0, 7), coachAvail: this.loadAllCoachAvail() });
+          this.loadCoachAvailRemote(res.id);
+          this.go('coach');
+        } else {
+          this.setState({ adminError: true });
+        }
+      }.bind(this)).catch(function () { this.setState({ adminError: true }); }.bind(this));
   }
 
   // ---------- COACH SELECTION (booking form) ----------
@@ -3003,22 +3000,24 @@ class Component extends DCLogic {
 
   // ---------- COACH PORTAL (each coach manages their own hours) ----------
   coachLogin() {
-    const pass = (this.state.coachPass || '').trim();
-    // The admin code works here too, so there's effectively one staff sign-in.
-    if (pass === 'greenpark2026') {
-      this.setState({ coachPass: '', coachLoginError: false, authed: true, adminError: false });
-      this.loadRemotePlans(); this.loadCancellations(); this.loadAllBookings(); this.loadSettings();
-      this.go('admin');
-      return;
-    }
-    const match = this.coaches().find(c => c.pass === pass);
-    if (!match) { this.setState({ coachLoginError: true }); return; }
-    this.setState({
-      coachAuthed: true, coachId: match.id, coachPass: '', coachLoginError: false,
-      coachEditDate: this.todayStr(), coachCalMonth: this.todayStr().slice(0, 7),
-      coachAvail: this.loadAllCoachAvail(),
-    });
-    this.loadCoachAvailRemote(match.id);
+    var pass = (this.state.coachPass || '').trim();
+    var ep = this.endpoint();
+    if (!ep || !pass) { this.setState({ coachLoginError: true }); return; }
+    fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'staffLogin', code: pass }) })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res && res.ok && res.role === 'admin') {
+          this.setState({ coachPass: '', coachLoginError: false, authed: true, authSecret: pass, adminError: false });
+          this.loadRemotePlans(); this.loadCancellations(); this.loadAllBookings(); this.loadSettings();
+          this.go('admin');
+        } else if (res && res.ok && res.role === 'coach') {
+          this.setState({ coachAuthed: true, coachId: res.id, authSecret: pass, coachPass: '', coachLoginError: false,
+            coachEditDate: this.todayStr(), coachCalMonth: this.todayStr().slice(0, 7), coachAvail: this.loadAllCoachAvail() });
+          this.loadCoachAvailRemote(res.id);
+        } else {
+          this.setState({ coachLoginError: true });
+        }
+      }.bind(this)).catch(function () { this.setState({ coachLoginError: true }); }.bind(this));
   }
   coachLogout() { this.setState({ coachAuthed: false, coachId: '', coachEditDate: '', coachLoginError: false }); }
   coachShiftMonth(delta) {
@@ -3066,8 +3065,8 @@ class Component extends DCLogic {
   // Pull a coach's real saved hours from the backend (so the admin — or the coach on a
   // new device — sees actual custom days, not just the standard weekday template).
   loadCoachAvailRemote(coachId) {
-    const ep = this.endpoint(); if (!ep || !coachId) return;
-    fetch(ep + '?action=coachavail&coach=' + encodeURIComponent(coachId)).then(r => r.json()).then(res => {
+    if (!coachId) return;
+    this.adminPost({ action: 'coachavail', coach: coachId, pass: this.state.authSecret }).then(res => {
       if (res && res.overrides) {
         const all = JSON.parse(JSON.stringify(this.state.coachAvail || {}));
         all[coachId] = Object.assign({}, all[coachId] || {}, res.overrides);
@@ -3419,11 +3418,11 @@ class Component extends DCLogic {
   saveAcctPlans(email, plans) { try { localStorage.setItem(this.acctPlansKey(email), JSON.stringify(plans)); } catch (e) {} this.setState({ acctPlans: plans }); }
   // ----- PASS SYNC: mirror every pass to the Google backend so any device + the admin see it -----
   pushPlan(email, plan, opts) {
-    const ep = this.endpoint(); if (!ep || !email || !plan) return;
+    if (!email || !plan) return;
     opts = opts || {};
     const payload = { action: 'savePlan', email: email, plan: plan };
     if (opts.sendReceipt) { payload.sendReceipt = true; payload.price = opts.price || ''; if (opts.amount != null) payload.amount = opts.amount; }
-    try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }); } catch (e) {}
+    this.adminPost(payload).catch(function () {});
   }
   // Ask the backend to email the customer about their pass schedule and/or coach.
   // opts: { mode:'scheduled'|'rescheduled'|'coachAssigned'|'coachChanged',
@@ -3431,7 +3430,7 @@ class Component extends DCLogic {
   // We pass the FULL session list from our live copy so the email always lists every
   // session (reading it back from the stored plan can race a just-saved change).
   emailPlanSchedule(email, ts, opts) {
-    const ep = this.endpoint(); if (!ep || !email) return;
+    if (!email) return;
     opts = opts || {};
     const plan = this.findPlan(email, ts) || {};
     const sessions = (opts.sessions || (plan.sessions || [])).map(s => ({ date: s.date, time: s.time }));
@@ -3443,7 +3442,7 @@ class Component extends DCLogic {
       holder: (plan.holder || ''), plan: (plan.name || ''),
     };
     if (opts.prevCoachName != null) payload.prevCoachName = opts.prevCoachName;
-    try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }); } catch (e) {}
+    this.adminPost(payload).catch(function () {});
   }
   // Default pass prices (used for the purchase receipt); admin content overrides win.
   passPrice(name) {
@@ -3524,8 +3523,8 @@ class Component extends DCLogic {
   }
   isPlanExpired(plan) { const e = this.planExpiry(plan); return !!e && this.todayStr() > e; }
   pushRemovePlan(email, ts, by, notify) {
-    const ep = this.endpoint(); if (!ep || !email) return;
-    try { fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'removePlan', email: email, ts: ts, by: by || 'customer', notify: notify !== false }) }); } catch (e) {}
+    if (!email) return;
+    this.adminPost({ action: 'removePlan', email: email, ts: ts, by: by || 'customer', notify: notify !== false }).catch(function () {});
   }
   // Pull a customer's passes from the backend and merge with the local cache.
   // Merge rule: keep whichever copy was edited most recently (updatedAt, falling back
@@ -3553,28 +3552,24 @@ class Component extends DCLogic {
   }
   // Pull EVERY customer's passes (admin view, any device).
   loadRemotePlans() {
-    const ep = this.endpoint(); if (!ep) return;
-    fetch(ep + '?action=plans').then(r => r.json()).then(res => {
+    this.adminPost({ action: 'plans' }).then(res => {
       if (res && res.plans) this.setState({ remotePlans: res.plans });
     }).catch(() => {});
   }
   loadCancellations() {
-    const ep = this.endpoint(); if (!ep) return;
-    fetch(ep + '?action=cancellations').then(r => r.json()).then(res => {
+    this.adminPost({ action: 'cancellations' }).then(res => {
       if (res && res.cancellations) this.setState({ cancelHistory: res.cancellations });
     }).catch(() => {});
   }
   // Pull EVERY booking across the business (admin dashboard + bookings tab).
   loadAllBookings() {
-    const ep = this.endpoint(); if (!ep) return;
-    fetch(ep + '?action=bookings').then(r => r.json()).then(res => {
+    this.adminPost({ action: 'bookings' }).then(res => {
       if (res && res.bookings) this.setState({ allBookings: res.bookings });
     }).catch(() => {});
   }
   // Pull settings: per-coach payment split (coach % / equipment % / range %) + coach list.
   loadSettings() {
-    const ep = this.endpoint(); if (!ep) return;
-    fetch(ep + '?action=settings').then(r => r.json()).then(res => {
+    this.adminPost({ action: 'settings' }).then(res => {
       if (res && res.splits) this.setState({
         coachSplits: res.splits,
         splitDefault: res.defaultSplit || this.state.splitDefault,
@@ -3594,27 +3589,22 @@ class Component extends DCLogic {
   }
   // Save a coach's split to the backend, then re-pull settings to confirm.
   saveCoachSplit(coachId) {
-    const ep = this.endpoint(); if (!ep) return;
     const d = (this.state.splitDraft || {})[coachId] || this.state.splitDefault;
-    fetch(ep, {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'setSplit', coach: coachId, coachPct: d.coach, equipPct: d.equip, rangePct: d.range }),
-    }).then(r => r.json()).then(() => { this.loadSettings(); if (typeof alert !== 'undefined') alert('Saved split for this coach.'); }).catch(() => {});
+    this.adminPost({ action: 'setSplit', coach: coachId, coachPct: d.coach, equipPct: d.equip, rangePct: d.range })
+      .then(() => { this.loadSettings(); if (typeof alert !== 'undefined') alert('Saved split for this coach.'); }).catch(() => {});
   }
   // ---------- ADMIN: BOOKINGS TAB (database-backed) ----------
   // Mark a booking Approved (status only — bookings still confirm instantly).
   approveBooking(b) {
-    const ep = this.endpoint(); if (!ep || !b) return;
+    if (!b) return;
     // A booking can't be approved without a coach — send it to Plans & Sessions to add one.
     if (!this.bookingHasCoach(b)) {
       if (typeof alert !== 'undefined') alert('This booking has no coach yet. It has been moved to Bookings — assign a coach there, then Approve.');
       this.retrieveToPlan(b);
       return;
     }
-    fetch(ep, {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'setBookingStatus', eventId: b.eventId || '', ref: b.ref || '', date: b.date || '', time: b.time || '', status: 'approved' }),
-    }).then(r => r.json()).then(() => this.loadAllBookings()).catch(() => {});
+    this.adminPost({ action: 'setBookingStatus', eventId: b.eventId || '', ref: b.ref || '', date: b.date || '', time: b.time || '', status: 'approved' })
+      .then(() => this.loadAllBookings()).catch(() => {});
   }
   // A booking counts as having a coach only if it maps to a real named coach (not blank / "any").
   bookingHasCoach(b) {
@@ -3639,17 +3629,11 @@ class Component extends DCLogic {
   }
   // Record an admin action to the Activity log (shown in the Bookings tab).
   logAction(ref, label, detail, name, email, actor) {
-    const ep = this.endpoint(); if (!ep) return;
-    try {
-      fetch(ep, {
-        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'logAction', ref: ref || '', label: label || '', detail: detail || '', name: name || '', email: email || '', actor: actor || '' }),
-      }).then(() => setTimeout(() => this.loadActivity(), 600)).catch(() => {});
-    } catch (e) {}
+    this.adminPost({ action: 'logAction', ref: ref || '', label: label || '', detail: detail || '', name: name || '', email: email || '', actor: actor || '' })
+      .then(function () { setTimeout(function () { this.loadActivity(); }.bind(this), 600); }.bind(this)).catch(function () {});
   }
   loadActivity() {
-    const ep = this.endpoint(); if (!ep) return;
-    fetch(ep + '?action=activity').then(r => r.json()).then(res => { if (res && res.activity) this.setState({ activity: res.activity }); }).catch(() => {});
+    this.adminPost({ action: 'activity' }).then(res => { if (res && res.activity) this.setState({ activity: res.activity }); }).catch(() => {});
   }
   // Make sure a plan has a reference number (older plans may not) so the activity log shows it.
   ensurePlanRef(email, ts) {
@@ -3661,11 +3645,9 @@ class Component extends DCLogic {
   }
   // Assign / change the coach on a booking (updates the calendar event + Bookings sheet).
   assignBookingCoach(b, coachId) {
-    const ep = this.endpoint(); if (!ep || !b) return;
-    fetch(ep, {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'setBookingCoach', eventId: b.eventId || '', ref: b.ref || '', date: b.date || '', time: b.time || '', coach: coachId }),
-    }).then(r => r.json()).then(() => this.loadAllBookings()).catch(() => {});
+    if (!b) return;
+    this.adminPost({ action: 'setBookingCoach', eventId: b.eventId || '', ref: b.ref || '', date: b.date || '', time: b.time || '', coach: coachId })
+      .then(() => this.loadAllBookings()).catch(() => {});
   }
   cancelSessionBooking(b) {
     const msg = b.eventId
@@ -3755,11 +3737,10 @@ class Component extends DCLogic {
     const addEmail = (this.state.mergeEmail || '').trim().toLowerCase();
     const ref = (this.state.mergeRef || '').trim().toUpperCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addEmail) || !ref) { this.setState({ mergeMsg: 'Enter the other email and one of its booking references.' }); return; }
-    const ep = this.endpoint(); if (!ep) { this.setState({ mergeMsg: 'Backend not connected.' }); return; }
     this.setState({ mergeMsg: 'Linking…' });
-    fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'addEmailAlias', email: email, addEmail: addEmail, ref: ref }) })
-      .then(r => r.json()).then(data => {
-        if (!data || !data.ok) { this.setState({ mergeMsg: (data && data.reason) || 'That reference doesn’t match that email.' }); return; }
+    this.adminPost({ action: 'addEmailAlias', email: email, addEmail: addEmail, ref: ref })
+      .then(data => {
+        if (!data || !data.ok) { this.setState({ mergeMsg: (data && data.reason) || "That reference doesn't match that email." }); return; }
         try { localStorage.setItem('pgac_acct_emails', JSON.stringify(data.emails || [])); } catch (e) {}
         this.setState({ acctEmails: data.emails || [], mergeEmail: '', mergeRef: '', mergeMsg: 'Merged — showing all your bookings.' });
         this.accountLogin(); // re-run lookup for the group to refresh bookings + passes
@@ -3947,15 +3928,7 @@ class Component extends DCLogic {
     const planRef = this.ensurePlanRef(email, ts);
     // Keep the plan, mark it cancelled (and clear its sessions since the events are gone).
     this.mutatePlan(email, ts, p => ({ ...p, status: 'cancelled', sessions: [] }));
-    const ep = this.endpoint();
-    if (ep) {
-      try {
-        fetch(ep, {
-          method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: 'planCancelEmail', email: email, ts: ts }),
-        }).catch(() => {});
-      } catch (e) {}
-    }
+    this.adminPost({ action: 'planCancelEmail', email: email, ts: ts }).catch(() => {});
     this.logAction(planRef, 'Cancelled', ((plan && plan.name) || 'Pass') + ' · ' + ((plan && plan.holder) || ''), (plan && plan.holder) || email, email, 'admin');
     this.forceUpdate();
   }
@@ -3973,29 +3946,21 @@ class Component extends DCLogic {
     if (!sessions.length) { if (typeof alert !== 'undefined') alert('Please schedule at least one session before approving (Call → assign Coach → Schedule → Approve).'); return; }
     const planRef = this.ensurePlanRef(email, ts);
     this.mutatePlan(email, ts, p => ({ ...p, status: 'approved' }));
-    const ep = this.endpoint();
-    if (ep) {
-      // Split the plan price evenly across its sessions so earnings count once.
-      const total = Number(String((plan && plan.price) || '').replace(/[^0-9.]/g, '')) || 0;
-      const per = sessions.length ? Math.round(total / sessions.length) : 0;
-      const coachName = plan.coach ? ((this.coachById(plan.coach) || {}).name || '') : '';
-      sessions.forEach(s => {
-        try {
-          fetch(ep, {
-            method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({
-              action: 'approveSession', eventId: s.eventId || '', ref: s.ref || '', date: s.date || '', time: s.time || '',
-              program: (plan.name || 'Plan') + ' (plan)', name: plan.holder || email, email: email, phone: plan.phone || '',
-              amount: per, coach: coachName,
-            }),
-          }).catch(() => {});
-        } catch (e) {}
-      });
-      // Email the client their confirmed sessions (+ coach) — full list, "scheduled" wording.
-      this.emailPlanSchedule(email, ts, { mode: 'scheduled', sessions: sessions.map(s => ({ date: s.date, time: s.time })) });
-      this.logAction(planRef, 'Approved', (plan.name || 'Plan') + ' · ' + (plan.holder || ''), plan.holder || email, email, 'admin');
-      setTimeout(() => this.loadAllBookings(), 1400);
-    }
+    // Split the plan price evenly across its sessions so earnings count once.
+    const total = Number(String((plan && plan.price) || '').replace(/[^0-9.]/g, '')) || 0;
+    const per = sessions.length ? Math.round(total / sessions.length) : 0;
+    const coachName = plan.coach ? ((this.coachById(plan.coach) || {}).name || '') : '';
+    sessions.forEach(s => {
+      this.adminPost({
+        action: 'approveSession', eventId: s.eventId || '', ref: s.ref || '', date: s.date || '', time: s.time || '',
+        program: (plan.name || 'Plan') + ' (plan)', name: plan.holder || email, email: email, phone: plan.phone || '',
+        amount: per, coach: coachName,
+      }).catch(() => {});
+    });
+    // Email the client their confirmed sessions (+ coach) — full list, "scheduled" wording.
+    this.emailPlanSchedule(email, ts, { mode: 'scheduled', sessions: sessions.map(s => ({ date: s.date, time: s.time })) });
+    this.logAction(planRef, 'Approved', (plan.name || 'Plan') + ' · ' + (plan.holder || ''), plan.holder || email, email, 'admin');
+    setTimeout(() => this.loadAllBookings(), 1400);
   }
   // ---------- ADMIN: plans across this device (coach assignment) ----------
   loadAllPlansLocal() {
@@ -4065,7 +4030,7 @@ class Component extends DCLogic {
     const sessClause = sessCount ? (' and the coach on ' + sessCount + ' scheduled session' + (sessCount === 1 ? '' : 's') + ' will be updated.') : '.';
     // Confirmation pop-up explaining exactly what will happen.
     let msg;
-    if (!coachId) msg = 'Remove the assigned coach' + (prevName ? (' (' + prevName + ')') : '') + ' from ' + holder + '’s pass?\n\nThe client will NOT be emailed.';
+    if (!coachId) msg = 'Remove the assigned coach' + (prevName ? (' (' + prevName + ')') : '') + " from " + holder + "'s pass?\n\nThe client will NOT be emailed.";
     else if (!prevCoachId) msg = 'Assign ' + newName + ' as the coach for ' + holder + '?\n\nThe client will be emailed that their assigned coach is ' + newName + sessClause;
     else msg = 'Change coach from ' + prevName + ' to ' + newName + ' for ' + holder + '?\n\nThe client will be emailed about their new coach' + sessClause;
     if (typeof confirm !== 'undefined' && !confirm(msg)) { this.forceUpdate(); return; } // cancelled → revert the dropdown
@@ -4076,14 +4041,10 @@ class Component extends DCLogic {
     this.logAction(planRef, 'Coach changed', (prevName || 'Unassigned') + ' → ' + (newName || 'Unassigned') + ' · ' + ((plan && plan.holder) || ''), (plan && plan.holder) || email, email, 'admin');
     // Update the coach on every already-scheduled calendar event so the calendar (and the
     // customer's My Bookings) reflects the new coach, not just future-created events.
-    const ep = this.endpoint();
-    if (ep && coachId && sessCount) {
+    if (coachId && sessCount) {
       sessions.forEach(s => {
         if (!s) return;
-        try {
-          fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'setBookingCoach', eventId: s.eventId || '', ref: s.ref || '', date: s.date || '', time: s.time || '', coach: coachId }) }).catch(() => {});
-        } catch (e) {}
+        this.adminPost({ action: 'setBookingCoach', eventId: s.eventId || '', ref: s.ref || '', date: s.date || '', time: s.time || '', coach: coachId }).catch(() => {});
       });
     }
     // Email the client about the coach (assigned vs changed) — NOT a reschedule notice.
@@ -5279,7 +5240,7 @@ class Component extends DCLogic {
       setBio: (e) => { const v = e.target.value; this.setState(s => ({ coachBioDrafts: { ...s.coachBioDrafts, [c.id]: v } })); },
       saveBio: () => this.saveCoachProfile(c.id, { bio: (this.state.coachBioDrafts[c.id] != null ? this.state.coachBioDrafts[c.id] : (c.bio || '')) }),
       onPhotoFile: (e) => { const f = e.target.files && e.target.files[0]; if (f) this.resizeImageFile(f, (url) => this.saveCoachProfile(c.id, { photo: url })); },
-      removePhoto: () => { if (typeof confirm !== 'undefined' && !confirm('Remove ' + (c.name || 'this coach') + '’s photo? You can upload a new one anytime.')) return; this.saveCoachProfile(c.id, { photo: '' }); },
+      removePhoto: () => { if (typeof confirm !== 'undefined' && !confirm('Remove ' + (c.name || 'this coach') + "'s photo? You can upload a new one anytime.")) return; this.saveCoachProfile(c.id, { photo: '' }); },
     }));
     const adminCoachPicked = !!this.state.coachId;
     const adminCoachName = (this.coachById(this.state.coachId) || {}).name || '';
