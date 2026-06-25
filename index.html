@@ -1677,17 +1677,21 @@
                   <sc-if value="{{ pl.showSchedLabel }}" hint-placeholder-val="{{ false }}"><div style="padding-left:25px;margin-top:2px;"><span style="font-size:11.5px;color:#8a9579;font-family:'Spline Sans Mono',monospace;">{{ pl.schedLabel }}</span></div></sc-if>
                   <sc-if value="{{ pl.hasExpiry }}" hint-placeholder-val="{{ false }}"><div style="padding-left:25px;"><span style="font-size:11.5px;color:{{ pl.expired ? '#b4512f' : '#8a9579' }};font-family:'Spline Sans Mono',monospace;">{{ pl.expiryLabel }}</span></div></sc-if>
                   <sc-if value="{{ pl.hasSessions }}" hint-placeholder-val="{{ false }}">
-                  <div style="display:flex;flex-direction:column;gap:5px;padding-left:25px;margin-top:3px;">
-                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
-                      <sc-for list="{{ pl.sessions }}" as="ps" hint-placeholder-count="0">
+                  <div style="display:flex;flex-direction:column;gap:6px;padding-left:25px;margin-top:3px;">
+                    <sc-for list="{{ pl.sessions }}" as="ps" hint-placeholder-count="0">
+                      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                         <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#244232;background:#fffdf6;border:1px solid rgba(36,66,50,0.14);border-radius:999px;padding:4px 11px;"><sc-if value="{{ ps.onCalendar }}" hint-placeholder-val="{{ false }}"><span style="width:6px;height:6px;border-radius:50%;background:#7fb43f;"></span></sc-if>{{ ps.label }}</span>
-                      </sc-for>
-                    </div>
+                        <sc-if value="{{ ps.canChange }}" hint-placeholder-val="{{ false }}">
+                          <button onClick="{{ ps.reschedule }}" style="background:#e6efd6;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:11.5px;font-weight:700;color:#4d7327;padding:5px 11px;border-radius:999px;">Reschedule</button>
+                          <button onClick="{{ ps.cancel }}" style="background:none;border:1px solid rgba(180,81,47,0.35);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:11.5px;font-weight:700;color:#b4512f;padding:4px 10px;border-radius:999px;">Cancel</button>
+                        </sc-if>
+                        <sc-if value="{{ ps.locked }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;color:#8a9579;font-family:'Spline Sans Mono',monospace;">{{ ps.lockLabel }} · contact us to change</span></sc-if>
+                      </div>
+                    </sc-for>
                   </div>
                   </sc-if>
                 </div>
                 <sc-if value="{{ pl.canRemove }}" hint-placeholder-val="{{ true }}"><button onClick="{{ pl.remove }}" style="background:none;border:none;cursor:pointer;color:#b4512f;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;">Remove</button></sc-if>
-                <sc-if value="{{ pl.hasSessions }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;color:#8a9579;font-family:'Spline Sans Mono',monospace;white-space:nowrap;">Scheduled · contact us to change</span></sc-if>
                 <sc-if value="{{ pl.canSchedule }}" hint-placeholder-val="{{ true }}">
                   <sc-if value="{{ pl.scheduling }}" hint-placeholder-val="{{ false }}">
                     <div style="margin-top:10px;width:100%;background:#fffdf6;border:1px solid rgba(36,66,50,0.14);border-radius:10px;padding:12px;">
@@ -2533,6 +2537,7 @@ class Component extends DCLogic {
     plSearch: '',
     plPage: 0,
     acctUpPage: 0, acctPastPage: 0, acctPassPage: 0,
+    acctReschedIdx: null,
     acctLoading: false,
     acctError: '',
     acctName: '',
@@ -3957,7 +3962,7 @@ class Component extends DCLogic {
     this.setState({ slotDate: '', slots: [], acctSchedMsg: 'Scheduled — a confirmation is on its way.' });
   }
   openAcctSched(key) { this.setState({ acctSchedKey: key, acctBookingOpen: false, slotDate: '', slots: [], slotTimes: [], acctSchedMsg: '' }); }
-  closeAcctSched() { this.setState({ acctSchedKey: '', slotDate: '', slots: [], acctSchedMsg: '' }); }
+  closeAcctSched() { this.setState({ acctSchedKey: '', slotDate: '', slots: [], acctSchedMsg: '', acctReschedIdx: null }); }
   addPlanSession(email, ts, date, time, cap, actor) {
     if (!date || !time) return;
     const _planForExp = this.findPlan(email, ts);
@@ -4015,6 +4020,51 @@ class Component extends DCLogic {
       }).catch(() => {});
     }
     if (sess) { const planRef = this.ensurePlanRef(email, ts); this.logAction(planRef, 'Session removed', sess.date + ' · ' + sess.time + ' · ' + ((plan && plan.holder) || ''), (plan && plan.holder) || email, email, 'admin'); }
+  }
+  cancelAcctPlanSession(email, ts, idx) {
+    const plan = this.findPlan(email, ts);
+    const s = (plan && plan.sessions) ? plan.sessions[idx] : null;
+    if (!s) return;
+    if (!this.sessionEditableByCustomer(s.date, s.time, plan)) { if (typeof alert !== 'undefined') alert('This session can no longer be changed online — please contact us.'); return; }
+    if (typeof confirm !== 'undefined' && !confirm('Cancel this session? It frees the slot and returns the session to your pass.')) return;
+    this.mutatePlan(email, ts, p => ({ ...p, sessions: (p.sessions || []).filter((_, i) => i !== idx) }));
+    const ep = this.endpoint();
+    if (ep && s.eventId) {
+      fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'cancel', eventId: s.eventId, ref: s.ref || '', date: s.date, time: s.time, email: email, notify: true, by: 'customer' }) }).catch(() => {});
+    }
+    const planRef = this.ensurePlanRef(email, ts);
+    this.logAction(planRef, 'Session removed', s.date + ' · ' + s.time + ' · ' + ((plan && plan.holder) || ''), (plan && plan.holder) || email, email, 'client');
+  }
+  startPassSessionReschedule(email, ts, idx) {
+    const plan = this.findPlan(email, ts);
+    const s = (plan && plan.sessions) ? plan.sessions[idx] : null;
+    if (!s) return;
+    if (!this.sessionEditableByCustomer(s.date, s.time, plan)) { if (typeof alert !== 'undefined') alert('This session can no longer be changed online — please contact us.'); return; }
+    this.setState({ acctReschedIdx: idx });
+    this.openAcctSched(email + '|' + ts);
+  }
+  confirmPassSlot(email, ts, date, time, cap) {
+    const idx = this.state.acctReschedIdx;
+    if (idx == null) { this.addAcctPlanSession(email, ts, date, time, cap); return; }   // normal add
+    const plan = this.findPlan(email, ts);
+    const s = (plan && plan.sessions) ? plan.sessions[idx] : null;
+    if (!s) { this.setState({ acctReschedIdx: null }); this.addAcctPlanSession(email, ts, date, time, cap); return; }
+    if (!this.sessionEditableByCustomer(s.date, s.time, plan)) { this.setState({ acctReschedIdx: null, acctSchedMsg: 'That session can no longer be changed.' }); return; }
+    const ep = this.endpoint();
+    if (ep && s.eventId) {
+      fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'reschedule', eventId: s.eventId, ref: s.ref || '', date: s.date, time: s.time, newDate: date, newTime: time, name: (plan.holder || ''), email: email }) })
+        .then(r => r.json()).then(res => {
+          const newEid = (res && res.ok && res.eventId) ? res.eventId : s.eventId;
+          this.mutatePlan(email, ts, p => ({ ...p, sessions: (p.sessions || []).map((x, i) => i === idx ? { ...x, date: date, time: time, eventId: newEid } : x).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)) }));
+          const planRef = this.ensurePlanRef(email, ts);
+          this.logAction(planRef, 'Rescheduled', this.prettyDateStr(s.date) + ' ' + s.time + ' → ' + this.prettyDateStr(date) + ' ' + time + ' · ' + ((plan.holder) || ''), (plan.holder) || email, email, 'client');
+        }).catch(() => {});
+    } else {
+      this.mutatePlan(email, ts, p => ({ ...p, sessions: (p.sessions || []).map((x, i) => i === idx ? { ...x, date: date, time: time } : x) }));
+    }
+    this.setState({ acctReschedIdx: null, slotDate: '', slots: [], acctSchedKey: '', acctSchedMsg: 'Rescheduled — see you then.' });
   }
   openPlanEditor(key) {
     const idx = key.lastIndexOf('|');
@@ -4616,10 +4666,16 @@ class Component extends DCLogic {
       const pEmail = (p.email || this.state.acctEmail || '').trim().toLowerCase();
       const schedKey = pEmail + '|' + p.ts;
       const c = p.coach ? this.coachById(p.coach) : null;
-      const sess = (p.sessions || []).map(s => {
-        let lbl = s.date;
-        try { lbl = new Date(s.date + 'T00:00:00').toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' }); } catch (e) {}
-        return { label: lbl + ' · ' + s.time, onCalendar: !!s.eventId };
+      const sess = (p.sessions || []).map((s, i) => {
+        let lbl = s.date; try { lbl = new Date(s.date + 'T00:00:00').toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' }); } catch (e) {}
+        const editable = this.sessionEditableByCustomer(s.date, s.time, p);
+        return {
+          label: lbl + ' · ' + s.time, onCalendar: !!s.eventId,
+          canChange: editable, locked: !editable,
+          lockLabel: this.isSessionUsed(s.date, s.time) ? 'Used' : 'Pass expired',
+          reschedule: () => this.startPassSessionReschedule(p.email, p.ts, i),
+          cancel: () => this.cancelAcctPlanSession(p.email, p.ts, i),
+        };
       });
       const cap = this.planCap(p);
       const expired = this.isPlanExpired(p); const expDate = this.planExpiry(p);
@@ -4999,7 +5055,7 @@ class Component extends DCLogic {
     const acctSchedTimes = (_schedOpen && this.state.slotDate)
       ? (this.state.slots || []).filter(s => !s.full && (s.left == null || s.left > 0)).map(s => ({
           time: s.time, leftLabel: (s.left != null ? (s.left + ' open') : 'open'),
-          add: () => this.addAcctPlanSession(_schedEmail, _schedTs, this.state.slotDate, s.time, _schedCap),
+          add: () => this.confirmPassSlot(_schedEmail, _schedTs, this.state.slotDate, s.time, _schedCap),
         }))
       : [];
 
