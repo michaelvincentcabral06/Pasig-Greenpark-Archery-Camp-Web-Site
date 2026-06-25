@@ -3961,7 +3961,7 @@ class Component extends DCLogic {
     this.emailPlanSchedule(email, ts, { mode: 'scheduled', sessions: [{ date: date, time: time }] });
     this.setState({ slotDate: '', slots: [], acctSchedMsg: 'Scheduled — a confirmation is on its way.' });
   }
-  openAcctSched(key) { this.setState({ acctSchedKey: key, acctBookingOpen: false, slotDate: '', slots: [], slotTimes: [], acctSchedMsg: '' }); }
+  openAcctSched(key) { this.setState({ acctSchedKey: key, acctBookingOpen: false, slotDate: '', slots: [], slotTimes: [], acctSchedMsg: '', acctReschedIdx: null }); }
   closeAcctSched() { this.setState({ acctSchedKey: '', slotDate: '', slots: [], acctSchedMsg: '', acctReschedIdx: null }); }
   addPlanSession(email, ts, date, time, cap, actor) {
     if (!date || !time) return;
@@ -4041,8 +4041,8 @@ class Component extends DCLogic {
     const s = (plan && plan.sessions) ? plan.sessions[idx] : null;
     if (!s) return;
     if (!this.sessionEditableByCustomer(s.date, s.time, plan)) { if (typeof alert !== 'undefined') alert('This session can no longer be changed online — please contact us.'); return; }
+    this.openAcctSched(email + '|' + ts);   // clears acctReschedIdx, so set it AFTER opening
     this.setState({ acctReschedIdx: idx });
-    this.openAcctSched(email + '|' + ts);
   }
   confirmPassSlot(email, ts, date, time, cap) {
     const idx = this.state.acctReschedIdx;
