@@ -1797,71 +1797,65 @@
         <!-- DASHBOARD TAB -->
         <sc-if value="{{ tabDashboard }}" hint-placeholder-val="{{ false }}">
         <div>
-          <!-- BOOKING COUNTS -->
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px;">
-            <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;">
-              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;font-family:'Spline Sans Mono',monospace;">Approved</div>
-              <div style="font-size:30px;font-weight:800;color:#244232;line-height:1.1;margin-top:4px;">{{ dashApproved }}</div>
+          <!-- AT A GLANCE -->
+          <div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#3c6b48;margin-bottom:10px;">At a glance</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:26px;">
+            <div style="background:#244232;border-radius:14px;padding:20px 22px;color:#f4efe4;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.7;">Earnings this week</div>
+              <div style="font-size:34px;font-weight:800;line-height:1.05;margin-top:6px;">{{ earnWeekLabel }}</div>
+              <div style="font-size:12.5px;opacity:0.7;margin-top:4px;">confirmed + pending</div>
             </div>
-            <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;">
-              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;font-family:'Spline Sans Mono',monospace;">Pending confirmation</div>
-              <div style="font-size:30px;font-weight:800;color:#8a6a1f;line-height:1.1;margin-top:4px;">{{ dashPending }}</div>
+            <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:14px;padding:20px 22px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;">Upcoming sessions</div>
+              <div style="font-size:34px;font-weight:800;line-height:1.05;margin-top:6px;color:#244232;">{{ upCount }}</div>
+              <sc-if value="{{ hasNextUpcoming }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#56664f;margin-top:4px;">Next: {{ nextUpcomingLabel }}</div></sc-if>
             </div>
-            <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;">
-              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;font-family:'Spline Sans Mono',monospace;">Cancelled</div>
-              <div style="font-size:30px;font-weight:800;color:#b4512f;line-height:1.1;margin-top:4px;">{{ dashCancelled }}</div>
-            </div>
-            <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;">
-              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;font-family:'Spline Sans Mono',monospace;">Coaches</div>
-              <div style="font-size:30px;font-weight:800;color:#244232;line-height:1.1;margin-top:4px;">{{ coachCount }}</div>
+            <div style="background:#fff8ec;border:1px solid rgba(202,168,74,0.5);border-radius:14px;padding:20px 22px;">
+              <div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a6a1f;">Needs your attention</div>
+              <div style="font-size:34px;font-weight:800;line-height:1.05;margin-top:6px;color:#8a6a1f;">{{ dashPending }}</div>
+              <div style="font-size:12.5px;color:#8a6a1f;margin-top:4px;">pending approvals</div>
             </div>
           </div>
 
           <!-- EARNINGS -->
-          <h3 style="font-size:16px;font-weight:800;color:#1b2a1f;margin:24px 0 4px;">Earnings</h3>
-          <p style="font-size:13px;color:#56664f;margin:0 0 14px;">From confirmed &amp; pending bookings (cancelled excluded), by the session date.</p>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">
-            <div style="background:#244232;border-radius:12px;padding:16px 18px;color:#f4efe4;">
-              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.75;font-family:'Spline Sans Mono',monospace;">This week</div>
-              <div style="font-size:26px;font-weight:800;line-height:1.1;margin-top:4px;">{{ earnWeekLabel }}</div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+            <h3 style="font-size:17px;font-weight:800;margin:0;color:#1b2a1f;">Earnings</h3>
+            <span style="font-size:12.5px;color:#56664f;">confirmed + pending, by session date</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px;">
+            <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:15px 17px;"><div style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;">This week</div><div style="font-size:23px;font-weight:800;color:#244232;margin-top:4px;">{{ earnWeekLabel }}</div></div>
+            <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:15px 17px;"><div style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;">This month</div><div style="font-size:23px;font-weight:800;color:#244232;margin-top:4px;">{{ earnMonthLabel }}</div></div>
+            <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:15px 17px;"><div style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;">This year</div><div style="font-size:23px;font-weight:800;color:#244232;margin-top:4px;">{{ earnYearLabel }}</div></div>
+            <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:15px 17px;"><div style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;">All time</div><div style="font-size:23px;font-weight:800;color:#244232;margin-top:4px;">{{ earnTotalLabel }}</div></div>
+          </div>
+          <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;">
+            <div style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;margin-bottom:10px;">Where the money goes</div>
+            <div style="display:flex;height:14px;border-radius:999px;overflow:hidden;background:#eef1ea;">
+              <div style="width:{{ splitCoachPct }}%;background:#4d7327;"></div><div style="width:{{ splitEquipPct }}%;background:#caa84a;"></div><div style="width:{{ splitRangePct }}%;background:#2f6b73;"></div>
             </div>
-            <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;">
-              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;font-family:'Spline Sans Mono',monospace;">This month</div>
-              <div style="font-size:26px;font-weight:800;color:#244232;line-height:1.1;margin-top:4px;">{{ earnMonthLabel }}</div>
-            </div>
-            <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;">
-              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;font-family:'Spline Sans Mono',monospace;">This year</div>
-              <div style="font-size:26px;font-weight:800;color:#244232;line-height:1.1;margin-top:4px;">{{ earnYearLabel }}</div>
-            </div>
-            <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;">
-              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a9579;font-family:'Spline Sans Mono',monospace;">All time</div>
-              <div style="font-size:26px;font-weight:800;color:#244232;line-height:1.1;margin-top:4px;">{{ earnTotalLabel }}</div>
+            <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:10px;font-size:12.5px;color:#1b2a1f;">
+              <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#4d7327;margin-right:6px;"></span>Coach payments <strong>{{ coachTotalLabel }}</strong></span>
+              <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#caa84a;margin-right:6px;"></span>Equipment <strong>{{ equipTotalLabel }}</strong></span>
+              <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#2f6b73;margin-right:6px;"></span>Range fee <strong>{{ rangeTotalLabel }}</strong></span>
             </div>
           </div>
 
-          <!-- EARNINGS SPLIT -->
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:12px;">
-            <div style="background:#eef4e4;border-radius:12px;padding:16px 18px;">
-              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#4d7327;font-family:'Spline Sans Mono',monospace;">Coach payments (total)</div>
-              <div style="font-size:24px;font-weight:800;color:#244232;line-height:1.1;margin-top:4px;">{{ coachTotalLabel }}</div>
-            </div>
-            <div style="background:#fff1cf;border-radius:12px;padding:16px 18px;">
-              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a6a1f;font-family:'Spline Sans Mono',monospace;">Equipment rental</div>
-              <div style="font-size:24px;font-weight:800;color:#8a6a1f;line-height:1.1;margin-top:4px;">{{ equipTotalLabel }}</div>
-            </div>
-            <div style="background:#e3eef0;border-radius:12px;padding:16px 18px;">
-              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#2f6b73;font-family:'Spline Sans Mono',monospace;">Range fee</div>
-              <div style="font-size:24px;font-weight:800;color:#2f6b73;line-height:1.1;margin-top:4px;">{{ rangeTotalLabel }}</div>
-            </div>
+          <!-- BOOKING STATUS -->
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin:22px 0;">
+            <span style="background:#e6efd6;color:#4d7327;border-radius:999px;padding:7px 15px;font-size:13px;font-weight:700;">✓ {{ dashApproved }} approved</span>
+            <span style="background:#fff1cf;color:#8a6a1f;border-radius:999px;padding:7px 15px;font-size:13px;font-weight:700;">⏳ {{ dashPending }} pending</span>
+            <span style="background:#f3e2e0;color:#b4512f;border-radius:999px;padding:7px 15px;font-size:13px;font-weight:700;">✕ {{ dashCancelled }} cancelled</span>
+            <span style="background:#fffdf6;border:1px solid rgba(36,66,50,0.16);color:#244232;border-radius:999px;padding:7px 15px;font-size:13px;font-weight:700;">👤 {{ coachCount }} coaches</span>
           </div>
 
           <!-- PER-COACH PAYMENTS + SPLIT EDITOR -->
-          <h3 style="font-size:16px;font-weight:800;color:#1b2a1f;margin:28px 0 4px;">Coach payments &amp; split</h3>
+          <h3 style="font-size:17px;font-weight:800;color:#1b2a1f;margin:28px 0 4px;">Coach payments &amp; split</h3>
           <p style="font-size:13px;color:#56664f;margin:0 0 14px;">Each coach earns a share of every booking they take. Adjust the split per coach — coach % + equipment % + range % should total 100%.</p>
           <div style="display:flex;flex-direction:column;gap:10px;">
             <sc-for list="{{ coachPayRows }}" as="cp" hint-placeholder-count="0">
-              <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
-                <div style="flex:1;min-width:160px;">
+              <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+                <span style="width:42px;height:42px;border-radius:50%;flex:none;background:#244232;color:#f4efe4;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;">{{ cp.initials }}</span>
+                <div style="flex:1;min-width:150px;">
                   <div style="font-size:16px;font-weight:800;color:#1b2a1f;">{{ cp.name }}</div>
                   <div style="font-size:12.5px;color:#8a9579;">{{ cp.role }}</div>
                   <div style="font-size:13px;font-weight:700;color:#4d7327;margin-top:4px;">Earned: {{ cp.pay }}</div>
@@ -4935,6 +4929,7 @@ class Component extends DCLogic {
       const sum = (Number(d.coach) || 0) + (Number(d.equip) || 0) + (Number(d.range) || 0);
       return {
         id: c.id, name: c.name, role: c.role || '',
+        initials: this.coachInitials(c.name),
         pay: pesoRound(coachPay[c.id] || 0),
         coachPct: d.coach, equipPct: d.equip, rangePct: d.range,
         setCoachPct: (e) => this.setSplitField(c.id, 'coach', e.target.value),
@@ -4975,6 +4970,12 @@ class Component extends DCLogic {
           status: String(b.status || 'booked').toLowerCase(),
         };
       });
+    const splitSum = (coachTotal + equipTotal + rangeTotal) || 0;
+    const splitPctOf = (n) => splitSum > 0 ? Math.round((n / splitSum) * 100) : 0;
+    const splitCoachPct = splitPctOf(coachTotal), splitEquipPct = splitPctOf(equipTotal), splitRangePct = splitPctOf(rangeTotal);
+    const nextUp = (upcoming && upcoming.length) ? upcoming[0] : null;
+    const hasNextUpcoming = !!nextUp;
+    const nextUpcomingLabel = nextUp ? (((nextUp.date || '') + ' ' + (nextUp.time || '') + ' · ' + (nextUp.who || nextUp.name || '')).trim()) : '';
     const dashUpCoachOpts = [{ id: 'all', name: 'All coaches' }].concat(
       this.coaches().map(c => ({ id: c.id, name: c.name })));
     const dashUpRangeOpts = [
@@ -5482,6 +5483,8 @@ class Component extends DCLogic {
       coachUnassignedLabel: pesoRound(coachUnassigned), hasUnassignedPay: coachUnassigned > 0,
       coachCount: dashCoaches.length,
       coachPayRows: coachPayRows,
+      splitCoachPct: splitCoachPct, splitEquipPct: splitEquipPct, splitRangePct: splitRangePct,
+      nextUpcomingLabel: nextUpcomingLabel, hasNextUpcoming: hasNextUpcoming,
       upcoming: upcoming,
       noUpcoming: upTotal === 0,
       upCount: upTotal,
