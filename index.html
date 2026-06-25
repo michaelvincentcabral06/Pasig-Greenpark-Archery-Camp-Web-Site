@@ -1811,9 +1811,9 @@
       <div>
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:8px;">
           <h1 style="font-size:clamp(26px,3.5vw,38px);font-weight:800;letter-spacing:-0.02em;color:#1b2a1f;margin:0;">Manage</h1>
-          <div style="display:flex;align-items:center;gap:10px;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;">
             <span style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#8a6a1f;background:#fff1cf;padding:6px 11px;border-radius:999px;">Live · changes save to your site</span>
-            <button onClick="{{ adminLogout }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.18);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">Sign out</button>
+            <button onClick="{{ adminLogout }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.18);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;white-space:nowrap;">Sign out</button>
           </div>
         </div>
 
@@ -2143,9 +2143,9 @@
           <sc-if value="{{ bkViewCalendar }}" hint-placeholder-val="{{ false }}">
           <div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;max-width:520px;">
-              <button onClick="{{ calViewPrev }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-size:18px;font-weight:800;color:#244232;width:36px;height:36px;border-radius:8px;">‹</button>
+              <button onClick="{{ calViewPrev }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-size:18px;font-weight:800;color:#244232;width:40px;height:40px;border-radius:8px;">‹</button>
               <span style="font-size:16px;font-weight:800;color:#1b2a1f;">{{ calMonthLabel }}</span>
-              <button onClick="{{ calViewNext }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-size:18px;font-weight:800;color:#244232;width:36px;height:36px;border-radius:8px;">›</button>
+              <button onClick="{{ calViewNext }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-size:18px;font-weight:800;color:#244232;width:40px;height:40px;border-radius:8px;">›</button>
             </div>
             <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;max-width:520px;">
               <sc-for list="{{ calDowHeads }}" as="dh" hint-placeholder-count="7"><div style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:11px;color:#8a9579;padding-bottom:4px;">{{ dh }}</div></sc-for>
@@ -2237,9 +2237,9 @@
               <!-- CALENDAR -->
               <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:14px;padding:clamp(16px,2.5vw,22px);">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                  <button onClick="{{ coachCalPrev }}" aria-label="Previous month" style="width:34px;height:34px;flex:none;border-radius:8px;border:1px solid rgba(36,66,50,0.14);background:#f4efe4;color:#244232;font-size:18px;font-weight:700;line-height:1;opacity:{{ coachCalPrevOpacity }};cursor:{{ coachCalPrevCursor }};">‹</button>
+                  <button onClick="{{ coachCalPrev }}" aria-label="Previous month" style="width:40px;height:40px;flex:none;border-radius:8px;border:1px solid rgba(36,66,50,0.14);background:#f4efe4;color:#244232;font-size:18px;font-weight:700;line-height:1;opacity:{{ coachCalPrevOpacity }};cursor:{{ coachCalPrevCursor }};">‹</button>
                   <span style="font-size:16px;font-weight:800;color:#1b2a1f;letter-spacing:-0.01em;">{{ coachCalLabel }}</span>
-                  <button onClick="{{ coachCalNext }}" aria-label="Next month" style="width:34px;height:34px;flex:none;border-radius:8px;border:1px solid rgba(36,66,50,0.14);background:#f4efe4;color:#244232;font-size:18px;font-weight:700;line-height:1;cursor:pointer;">›</button>
+                  <button onClick="{{ coachCalNext }}" aria-label="Next month" style="width:40px;height:40px;flex:none;border-radius:8px;border:1px solid rgba(36,66,50,0.14);background:#f4efe4;color:#244232;font-size:18px;font-weight:700;line-height:1;cursor:pointer;">›</button>
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:6px;">
                   <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#8a9579;">Su</span>
@@ -2465,9 +2465,9 @@
           <!-- CALENDAR -->
           <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:14px;padding:clamp(16px,2.5vw,22px);">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-              <button onClick="{{ coachCalPrev }}" aria-label="Previous month" style="width:34px;height:34px;flex:none;border-radius:8px;border:1px solid rgba(36,66,50,0.14);background:#f4efe4;color:#244232;font-size:18px;font-weight:700;line-height:1;opacity:{{ coachCalPrevOpacity }};cursor:{{ coachCalPrevCursor }};">‹</button>
+              <button onClick="{{ coachCalPrev }}" aria-label="Previous month" style="width:40px;height:40px;flex:none;border-radius:8px;border:1px solid rgba(36,66,50,0.14);background:#f4efe4;color:#244232;font-size:18px;font-weight:700;line-height:1;opacity:{{ coachCalPrevOpacity }};cursor:{{ coachCalPrevCursor }};">‹</button>
               <span style="font-size:16px;font-weight:800;color:#1b2a1f;letter-spacing:-0.01em;">{{ coachCalLabel }}</span>
-              <button onClick="{{ coachCalNext }}" aria-label="Next month" style="width:34px;height:34px;flex:none;border-radius:8px;border:1px solid rgba(36,66,50,0.14);background:#f4efe4;color:#244232;font-size:18px;font-weight:700;line-height:1;cursor:pointer;">›</button>
+              <button onClick="{{ coachCalNext }}" aria-label="Next month" style="width:40px;height:40px;flex:none;border-radius:8px;border:1px solid rgba(36,66,50,0.14);background:#f4efe4;color:#244232;font-size:18px;font-weight:700;line-height:1;cursor:pointer;">›</button>
             </div>
             <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:6px;">
               <span style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#8a9579;">Su</span>
@@ -2575,7 +2575,7 @@
   </footer>
 
   <!-- STICKY MOBILE CALL/BOOK BAR -->
-  <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+  <sc-if value="{{ showMobileBar }}" hint-placeholder-val="{{ false }}">
   <div>
     <div style="height:calc(74px + env(safe-area-inset-bottom, 0px));"></div>
     <div style="position:fixed;bottom:0;left:0;right:0;z-index:60;display:flex;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom, 0px));background:rgba(244,239,228,0.96);backdrop-filter:blur(10px);border-top:1px solid rgba(36,66,50,0.14);box-shadow:0 -6px 20px rgba(27,42,31,0.1);">
@@ -5361,7 +5361,7 @@ class Component extends DCLogic {
       bookOpen: () => this.go('book', 'Open Range'),
       bookPrivate: () => this.go('book', 'Private Coaching'),
       bookGroup: () => this.go('book', 'Group & Corporate'),
-      isMobile, isDesktop: !isMobile, navOpen,
+      isMobile, isDesktop: !isMobile, navOpen, showMobileBar: isMobile && page !== 'admin',
       toggleNav: () => this.setState(s => ({ navOpen: !s.navOpen })),
       packages, testimonials, reviewsRating, reviewsCount, reviewsUrl, hasReviewsCount, hasReviewsUrl, values, faqs,
       aboutCoaches: this.coaches().map(c => {
