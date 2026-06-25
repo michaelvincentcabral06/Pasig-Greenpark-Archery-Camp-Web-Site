@@ -96,7 +96,7 @@
         <div style="display:flex;align-items:center;gap:18px;margin-top:34px;">
           <div style="display:flex;align-items:center;gap:6px;">
             <span style="color:#7fb43f;font-size:18px;letter-spacing:2px;">★★★★★</span>
-            <span style="font-weight:700;font-size:15px;">5.0</span>
+            <span style="font-weight:700;font-size:15px;">{{ reviewsRating }}</span>
           </div>
           <span style="width:1px;height:20px;background:rgba(36,66,50,0.2);"></span>
           <span style="font-size:14px;color:#46563f;font-family:'Spline Sans Mono',monospace;">Google reviewed</span>
@@ -331,14 +331,30 @@
 
     <!-- TESTIMONIALS -->
     <section style="padding:clamp(56px,7vw,96px) clamp(20px,5vw,64px);max-width:1320px;margin:0 auto;width:100%;">
-      <div style="font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#3c6b48;margin-bottom:12px;">From the range</div>
-      <h2 style="font-size:clamp(28px,4vw,44px);font-weight:800;letter-spacing:-0.02em;margin:0 0 44px;color:#1b2a1f;">What our archers say</h2>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:36px;">
+        <div>
+          <div style="font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#3c6b48;margin-bottom:12px;">From the range</div>
+          <h2 style="font-size:clamp(28px,4vw,44px);font-weight:800;letter-spacing:-0.02em;margin:0 0 12px;color:#1b2a1f;">What our archers say</h2>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="color:#7fb43f;font-size:18px;letter-spacing:2px;">★★★★★</span>
+            <span style="font-weight:800;font-size:16px;color:#1b2a1f;">{{ reviewsRating }}</span>
+            <sc-if value="{{ hasReviewsCount }}" hint-placeholder-val="{{ true }}"><span style="font-size:14px;color:#56664f;">· {{ reviewsCount }} reviews on Google</span></sc-if>
+          </div>
+        </div>
+        <sc-if value="{{ hasReviewsUrl }}" hint-placeholder-val="{{ true }}">
+          <a href="{{ reviewsUrl }}" target="_blank" rel="noopener" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);color:#244232;text-decoration:none;font-size:14px;font-weight:700;padding:11px 20px;border-radius:999px;white-space:nowrap;" style-hover="background:#fff;">Read all reviews on Google →</a>
+        </sc-if>
+      </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;">
         <sc-for list="{{ testimonials }}" as="t" hint-placeholder-count="3">
-          <figure style="margin:0;background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:8px;padding:28px;display:flex;flex-direction:column;gap:16px;">
-            <span style="color:#7fb43f;font-size:15px;letter-spacing:2px;">★★★★★</span>
-            <blockquote style="margin:0;font-size:17px;line-height:1.5;color:#2c3a26;font-weight:500;">“{{ t.quote }}”</blockquote>
-            <figcaption style="font-size:13.5px;color:#56664f;margin-top:auto;"><span style="font-weight:700;color:#1b2a1f;">{{ t.name }}</span> · {{ t.role }}</figcaption>
+          <figure style="margin:0;background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:8px;padding:28px;display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="width:42px;height:42px;flex:none;border-radius:50%;background:#244232;color:#f4efe4;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;">{{ t.initial }}</span>
+              <span style="font-weight:700;color:#1b2a1f;font-size:15px;flex:1;">{{ t.name }}</span>
+              <span style="width:22px;height:22px;flex:none;border-radius:50%;border:1px solid rgba(36,66,50,0.15);display:flex;align-items:center;justify-content:center;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:13px;color:#4285F4;">G</span>
+            </div>
+            <div style="font-size:15px;letter-spacing:1px;"><span style="color:#7fb43f;">{{ t.starsFull }}</span><span style="color:rgba(36,66,50,0.22);">{{ t.starsEmpty }}</span><sc-if value="{{ t.hasDate }}" hint-placeholder-val="{{ false }}"><span style="font-size:12.5px;letter-spacing:0;color:#8a9579;margin-left:8px;">· {{ t.date }}</span></sc-if></div>
+            <blockquote style="margin:0;font-size:16px;line-height:1.5;color:#2c3a26;font-weight:500;">"{{ t.quote }}"</blockquote>
           </figure>
         </sc-for>
       </div>
@@ -2915,6 +2931,9 @@ class Component extends DCLogic {
       funShoot: c.funShoot != null ? c.funShoot : defaults.funShoot,
       rates: c.rates || defaults.rates,
       capacity: c.capacity != null ? c.capacity : defaults.capacity,
+      reviewsRating: c.reviewsRating != null ? c.reviewsRating : defaults.reviewsRating,
+      reviewsCount: c.reviewsCount != null ? c.reviewsCount : defaults.reviewsCount,
+      reviewsUrl: c.reviewsUrl != null ? c.reviewsUrl : defaults.reviewsUrl,
       testimonials: c.testimonials || defaults.testimonials,
     };
   }
@@ -4230,10 +4249,10 @@ class Component extends DCLogic {
       Sat: [ { time: '9:00 AM', name: 'Little Archers', level: 'ages 6–10' }, { time: '10:30 AM', name: 'Adult Beginners', level: 'beginner' }, { time: '1:00 PM', name: 'Open Range', level: 'all levels' }, { time: '3:00 PM', name: 'Youth Squad', level: 'ages 11–17' } ],
       Sun: [ { time: '9:00 AM', name: 'Open Range', level: 'all levels' }, { time: '10:30 AM', name: 'Little Archers', level: 'ages 6–10' }, { time: '1:00 PM', name: 'Private Coaching', level: 'by appt' } ],
     };
-    const cm = this.mergedContent({ packages: defaultPackages, scheduleNote: defaultScheduleNote, schedule: defaultSchedule, funShoot: '₱10', rates: { openRange: 400, session: 600, private: 1200 }, capacity: 6, testimonials: [
-        { quote: 'My two kids beg to come back every weekend. The coaches make it safe and genuinely fun.', name: 'Liza M.', role: 'parent' },
-        { quote: "Walked in never having held a bow. Six weeks later I'm hooked and hitting golds.", name: 'Daniel R.', role: 'adult beginner' },
-        { quote: 'Cleanest, friendliest range in the metro. The Greenpark setting is unbeatable.', name: 'Coach Pia', role: 'visiting club' },
+    const cm = this.mergedContent({ packages: defaultPackages, scheduleNote: defaultScheduleNote, schedule: defaultSchedule, funShoot: '₱10', rates: { openRange: 400, session: 600, private: 1200 }, capacity: 6, reviewsRating: '5.0', reviewsCount: '', reviewsUrl: '', testimonials: [
+        { quote: 'My two kids beg to come back every weekend. The coaches make it safe and genuinely fun.', name: 'Liza M.', role: 'parent', rating: 5, date: '' },
+        { quote: "Walked in never having held a bow. Six weeks later I'm hooked and hitting golds.", name: 'Daniel R.', role: 'adult beginner', rating: 5, date: '' },
+        { quote: 'Cleanest, friendliest range in the metro. The Greenpark setting is unbeatable.', name: 'Coach Pia', role: 'visiting club', rating: 5, date: '' },
       ] });
     cm.packages = this.normalizePackages(cm.packages);
     const packages = cm.packages.map(pk => ({ ...pk, choose: () => this.selectPlanToBuy(pk.name) }));
@@ -4252,7 +4271,17 @@ class Component extends DCLogic {
       pick: () => this.selectPlanToBuy(pk.name),
     }));
 
-    const testimonials = (cm.testimonials || []).map(t => ({ quote: t.quote, name: t.name, role: t.role }));
+    const clampStars = (r) => { const n = Math.round(Number(r)); return (n >= 1 && n <= 5) ? n : 5; };
+    const testimonials = (cm.testimonials || []).map(t => {
+      const rt = clampStars(t.rating == null ? 5 : t.rating);
+      const nm = (t.name || '').trim();
+      return { quote: t.quote, name: t.name, initial: nm ? nm.charAt(0).toUpperCase() : '★', starsFull: '★'.repeat(rt), starsEmpty: '☆'.repeat(5 - rt), date: t.date || '', hasDate: !!(t.date && String(t.date).trim()) };
+    });
+    const reviewsRating = cm.reviewsRating || '5.0';
+    const reviewsCount = cm.reviewsCount || '';
+    const reviewsUrl = cm.reviewsUrl || '';
+    const hasReviewsCount = !!(reviewsCount && String(reviewsCount).trim());
+    const hasReviewsUrl = !!(reviewsUrl && String(reviewsUrl).trim());
 
     const values = [
       { icon: '🍃', title: 'Calm over force', body: 'Archery rewards breath and posture, not muscle. We teach the quiet discipline that makes the rest fall into place.' },
@@ -5322,7 +5351,7 @@ class Component extends DCLogic {
       bookGroup: () => this.go('book', 'Group & Corporate'),
       isMobile, isDesktop: !isMobile, navOpen,
       toggleNav: () => this.setState(s => ({ navOpen: !s.navOpen })),
-      packages, testimonials, values, faqs,
+      packages, testimonials, reviewsRating, reviewsCount, reviewsUrl, hasReviewsCount, hasReviewsUrl, values, faqs,
       aboutCoaches: this.coaches().map(c => {
         const av = this.coachAvatar(c);
         return { name: c.name, role: c.role || 'Coach', bio: c.bio || '', hasBio: !!(c.bio && String(c.bio).trim()), hasPhoto: av.hasPhoto, noPhoto: !av.hasPhoto, photo: av.photo, initials: av.initials };
