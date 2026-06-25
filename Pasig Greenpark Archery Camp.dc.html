@@ -5361,7 +5361,7 @@ class Component extends DCLogic {
       bookOpen: () => this.go('book', 'Open Range'),
       bookPrivate: () => this.go('book', 'Private Coaching'),
       bookGroup: () => this.go('book', 'Group & Corporate'),
-      isMobile, isDesktop: !isMobile, navOpen, showMobileBar: isMobile && page !== 'admin',
+      isMobile, isDesktop: !isMobile, navOpen, showMobileBar: isMobile && page !== 'admin' && page !== 'coach',
       toggleNav: () => this.setState(s => ({ navOpen: !s.navOpen })),
       packages, testimonials, reviewsRating, reviewsCount, reviewsUrl, hasReviewsCount, hasReviewsUrl, values, faqs,
       aboutCoaches: this.coaches().map(c => {
