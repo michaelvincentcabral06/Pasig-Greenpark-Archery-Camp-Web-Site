@@ -1957,6 +1957,53 @@
         <!-- PLANS & COACHES TAB -->
         <sc-if value="{{ tabPlans }}" hint-placeholder-val="{{ false }}">
         <div>
+          <div style="display:flex;gap:8px;margin-bottom:18px;">
+            <button onClick="{{ goSessions }}" style="background:{{ bkSessTabBg }};color:{{ bkSessTabFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;padding:9px 18px;border-radius:999px;">Sessions</button>
+            <button onClick="{{ goPasses }}" style="background:{{ bkPassTabBg }};color:{{ bkPassTabFg }};border:1px solid rgba(36,66,50,0.16);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;padding:9px 18px;border-radius:999px;">Passes</button>
+          </div>
+          <sc-if value="{{ bkViewSessions }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <h3 style="font-size:16px;font-weight:800;color:#1b2a1f;margin:0 0 4px;">All booked sessions</h3>
+            <p style="font-size:13px;color:#56664f;margin:0 0 14px;">Every session booked across the business — single bookings and pass sessions. Assign a coach or cancel right here.</p>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+              <input type="text" value="{{ sessSearch }}" onInput="{{ setSessSearch }}" placeholder="Search name, program, reference…" style="flex:1;min-width:200px;padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;">
+              <select value="{{ sessStatus }}" onChange="{{ setSessStatus }}" style="padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;background:#fffdf6;"><sc-for list="{{ sessStatusOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o.id }}">{{ o.name }}</option></sc-for></select>
+              <select value="{{ sessRange }}" onChange="{{ setSessRange }}" style="padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;background:#fffdf6;"><sc-for list="{{ sessRangeOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o.id }}">{{ o.name }}</option></sc-for></select>
+              <select value="{{ sessCoach }}" onChange="{{ setSessCoach }}" style="padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;background:#fffdf6;"><sc-for list="{{ sessCoachOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o.id }}">{{ o.name }}</option></sc-for></select>
+            </div>
+            <div style="font-size:13px;color:#56664f;margin-bottom:12px;">{{ sessCount }} session(s)<sc-if value="{{ sessFiltered }}" hint-placeholder-val="{{ false }}"> · <button onClick="{{ clearSessFilters }}" style="background:none;border:none;cursor:pointer;color:#4d7327;font-weight:700;font-size:13px;font-family:'Hanken Grotesk',sans-serif;text-decoration:underline;padding:0;">clear filters</button></sc-if></div>
+            <sc-if value="{{ sessNone }}" hint-placeholder-val="{{ true }}"><div style="background:#fffdf6;border:1px dashed rgba(36,66,50,0.2);border-radius:12px;padding:24px;text-align:center;color:#8a9579;font-size:14px;">{{ sessEmptyLabel }}</div></sc-if>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <sc-for list="{{ sessionRows }}" as="r" hint-placeholder-count="0">
+                <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+                  <div style="min-width:120px;">
+                    <div style="font-size:14px;font-weight:800;color:#1b2a1f;">{{ r.when }}</div>
+                    <div style="font-size:12.5px;color:#56664f;font-family:'Spline Sans Mono',monospace;">{{ r.time }}</div>
+                  </div>
+                  <div style="flex:1;min-width:160px;">
+                    <div style="font-size:14px;font-weight:700;color:#1b2a1f;">{{ r.name }}</div>
+                    <div style="font-size:12.5px;color:#56664f;">{{ r.program }}</div>
+                    <sc-if value="{{ r.hasPhone }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#3c6b48;font-family:'Spline Sans Mono',monospace;margin-top:2px;">📞 <a href="{{ r.callHref }}" style="color:#3c6b48;text-decoration:none;font-weight:700;">{{ r.phone }}</a></div></sc-if>
+                    <sc-if value="{{ r.hasRef }}" hint-placeholder-val="{{ false }}"><div style="font-size:11.5px;color:#a6b09a;font-family:'Spline Sans Mono',monospace;margin-top:2px;">{{ r.ref }}</div></sc-if>
+                  </div>
+                  <span style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;background:{{ r.statusBg }};color:{{ r.statusFg }};padding:5px 11px;border-radius:999px;">{{ r.statusLabel }}</span>
+                  <sc-if value="{{ r.hasAmount }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;font-weight:700;color:#4d7327;font-family:'Spline Sans Mono',monospace;">{{ r.amountLabel }}</span></sc-if>
+                  <select value="{{ r.coachId }}" onChange="{{ r.setCoach }}" style="padding:8px 11px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:12.5px;font-family:'Hanken Grotesk',sans-serif;background:#f4efe4;color:#244232;"><sc-for list="{{ sessAssignOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o.id }}">{{ o.name }}</option></sc-for></select>
+                  <button onClick="{{ r.cancel }}" style="background:none;border:1px solid rgba(180,81,47,0.35);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12.5px;font-weight:700;color:#b4512f;padding:7px 13px;border-radius:999px;">Cancel</button>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ sessMultiPage }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:16px;">
+              <sc-if value="{{ sessHasPrev }}" hint-placeholder-val="{{ true }}"><button onClick="{{ sessPrev }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">← Prev</button></sc-if>
+              <span style="font-size:13px;color:#56664f;font-family:'Spline Sans Mono',monospace;">{{ sessPageLabel }}</span>
+              <sc-if value="{{ sessHasNext }}" hint-placeholder-val="{{ true }}"><button onClick="{{ sessNext }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">Next →</button></sc-if>
+            </div>
+            </sc-if>
+          </div>
+          </sc-if>
+          <sc-if value="{{ bkViewPasses }}" hint-placeholder-val="{{ false }}">
+          <div>
           <p style="font-size:14px;line-height:1.55;color:#56664f;margin:0 0 12px;">Every customer's pass. <strong>Process: ① Call → ② assign Coach + Schedule → ③ Approve (or Cancel).</strong> Approved &amp; cancelled passes stay here; every action is logged in the Bookings tab.</p>
           <!-- FILTERS -->
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
@@ -2054,6 +2101,8 @@
             <sc-if value="{{ plHasPrev }}" hint-placeholder-val="{{ true }}"><button onClick="{{ plPrev }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">← Prev</button></sc-if>
             <span style="font-size:13px;color:#56664f;font-family:'Spline Sans Mono',monospace;">{{ plPageLabel }}</span>
             <sc-if value="{{ plHasNext }}" hint-placeholder-val="{{ true }}"><button onClick="{{ plNext }}" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#244232;padding:9px 16px;border-radius:999px;">Next →</button></sc-if>
+          </div>
+          </sc-if>
           </div>
           </sc-if>
         </div>
