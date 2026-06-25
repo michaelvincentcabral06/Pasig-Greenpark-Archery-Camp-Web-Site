@@ -4973,7 +4973,7 @@ class Component extends DCLogic {
     const splitSum = (coachTotal + equipTotal + rangeTotal) || 0;
     const splitPctOf = (n) => splitSum > 0 ? Math.round((n / splitSum) * 100) : 0;
     const splitCoachPct = splitPctOf(coachTotal), splitEquipPct = splitPctOf(equipTotal), splitRangePct = splitPctOf(rangeTotal);
-    const nextUp = (upcoming && upcoming.length) ? upcoming[0] : null;
+    const nextUp = (upAllFiltered && upAllFiltered.length) ? upAllFiltered[0] : null;   // soonest overall, not the current page
     const hasNextUpcoming = !!nextUp;
     const nextUpcomingLabel = nextUp ? (((nextUp.date || '') + ' ' + (nextUp.time || '') + ' · ' + (nextUp.who || nextUp.name || '')).trim()) : '';
     const dashUpCoachOpts = [{ id: 'all', name: 'All coaches' }].concat(
