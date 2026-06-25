@@ -4757,7 +4757,7 @@ class Component extends DCLogic {
       const st = (s.full || left <= 0) ? { label: 'Full', bg: '#f3e2e0', fg: '#b4512f' }
                : (left <= 2) ? { label: left + ' left', bg: '#fff1cf', fg: '#8a6a1f' }
                : { label: 'Open', bg: '#e6efd6', fg: '#4d7327' };
-      return { time: s.time || '', statusLabel: st.label, statusBg: st.bg, statusFg: st.fg, isOpen: !(s.full || left <= 0), book: () => this.go('book') };
+      return { time: s.label || s.time || '', statusLabel: st.label, statusBg: st.bg, statusFg: st.fg, isOpen: !(s.full || left <= 0), book: () => this.go('book') };
     });
     const PL_PAGE = 8;
     const plTotal = plFiltered.length;
