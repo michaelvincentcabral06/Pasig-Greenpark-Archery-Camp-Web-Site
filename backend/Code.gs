@@ -777,7 +777,7 @@ function lookup_(email, ref) {
     if (!inGroup[em]) return;                       // any email in the group (was: single email)
     if (/\(plan\)\s*$/i.test(field(d, 'Program'))) return;
     var conc = field(d, 'Concession');
-    var c = conc ? { pasig: /Pasig/i.test(conc), local: /Greenpark|RHS/i.test(conc), pac: /PAC/i.test(conc) } : null;
+    var c = conc ? { label: conc, pasig: /Pasig/i.test(conc), local: /Greenpark|RHS/i.test(conc), pac: /PAC/i.test(conc) } : null;
     var st = ev.getStartTime();
     var nm = field(d, 'Name'); if (nm) name = nm;
     out.push({ name: nm, phone: field(d, 'Mobile'), email: em, program: field(d, 'Program'),
@@ -795,6 +795,11 @@ function lookup_(email, ref) {
 function concLine_(body) {
   var c = body.concession;
   if (!c) return '';
+  if (c.items && c.items.length) {
+    var parts = c.items.map(function (it) { return (it.name || '') + (it.proof ? (' (' + it.proof + ')') : ''); });
+    return parts.length ? ('\nConcession: ' + parts.join(', ')) : '';
+  }
+  // legacy shape (pre-Phase-2 requests)
   var p = [];
   if (c.pasig) p.push('Pasig');
   if (c.local) p.push('Greenpark/RHS');
