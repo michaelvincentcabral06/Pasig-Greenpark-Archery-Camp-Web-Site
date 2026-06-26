@@ -280,3 +280,24 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 - [ ] **Photo persists:** Set a coach photo (data URL) via admin. Open `…/exec?action=coaches` — confirm the returned coach object has a non-empty `photo` field. Reload on a different device — photo still present.
 - [ ] **Photo and bio appear on About page:** Confirm the About / Coaches section on the live site renders the updated bio and photo.
 - [ ] **Delete coach clears CoachPhotos row:** Remove a coach in admin. Open the `CoachPhotos` sheet — confirm their row is gone (a re-added coach with the same id starts with no stale photo).
+
+---
+
+## db-v23 deploy & verify
+
+**What changed:** concession discounts are now admin-editable (Pricing tab). The backend's `concLine_`/`lookup_` were generalized so any admin-defined discount — not just the original Pasig/PAC/Greenpark three — survives the calendar round-trip as a self-describing label. **Frontend ships via GitHub Pages; this re-deploy makes the backend half live.** Until you re-deploy, custom discounts beyond the original three are dropped when a booking round-trips through the calendar.
+
+### Deploy steps
+
+1. Open the Apps Script project in your browser.
+2. Paste the entire contents of `backend/Code.gs` (overwriting the old code), then click **Save** (💾).
+3. Click **Deploy → Manage deployments → edit (✏️) → Version: New version → Deploy.**
+   - This keeps the same `/exec` URL — no changes needed in the website.
+
+### Verification checklist
+
+- [ ] Open `…/exec?action=version` in a browser — confirm the response shows `"version":"db-v23"`, `"editableDiscounts":true`, and all prior flags (`coachProfiles:true`, `brandedEmail:true`, `contentStore:true`, etc.) still present.
+- [ ] **Seeded discounts still work:** On the live site, book an **Open Range** session, tick **Pasig City resident** (+ enter proof), and confirm. In admin (and My Bookings), confirm the booking shows the **Pasig City resident** concession and the ₱100 discount applied to the total.
+- [ ] **Custom discount survives the round-trip (the key fix):** In admin **Pricing → Concession discounts**, add a new discount (e.g. `Senior citizen`, ₱150, proof required). Book an Open Range session with **only that new discount** ticked. Confirm the calendar event is created, then reload admin / My Bookings — the booking must still display **Senior citizen** (not blank, not a fallback). Before this re-deploy the custom name would vanish on round-trip.
+- [ ] **Legacy bookings still display:** Open an older Open Range booking made before this change (one with a Pasig/PAC/Greenpark concession) — confirm its concession label still renders correctly in admin and My Bookings.
+- [ ] **Stackable + per-slot pricing:** Book Open Range with **two** discounts ticked across **two** time slots — confirm the receipt subtracts both amounts **per slot** (no "extra slots free" perk; that was removed in Phase 2).
