@@ -3575,6 +3575,22 @@ class Component extends DCLogic {
     return this.addDaysStr(this.tsToDateStr(plan.ts), days);
   }
   isPlanExpired(plan) { const e = this.planExpiry(plan); return !!e && this.todayStr() > e; }
+  concLabelFull_(c) {
+    if (!c) return '';
+    if (c.items && c.items.length) return c.items.map(it => it.name + (it.proof ? (' · ' + it.proof) : '')).join('  ·  ');
+    if (c.label) return c.label;
+    return [
+      c.pasig ? ('Pasig resident · ' + (c.pasigProof || '—')) : '',
+      c.local ? ('Greenpark/RHS · ' + (c.localProof || '—')) : '',
+      c.pac ? ('PAC · WAP ID ' + (c.wapId || '—')) : ''
+    ].filter(Boolean).join('  ·  ');
+  }
+  concLabelShort_(c) {
+    if (!c) return '';
+    if (c.items && c.items.length) return c.items.map(it => it.name).join(' + ');
+    if (c.label) return c.label;
+    return [c.pasig ? 'Pasig' : '', c.local ? 'Greenpark/RHS' : '', c.pac ? 'PAC' : ''].filter(Boolean).join(' + ');
+  }
   pushRemovePlan(email, ts, by, notify) {
     if (!email) return;
     this.adminPost({ action: 'removePlan', email: email, ts: ts, by: by || 'customer', notify: notify !== false }).catch(function () {});
@@ -4701,12 +4717,8 @@ class Component extends DCLogic {
       amountLabel: b.amount ? ('\u20B1' + Number(b.amount).toLocaleString('en-PH')) : '',
       roster: (b.archers && b.archers.length) ? b.archers.map(function (a) { return (a.name || 'Archer') + (a.age != null && a.age !== '' ? ' (' + a.age + ')' : ''); }).join(', ') : '',
       hasRoster: !!(b.archers && b.archers.length),
-      concessionLabel: b.concession ? [
-        b.concession.pasig ? ('Pasig resident · ' + (b.concession.pasigProof || '—')) : '',
-        b.concession.local ? ('Greenpark/RHS · ' + (b.concession.localProof || '—')) : '',
-        b.concession.pac ? ('PAC · WAP ID ' + (b.concession.wapId || '—')) : ''
-      ].filter(Boolean).join('  ·  ') : '',
-      hasConcession: !!(b.concession && (b.concession.pasig || b.concession.pac || b.concession.local)),
+      concessionLabel: this.concLabelFull_(b.concession),
+      hasConcession: !!this.concLabelFull_(b.concession),
       slotInfo: (b.time ? b.time : '') + ((b.party || 1) > 1 ? ' · group of ' + b.party : ''),
       hasSlot: !!b.time || (b.party || 1) > 1,
       onCalendar: !!b.eventId,
@@ -4918,7 +4930,7 @@ class Component extends DCLogic {
     const sessionIsPast = (b) => this.isSessionUsed(b.date, b.time);
     const fmtSession = (b) => {
       let pretty = b.date; try { pretty = new Date(b.date + 'T00:00:00').toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' }); } catch (e) {}
-      const cl = b.concession ? [b.concession.pasig ? 'Pasig' : '', b.concession.local ? 'Greenpark/RHS' : '', b.concession.pac ? 'PAC' : ''].filter(Boolean).join(' + ') : '';
+      const cl = this.concLabelShort_(b.concession);
       return {
         ts: b.ts, date: b.date, time: b.time || '', program: b.program || '', pretty: pretty,
         coachName: (b.coach ? ((this.coachById(b.coach) || {}).name || '') : ''),
