@@ -746,7 +746,7 @@ function doGet(e) {
     if (action === 'content') return getContent_();
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v21', auth: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true });
+      return json_({ version: 'db-v22', auth: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -1342,6 +1342,25 @@ function listPlans_(email) {
   return json_({ plans: out });
 }
 
+// Does this customer already hold a booking at this date + time? Prevents the same
+// email from double-booking the exact same slot (which looks like one session but
+// quietly consumes two seats).
+function customerHasSlot_(email, dateStr, timeLabel) {
+  email = (email || '').trim().toLowerCase();
+  if (!email || !dateStr || !timeLabel) return false;
+  var p = dateStr.split('-');
+  if (p.length !== 3) return false;
+  var ds = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10), 0, 0, 0);
+  var de = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10), 23, 59, 59);
+  var evs = getCalendar_().getEvents(ds, de);
+  for (var i = 0; i < evs.length; i++) {
+    var lbl = fmtLabel_(parseInt(Utilities.formatDate(evs[i].getStartTime(), TIMEZONE, 'H'), 10));
+    if (lbl !== timeLabel) continue;
+    var m = (evs[i].getDescription() || '').match(/Email:\s*([^\n\r]+)/i);
+    if (m && m[1].trim().toLowerCase() === email) return true;
+  }
+  return false;
+}
 function book_(body) {
   if (body.dates && body.dates.length) return bookMulti_(body);
   var date = body.date;
@@ -1360,6 +1379,14 @@ function book_(body) {
     var alts = slots.filter(function (s) { return s.left >= party && requested.indexOf(s.time) === -1; })
                     .map(function (s) { return s.time; }).slice(0, 3);
     return json_({ ok: false, reason: 'full', unavailable: unavailable, alternatives: alts });
+  }
+
+  // Block the same customer from re-booking a slot they already hold (use the archer
+  // count for extra people instead of a second booking).
+  if (!body.noEmail) {
+    var already = [];
+    requested.forEach(function (label) { if (customerHasSlot_(body.email, date, label)) already.push(label); });
+    if (already.length) return json_({ ok: false, reason: 'duplicate', duplicates: already });
   }
 
   // Amount: trust the website's figure if present, else compute from the rate
@@ -1450,6 +1477,13 @@ function bookMulti_(body) {
     });
   });
   if (unavailable.length) return json_({ ok: false, reason: 'full', unavailable: unavailable });
+
+  // Block slots this customer already holds (same email, same date+time).
+  if (!body.noEmail) {
+    var dup = [];
+    dates.forEach(function (d) { (d.times || []).forEach(function (label) { if (customerHasSlot_(body.email, d.date, label)) dup.push(d.date + ' ' + label); }); });
+    if (dup.length) return json_({ ok: false, reason: 'duplicate', duplicates: dup });
+  }
 
   var rate = /Open Range/i.test(body.program || '') ? OPEN_RANGE_RATE : (/Private/i.test(body.program || '') ? PRIVATE_RATE : SESSION_RATE);
   var pairCount = dates.reduce(function (n, d) { return n + ((d.times || []).length); }, 0);
