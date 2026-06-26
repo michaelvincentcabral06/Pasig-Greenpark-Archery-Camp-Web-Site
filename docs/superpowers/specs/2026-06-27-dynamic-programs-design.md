@@ -15,19 +15,19 @@ The backend's only program-name logic is a price **fallback** (`/Private/i`, `/O
 Editable like `packages` (persisted via the existing admin content-save path, which is admin-authed). Each program:
 
 ```
-{ name, price (number), needsCoach (bool), multiDay (bool), offerDiscounts (bool), ageNote (string, optional), blurb (string, optional) }
+{ name, price (number), needsCoach (bool), multiDay (bool), offerDiscounts (bool), minAge (number|null), maxAge (number|null), blurb (string, optional) }
 ```
 
-`defaultPrograms()` seeds the current line-up so nothing changes on launch:
+`minAge`/`maxAge` replace the hardcoded `PROGRAM_AGE` name→range map: they drive the age-range label, whether per-archer birthdates are collected (`showArcherDetails`), and the age-fit validation. Empty/null → no age restriction (no per-archer age check). `defaultPrograms()` seeds the current line-up so nothing changes on launch:
 
-| name | price | needsCoach | multiDay | offerDiscounts |
-|---|---|---|---|---|
-| Little Archers (6–10) | 600 | true | false | false |
-| Youth Squad (11–17) | 600 | true | false | false |
-| Adult Beginners (18+) | 600 | true | false | false |
-| Open Range | 400 | false | true | true |
-| Private Coaching | 1200 | true | false | false |
-| Group & Corporate | 600 | true | false | false |
+| name | price | needsCoach | multiDay | offerDiscounts | minAge | maxAge |
+|---|---|---|---|---|---|---|
+| Little Archers (6–10) | 600 | true | false | false | 6 | 10 |
+| Youth Squad (11–17) | 600 | true | false | false | 11 | 17 |
+| Adult Beginners (18+) | 600 | true | false | false | 18 | null |
+| Open Range | 400 | false | true | true | null | null |
+| Private Coaching | 1200 | true | false | false | null | null |
+| Group & Corporate | 600 | true | false | false | null | null |
 
 Added to `mergedContent(...)` defaults: `programs: this.defaultPrograms()`. `mergedContent` returns `programs: c.programs || defaults.programs` (mirrors `packages`). A `normalizePrograms()` coerces fields (price→Number, toggles→bool, default missing) for resilience against partial/legacy content.
 
@@ -42,6 +42,7 @@ Replace every frontend program-name check with a lookup of the **selected** prog
 - multi-date mode (`multiDateMode`, the `/Open Range/i` test ~line 4467) → `programByName(form.program).multiDay`.
 - concession UI + eligibility (the `/Open Range/i` checks ~3285/3298/3848 + the "Open Range concessions" label/gating ~1093) → `programByName(form.program).offerDiscounts`.
 - `priceFor(program, …)` rate (the `/Open Range/i`/`/Private/i` bucket ~3279-3280) → `programByName(program).price` as the base rate; the party × sessions × group-discount × concession math is unchanged.
+- the `PROGRAM_AGE` constant + `ageRange` lookup (~4399-4404) → `programByName(form.program)`'s `minAge`/`maxAge` (`ageRange = (minAge != null) ? [minAge, (maxAge != null ? maxAge : 120)] : null`); `ageRangeLabel`, `showArcherDetails`, and the age-fit check then work off the program's data unchanged.
 
 (Any user-facing copy that hardcodes "Open Range" — e.g. the concession label/help text — becomes generic, e.g. "Concession discounts" / "This program offers …", since it's now toggle-driven.)
 
@@ -54,8 +55,8 @@ The hardcoded `<option>` list (~lines 903-909) becomes a `<sc-for>` over `progra
 A new section in the **Pricing** admin tab, beside the pass editor, mirroring its pattern (`packages`/`addPass`/`removePass`/`updatePackage` → `programs`/`addProgram`/`removeProgram`/`setProgramField`). Each program row edits:
 - **Name** (text), **Price** (number).
 - Three **toggle buttons** (on/off, brand-styled): "Needs a coach", "Book multiple days", "Offer concession discounts".
-- **Age note** (text, optional), **Blurb** (textarea, optional).
-- **Remove** + a **+ Add program** button (new program default: `{ name:'New program', price:600, needsCoach:true, multiDay:false, offerDiscounts:false, ageNote:'', blurb:'' }`).
+- **Min age** / **Max age** (number, optional — blank = no age limit), **Blurb** (textarea, optional).
+- **Remove** + a **+ Add program** button (new program default: `{ name:'New program', price:600, needsCoach:true, multiDay:false, offerDiscounts:false, minAge:null, maxAge:null, blurb:'' }`).
 
 Handlers go through `saveCM({ programs: … })` → `persistContent` → the admin-authed `setContent` (sends the secret; same as passes). No new backend action.
 
