@@ -49,7 +49,6 @@
       <button onClick="{{ goPrograms }}" style="position:relative;background:none;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:600;color:#1b2a1f;padding:4px 0;" style-hover="opacity:0.6;">Programs<sc-if value="{{ isPrograms }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;right:0;bottom:-4px;height:2px;background:#7fb43f;border-radius:2px;"></span></sc-if></button>
       <button onClick="{{ goPlans }}" style="position:relative;background:none;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:600;color:#1b2a1f;padding:4px 0;" style-hover="opacity:0.6;">Passes<sc-if value="{{ isPlans }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;right:0;bottom:-4px;height:2px;background:#7fb43f;border-radius:2px;"></span></sc-if></button>
       <button onClick="{{ goAbout }}" style="position:relative;background:none;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:600;color:#1b2a1f;padding:4px 0;" style-hover="opacity:0.6;">About<sc-if value="{{ isAbout }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;right:0;bottom:-4px;height:2px;background:#7fb43f;border-radius:2px;"></span></sc-if></button>
-      <button onClick="{{ goBook }}" style="position:relative;background:none;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:600;color:#1b2a1f;padding:4px 0;" style-hover="opacity:0.6;">Book<sc-if value="{{ isBook }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;right:0;bottom:-4px;height:2px;background:#7fb43f;border-radius:2px;"></span></sc-if></button>
       <button onClick="{{ goContact }}" style="position:relative;background:none;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:600;color:#1b2a1f;padding:4px 0;" style-hover="opacity:0.6;">Contact<sc-if value="{{ isContact }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;right:0;bottom:-4px;height:2px;background:#7fb43f;border-radius:2px;"></span></sc-if></button>
       <button onClick="{{ goAccount }}" style="position:relative;background:none;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:600;color:#1b2a1f;padding:4px 0;" style-hover="opacity:0.6;">My Bookings<sc-if value="{{ isAccount }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;right:0;bottom:-4px;height:2px;background:#7fb43f;border-radius:2px;"></span></sc-if></button>
       <button onClick="{{ goBook }}" style="background:#244232;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;padding:11px 20px;border-radius:999px;letter-spacing:0.01em;" style-hover="background:#1b3325;">Book a Session</button>
@@ -69,7 +68,6 @@
     <button onClick="{{ goPrograms }}" style="background:none;border:none;cursor:pointer;text-align:left;font-family:'Hanken Grotesk',sans-serif;font-size:18px;font-weight:700;color:#1b2a1f;padding:14px 4px;border-bottom:1px solid rgba(36,66,50,0.08);">Programs</button>
     <button onClick="{{ goPlans }}" style="background:none;border:none;cursor:pointer;text-align:left;font-family:'Hanken Grotesk',sans-serif;font-size:18px;font-weight:700;color:#1b2a1f;padding:14px 4px;border-bottom:1px solid rgba(36,66,50,0.08);">Passes</button>
     <button onClick="{{ goAbout }}" style="background:none;border:none;cursor:pointer;text-align:left;font-family:'Hanken Grotesk',sans-serif;font-size:18px;font-weight:700;color:#1b2a1f;padding:14px 4px;border-bottom:1px solid rgba(36,66,50,0.08);">About</button>
-    <button onClick="{{ goBook }}" style="background:none;border:none;cursor:pointer;text-align:left;font-family:'Hanken Grotesk',sans-serif;font-size:18px;font-weight:700;color:#1b2a1f;padding:14px 4px;border-bottom:1px solid rgba(36,66,50,0.08);">Book</button>
     <button onClick="{{ goContact }}" style="background:none;border:none;cursor:pointer;text-align:left;font-family:'Hanken Grotesk',sans-serif;font-size:18px;font-weight:700;color:#1b2a1f;padding:14px 4px;">Contact</button>
     <button onClick="{{ goAccount }}" style="background:none;border:none;cursor:pointer;text-align:left;font-family:'Hanken Grotesk',sans-serif;font-size:18px;font-weight:700;color:#1b2a1f;padding:14px 4px;border-top:1px solid rgba(36,66,50,0.08);">My Bookings</button>
     <button onClick="{{ goBook }}" style="margin-top:10px;background:#244232;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:700;padding:14px;border-radius:999px;">Book a Session</button>
@@ -558,7 +556,7 @@
             <sc-for list="{{ calDowHeads }}" as="dh" hint-placeholder-count="7"><div style="text-align:center;font-family:'Spline Sans Mono',monospace;font-size:11px;color:#8a9579;padding-bottom:4px;">{{ dh }}</div></sc-for>
             <sc-for list="{{ calPubCells }}" as="co" hint-placeholder-count="35">
               <sc-if value="{{ co.blank }}" hint-placeholder-val="{{ false }}"><div></div></sc-if>
-              <sc-if value="{{ co.date }}" hint-placeholder-val="{{ true }}"><button onClick="{{ co.pick }}" style="position:relative;min-height:46px;background:{{ co.cellBg }};border:1px solid {{ co.cellBorder }};border-radius:8px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;padding:5px;text-align:left;opacity:{{ co.cellOpacity }};"><span style="font-size:13px;font-weight:700;color:#1b2a1f;">{{ co.day }}</span><sc-if value="{{ co.open }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;bottom:5px;right:6px;width:7px;height:7px;border-radius:50%;background:#7fb43f;"></span></sc-if></button></sc-if>
+              <sc-if value="{{ co.date }}" hint-placeholder-val="{{ true }}"><button onClick="{{ co.pick }}" style="position:relative;min-height:46px;background:{{ co.cellBg }};border:1px solid {{ co.cellBorder }};border-radius:8px;cursor:{{ co.cellCursor }};font-family:'Hanken Grotesk',sans-serif;padding:5px;text-align:left;opacity:{{ co.cellOpacity }};"><span style="font-size:13px;font-weight:700;color:#1b2a1f;">{{ co.day }}</span><sc-if value="{{ co.open }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;bottom:5px;right:6px;width:7px;height:7px;border-radius:50%;background:#7fb43f;"></span></sc-if></button></sc-if>
             </sc-for>
           </div>
           <sc-if value="{{ calHasSel }}" hint-placeholder-val="{{ false }}">
@@ -3084,11 +3082,23 @@ class Component extends DCLogic {
   }
 
   pickCalDayPublic(date) {
+    if (date && date < this.todayStr()) return; // past dates are not bookable
     this.setState({ calSel: date, calDayAvail: [], calAvailLoading: true });
     const ep = this.endpoint(); if (!ep) { this.setState({ calAvailLoading: false }); return; }
     fetch(ep + '?action=availability&date=' + encodeURIComponent(date)).then(r => r.json()).then(res => {
       this.setState({ calDayAvail: (res && res.slots) || [], calAvailLoading: false });
     }).catch(() => this.setState({ calAvailLoading: false }));
+  }
+  // From the public "Full schedule" calendar: carry the chosen day into the booking
+  // form (loads that day's slots), navigate to Book, and scroll to the form.
+  bookFromCalendar(date) {
+    this.setState({ page: 'book', navOpen: false });
+    if (date && date >= this.todayStr()) this.loadSlots(date);
+    if (typeof window !== 'undefined') setTimeout(() => {
+      const el = document.getElementById('booking-form');
+      if (el) { const y = el.getBoundingClientRect().top + window.pageYOffset - 80; window.scrollTo({ top: y, behavior: 'smooth' }); }
+      else window.scrollTo({ top: 0, behavior: 'instant' });
+    }, 80);
   }
 
   // ---------- BOOKING ENGINE (capacity-aware) ----------
@@ -4753,13 +4763,13 @@ class Component extends DCLogic {
       .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
       .map(b => { const c = b.coach ? this.coachById(b.coach) : null; const si = sessStatusInfo(b.status); return { time: b.time || '', name: b.name || 'Guest', program: b.program || '', coachName: c ? c.name : 'Any coach', statusLabel: si.label, statusBg: si.bg, statusFg: si.fg }; });
     // ----- Public calendar cells + day detail -----
-    const calPubCells = calGrid.map(c => { if (c.blank) return c; const dow = new Date(c.date + 'T00:00:00').getDay(); const isOpen = this.startHours(dow).length > 0; const past = c.date < calTodayStr; return { ...c, open: isOpen && !past, closed: !isOpen, past: past, pick: () => this.pickCalDayPublic(c.date), cellBg: c.selected ? '#e6efd6' : '#fffdf6', cellBorder: c.isToday ? '#7fb43f' : 'rgba(36,66,50,0.12)', cellOpacity: past ? '0.45' : '1' }; });
+    const calPubCells = calGrid.map(c => { if (c.blank) return c; const dow = new Date(c.date + 'T00:00:00').getDay(); const isOpen = this.startHours(dow).length > 0; const past = c.date < calTodayStr; return { ...c, open: isOpen && !past, closed: !isOpen, past: past, pick: () => this.pickCalDayPublic(c.date), cellBg: c.selected ? '#e6efd6' : '#fffdf6', cellBorder: c.isToday ? '#7fb43f' : 'rgba(36,66,50,0.12)', cellOpacity: past ? '0.45' : '1', cellCursor: past ? 'default' : 'pointer' }; });
     const calPubDay = ((this.state.calDayAvail) || []).map(s => {
       const left = (s.left != null) ? s.left : (s.full ? 0 : this.capacity());
       const st = (s.full || left <= 0) ? { label: 'Full', bg: '#f3e2e0', fg: '#b4512f' }
                : (left <= 2) ? { label: left + ' left', bg: '#fff1cf', fg: '#8a6a1f' }
                : { label: 'Open', bg: '#e6efd6', fg: '#4d7327' };
-      return { time: s.label || s.time || '', statusLabel: st.label, statusBg: st.bg, statusFg: st.fg, isOpen: !(s.full || left <= 0), book: () => this.go('book') };
+      return { time: s.label || s.time || '', statusLabel: st.label, statusBg: st.bg, statusFg: st.fg, isOpen: !(s.full || left <= 0), book: () => this.bookFromCalendar(this.state.calSel) };
     });
     const PL_PAGE = 8;
     const plTotal = plFiltered.length;
