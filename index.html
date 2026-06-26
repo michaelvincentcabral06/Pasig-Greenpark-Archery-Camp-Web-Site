@@ -900,12 +900,7 @@
               <div>
                 <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Program</label>
                 <select value="{{ fProgram }}" onChange="{{ setProgram }}" style="width:100%;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:13px 14px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:#f4efe4;outline:none;">
-                  <option>Little Archers (6–10)</option>
-                  <option>Youth Squad (11–17)</option>
-                  <option>Adult Beginners (18+)</option>
-                  <option>Open Range</option>
-                  <option>Private Coaching</option>
-                  <option>Group & Corporate</option>
+                  <sc-for list="{{ programOpts }}" as="po" hint-placeholder-count="5"><option value="{{ po.name }}">{{ po.name }}</option></sc-for>
                 </select>
               </div>
               <div>
@@ -1322,12 +1317,7 @@
             <div>
               <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Program</label>
               <select value="{{ fProgram }}" onChange="{{ setProgram }}" style="width:100%;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:13px 14px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:#f4efe4;outline:none;">
-                <option>Little Archers (6–10)</option>
-                <option>Youth Squad (11–17)</option>
-                <option>Adult Beginners (18+)</option>
-                <option>Open Range</option>
-                <option>Private Coaching</option>
-                <option>Group & Corporate</option>
+                <sc-for list="{{ programOpts }}" as="po" hint-placeholder-count="5"><option value="{{ po.name }}">{{ po.name }}</option></sc-for>
               </select>
             </div>
 
@@ -2846,8 +2836,8 @@ class Component extends DCLogic {
         this.loadAllBookings(); this.loadActivity(); this.loadRemotePlans(); this.loadCancellations();
       }).catch(() => { this.setState({ resetting: false }); if (typeof alert !== 'undefined') alert('Reset failed — check the connection and try again.'); });
   }
-  // Open Range is drop-in (no coach). Every other program is coach-led.
-  needsCoach(program) { return !/Open Range/i.test(program || ''); }
+  // Coach requirement is now a per-program toggle.
+  needsCoach(program) { return !!this.programByName(program).needsCoach; }
   // Coach-led programs must only offer hours where ≥1 coach is free, so the
   // backend filters by the union of every coach's open hours (`coach=any`).
   // Open Range is drop-in, so it keeps the standard range hours (no coach param).
@@ -2940,6 +2930,7 @@ class Component extends DCLogic {
     const c = this.state.content || {};
     return {
       packages: c.packages || defaults.packages,
+      programs: c.programs || defaults.programs,
       scheduleNote: c.scheduleNote != null ? c.scheduleNote : defaults.scheduleNote,
       schedule: c.schedule || defaults.schedule,
       funShoot: c.funShoot != null ? c.funShoot : defaults.funShoot,
@@ -3274,15 +3265,11 @@ class Component extends DCLogic {
   }
 
   // per-archer session price, used for the receipt total
-  rateFor(program) {
-    var r = this.cfgRates();
-    if (/Open Range/i.test(program || '')) return r.openRange;
-    return /Private/i.test(program || '') ? r.priv : r.session;
-  }
-  // Flat per-archer concessions (Open Range only), ₱100 each, stackable:
+  rateFor(program) { return this.programByName(program).price; }
+  // Flat per-archer concessions (programs with offerDiscounts), ₱100 each, stackable:
   // Pasig City resident · Greenpark resident / RHS student · PAC member.
   eligPerArcher() {
-    if (!/Open Range/i.test(this.state.form.program || '')) return 0;
+    if (!this.programByName(this.state.form.program).offerDiscounts) return 0;
     return (this.state.eligPasig ? 100 : 0) + (this.state.eligLocal ? 100 : 0) + (this.state.eligPac ? 100 : 0);
   }
   // Group discount on the same session: 2 → 10%, 3–4 → 20%, 5–6 → 30%.
@@ -3293,9 +3280,9 @@ class Component extends DCLogic {
     if (party === 2) return 0.10;
     return 0;
   }
-  // Both Open Range concessions together → flat fee, extra time slots don't add to the bill.
+  // Both concessions together (for programs with offerDiscounts) → flat fee, extra time slots don't add to the bill.
   bothConcessions(program) {
-    return /Open Range/i.test(program || '') && this.state.eligPac && this.state.eligLocal;
+    return this.programByName(program).offerDiscounts && this.state.eligPac && this.state.eligLocal;
   }
   // Final price = (rate × archers × sessions, less group discount), then per-archer concessions.
   // Final price. `sessions` = total time-slots chosen; `days` = distinct days chosen.
@@ -3323,8 +3310,8 @@ class Component extends DCLogic {
     const email = (form.email || '').trim();
     const archerList = (archers || []).slice(0, party);
     const amount = this.priceFor(form.program, party, times.length, 1);
-    const openRange = /Open Range/i.test(form.program || '');
-    const concession = openRange ? {
+    const openRange = this.programByName(form.program).multiDay;
+    const concession = this.programByName(form.program).offerDiscounts ? {
       pasig: this.state.eligPasig, pasigProof: this.state.eligPasig ? this.state.pasigProof.trim() : '',
       pac: this.state.eligPac, wapId: this.state.eligPac ? this.state.wapId.trim() : '',
       local: this.state.eligLocal, localProof: this.state.eligLocal ? this.state.localProof.trim() : ''
@@ -3476,6 +3463,32 @@ class Component extends DCLogic {
     ];
     const pk = pkgs.find(p => p.name === name);
     return pk ? (pk.price || '') : '';
+  }
+  defaultPrograms() {
+    return [
+      { name: 'Little Archers (6–10)', price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, minAge: 6,  maxAge: 10,  blurb: '' },
+      { name: 'Youth Squad (11–17)',   price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, minAge: 11, maxAge: 17,  blurb: '' },
+      { name: 'Adult Beginners (18+)',      price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, minAge: 18, maxAge: null, blurb: '' },
+      { name: 'Open Range',                 price: 400, needsCoach: false, multiDay: true,  offerDiscounts: true,  minAge: null, maxAge: null, blurb: '' },
+      { name: 'Private Coaching',           price: 1200, needsCoach: true, multiDay: false, offerDiscounts: false, minAge: null, maxAge: null, blurb: '' },
+      { name: 'Group & Corporate',          price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, minAge: null, maxAge: null, blurb: '' }
+    ];
+  }
+  normalizePrograms(progs) {
+    var list = (progs && progs.length) ? progs : this.defaultPrograms();
+    return list.map(p => ({
+      name: p.name || 'Program', price: Number(p.price) || 0,
+      needsCoach: !!p.needsCoach, multiDay: !!p.multiDay, offerDiscounts: !!p.offerDiscounts,
+      minAge: (p.minAge == null || p.minAge === '') ? null : (parseInt(p.minAge, 10) || null),
+      maxAge: (p.maxAge == null || p.maxAge === '') ? null : (parseInt(p.maxAge, 10) || null),
+      blurb: p.blurb || ''
+    }));
+  }
+  programList() { var c = this.state.content || {}; return this.normalizePrograms(c.programs); }
+  programByName(name) {
+    var list = this.programList();
+    for (var i = 0; i < list.length; i++) { if (list[i].name === name) return list[i]; }
+    return { name: name || '', price: 600, needsCoach: true, multiDay: false, offerDiscounts: false, minAge: null, maxAge: null, blurb: '' };
   }
   defaultPackages() {
     return [
@@ -3831,7 +3844,7 @@ class Component extends DCLogic {
     const program = entry.program || '';
     const party = Math.max(1, this.state.editParty || 1);
     const rate = this.rateFor(program);
-    const open = /Open Range/i.test(program);
+    const open = this.programByName(program).offerDiscounts;
     const elig = open ? ((this.state.editPasig ? 100 : 0) + (this.state.editLocal ? 100 : 0) + (this.state.editPac ? 100 : 0)) : 0;
     const gross = rate * party * (1 - this.discountFor(party)); // single session (1 day)
     return Math.max(0, Math.round(gross - elig * party));
@@ -3845,7 +3858,7 @@ class Component extends DCLogic {
     if (!date || !time) { return; }
     const program = entry.program || '';
     const oc = entry.concession || {};
-    const concession = /Open Range/i.test(program) ? {
+    const concession = this.programByName(program).offerDiscounts ? {
       pasig: this.state.editPasig, pasigProof: this.state.editPasig ? (oc.pasigProof || '') : '',
       pac: this.state.editPac, wapId: this.state.editPac ? (oc.wapId || '') : '',
       local: this.state.editLocal, localProof: this.state.editLocal ? (oc.localProof || '') : '',
@@ -4244,7 +4257,7 @@ class Component extends DCLogic {
       Sat: [ { time: '9:00 AM', name: 'Little Archers', level: 'ages 6–10' }, { time: '10:30 AM', name: 'Adult Beginners', level: 'beginner' }, { time: '1:00 PM', name: 'Open Range', level: 'all levels' }, { time: '3:00 PM', name: 'Youth Squad', level: 'ages 11–17' } ],
       Sun: [ { time: '9:00 AM', name: 'Open Range', level: 'all levels' }, { time: '10:30 AM', name: 'Little Archers', level: 'ages 6–10' }, { time: '1:00 PM', name: 'Private Coaching', level: 'by appt' } ],
     };
-    const cm = this.mergedContent({ packages: defaultPackages, scheduleNote: defaultScheduleNote, schedule: defaultSchedule, funShoot: '₱10', rates: { openRange: 400, session: 600, private: 1200 }, capacity: 6, reviewsRating: '5.0', reviewsCount: '', reviewsUrl: '', testimonials: [
+    const cm = this.mergedContent({ packages: defaultPackages, programs: this.defaultPrograms(), scheduleNote: defaultScheduleNote, schedule: defaultSchedule, funShoot: '₱10', rates: { openRange: 400, session: 600, private: 1200 }, capacity: 6, reviewsRating: '5.0', reviewsCount: '', reviewsUrl: '', testimonials: [
         { quote: 'My two kids beg to come back every weekend. The coaches make it safe and genuinely fun.', name: 'Liza M.', role: 'parent', rating: 5, date: '' },
         { quote: "Walked in never having held a bow. Six weeks later I'm hooked and hitting golds.", name: 'Daniel R.', role: 'adult beginner', rating: 5, date: '' },
         { quote: 'Cleanest, friendliest range in the metro. The Greenpark setting is unbeatable.', name: 'Coach Pia', role: 'visiting club', rating: 5, date: '' },
@@ -4396,12 +4409,8 @@ class Component extends DCLogic {
     const noMoreToday = !!st.slotDate && !st.slotsLoading && (st.slots || []).length === 0 && slotDayHasHours;
 
     // ---------- ARCHER DETAILS (verify each archer's age fits the program) ----------
-    const PROGRAM_AGE = {
-      'Little Archers (6\u201310)': [6, 10],
-      'Youth Squad (11\u201317)': [11, 17],
-      'Adult Beginners (18+)': [18, 120],
-    };
-    const ageRange = PROGRAM_AGE[this.state.form.program] || null;
+    var _pg = this.programByName(this.state.form.program);
+    const ageRange = (_pg.minAge != null) ? [_pg.minAge, (_pg.maxAge != null ? _pg.maxAge : 120)] : null;
     const ageRangeLabel = ageRange ? (ageRange[1] >= 120 ? (ageRange[0] + '+') : (ageRange[0] + '\u2013' + ageRange[1])) : 'all ages';
     const ageOnDate = (() => { if (st.slotDate) { try { var dd = new Date(st.slotDate + 'T00:00:00'); if (!isNaN(dd.getTime())) return dd; } catch (e) {} } return new Date(); })();
     const calcAge = (dob) => {
@@ -4461,11 +4470,12 @@ class Component extends DCLogic {
       if (this._sendingBooking) return; // guard against double/triple submit (was creating multiple bookings + emails)
       const f = this.state.form;
       const archersBlock = showArcherDetails && (!archersComplete || !archersAgeOk);
-      const openRange = /Open Range/i.test(f.program || '');
-      const proofBlock = openRange && ((this.state.eligPac && !this.state.wapId.trim()) || (this.state.eligLocal && !this.state.localProof.trim()) || (this.state.eligPasig && !this.state.pasigProof.trim()));
+      const isMulti = this.programByName(f.program).multiDay;
+      const offersDisc = this.programByName(f.program).offerDiscounts;
+      const proofBlock = offersDisc && ((this.state.eligPac && !this.state.wapId.trim()) || (this.state.eligLocal && !this.state.localProof.trim()) || (this.state.eligPasig && !this.state.pasigProof.trim()));
       const mPairs = (this.state.selectedDates || []).reduce((n, d) => n + (((this.state.multiTimes || {})[d]) || []).length, 0);
-      const noSlot = openRange ? (mPairs === 0) : (chosenTimes.length === 0);
-      const sc = openRange ? mPairs : (this.state.slotTimes || []).length;
+      const noSlot = isMulti ? (mPairs === 0) : (chosenTimes.length === 0);
+      const sc = isMulti ? mPairs : (this.state.slotTimes || []).length;
       const target = Math.max(1, this.state.sessionTarget || 1);
       if (this.state.page === 'book' && sc !== target) { this.setState({ bookingStatus: 'sessionMismatch' }); return; }
       if (!f.name.trim() || !f.phone.trim() || !validEmail(f.email) || noSlot || archersBlock || proofBlock) { this.setState({ formError: true }); return; }
@@ -4477,8 +4487,8 @@ class Component extends DCLogic {
     const chosenSorted = (st.slots || []).filter(s => chosenTimes.indexOf(s.time) !== -1).map(s => s.time);
     const chosenLabel = chosenSorted.join(' · ');
 
-    // ---------- MULTI-DATE (Open Range): mini calendar + per-day time picker ----------
-    const multiDateMode = /Open Range/i.test(this.state.form.program || '');
+    // ---------- MULTI-DATE (multi-day programs): mini calendar + per-day time picker ----------
+    const multiDateMode = this.programByName(this.state.form.program).multiDay;
     const multiTimesState = st.multiTimes || {};
     const selDates = (st.selectedDates || []).slice().sort();
     const calBase = st.calMonth ? new Date(st.calMonth + '-01T00:00:00') : new Date(todayStr + 'T00:00:00');
@@ -4897,7 +4907,7 @@ class Component extends DCLogic {
     const acctUpcoming = acctSorted.filter(b => !sessionIsPast(b)).map(fmtSession);
     const acctPast = acctSorted.filter(sessionIsPast).map(fmtSession).reverse();
     const editingEntry = acctMerged.find(b => b.ts === this.state.editTs) || (this.state.acctBookings || []).find(b => b.ts === this.state.editTs) || null;
-    const editIsOpen = editingEntry ? /Open Range/i.test(editingEntry.program || '') : false;
+    const editIsOpen = editingEntry ? this.programByName(editingEntry.program || '').offerDiscounts : false;
     const editPartyN = Math.max(1, this.state.editParty || 1);
     const editSlotView = (this.state.editSlots || []).map(s => {
       const selected = this.state.editTime === s.time;
@@ -5385,7 +5395,8 @@ class Component extends DCLogic {
       sessionTargetReached: slotCount === Math.max(1, st.sessionTarget || 1),
       canInc: party < cap, canDec: party > 1, isGroup: party > 1,
       eligPac: this.state.eligPac, eligLocal: this.state.eligLocal, eligPasig: this.state.eligPasig,
-      isOpenRange: /Open Range/i.test(this.state.form.program || ''),
+      isOpenRange: this.programByName(this.state.form.program).offerDiscounts,
+      programOpts: this.programList().map(function (p) { return { name: p.name }; }),
       coachAddonOn: !!this.state.coachAddon,
       coachAddonCheck: this.state.coachAddon ? '✓' : '',
       coachAddonBox: this.state.coachAddon ? '#7fb43f' : 'transparent',
