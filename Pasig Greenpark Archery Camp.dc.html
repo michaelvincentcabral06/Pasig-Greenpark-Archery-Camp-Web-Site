@@ -1590,10 +1590,10 @@
                   </div>
                   <sc-if value="{{ editIsOpen }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;flex-direction:column;gap:8px;">
-                    <label style="font-size:12.5px;font-weight:600;color:#cdd6c5;">Concessions (₱100 off each)</label>
-                    <button onClick="{{ toggleEditPasig }}" style="display:flex;align-items:center;gap:10px;text-align:left;background:#1b3325;border:1.5px solid {{ editPasigBorder }};border-radius:9px;padding:9px 12px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;"><span style="width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid {{ editPasigBorder }};background:{{ editPasigBox }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">{{ editPasigCheck }}</span><span style="flex:1;font-size:13.5px;color:#f4efe4;">Pasig City resident</span><span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#7fb43f;">−₱100</span></button>
-                    <button onClick="{{ toggleEditLocal }}" style="display:flex;align-items:center;gap:10px;text-align:left;background:#1b3325;border:1.5px solid {{ editLocalBorder }};border-radius:9px;padding:9px 12px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;"><span style="width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid {{ editLocalBorder }};background:{{ editLocalBox }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">{{ editLocalCheck }}</span><span style="flex:1;font-size:13.5px;color:#f4efe4;">Greenpark / RHS</span><span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#7fb43f;">−₱100</span></button>
-                    <button onClick="{{ toggleEditPac }}" style="display:flex;align-items:center;gap:10px;text-align:left;background:#1b3325;border:1.5px solid {{ editPacBorder }};border-radius:9px;padding:9px 12px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;"><span style="width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid {{ editPacBorder }};background:{{ editPacBox }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">{{ editPacCheck }}</span><span style="flex:1;font-size:13.5px;color:#f4efe4;">PAC member</span><span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#7fb43f;">−₱100</span></button>
+                    <label style="font-size:12.5px;font-weight:600;color:#cdd6c5;">Concessions</label>
+                    <sc-for list="{{ editDiscountRows }}" as="d" hint-placeholder-count="3">
+                      <button onClick="{{ d.toggle }}" style="display:flex;align-items:center;gap:10px;text-align:left;background:#1b3325;border:1.5px solid {{ d.border }};border-radius:9px;padding:9px 12px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;"><span style="width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid {{ d.border }};background:{{ d.box }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">{{ d.check }}</span><span style="flex:1;font-size:13.5px;color:#f4efe4;">{{ d.name }}</span><span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#7fb43f;">{{ d.amountLabel }}</span></button>
+                    </sc-for>
                   </div>
                   </sc-if>
                   <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px dashed rgba(127,180,63,0.3);padding-top:12px;">
@@ -2655,9 +2655,8 @@ class Component extends DCLogic {
     editDate: '',
     editTime: '',
     editParty: 1,
-    editPac: false,
-    editLocal: false,
-    editPasig: false,
+    editSel: {},
+    editProof: {},
     editSlots: [],
     editLoading: false,
     editBusy: false,
@@ -3846,15 +3845,27 @@ class Component extends DCLogic {
       })
       .catch(() => this.setState({ editSlots: this.buildSampleSlots(dateStr), editLoading: false }));
   }
+  concToSel_(c) {
+    var sel = {}, proof = {};
+    if (c && c.items && c.items.length) {
+      c.items.forEach(it => { if (it && it.id) { sel[it.id] = true; proof[it.id] = it.proof || ''; } });
+    } else if (c) {
+      if (c.pasig) { sel.pasig = true; proof.pasig = c.pasigProof || ''; }
+      if (c.pac)   { sel.pac = true;   proof.pac = c.wapId || ''; }
+      if (c.local) { sel.local = true; proof.local = c.localProof || ''; }
+    }
+    return { sel: sel, proof: proof };
+  }
   startEdit(entry) {
     if (!this.sessionEditableByCustomer(entry.date, entry.time, null)) {
       if (typeof alert !== 'undefined') alert('This session has already taken place — please contact us to change it.');
       return;
     }
     const c = entry.concession || {};
+    const seed = this.concToSel_(c);
     this.setState({
       editTs: entry.ts, editDate: entry.date || '', editTime: entry.time || '', editParty: Math.max(1, entry.party || 1),
-      editPac: !!c.pac, editLocal: !!c.local, editPasig: !!c.pasig, editSlots: [], editLoading: false,
+      editSel: seed.sel, editProof: seed.proof, editSlots: [], editLoading: false,
     });
     if (entry.date) this.loadEditSlots(entry.date, entry.program);
   }
@@ -3863,10 +3874,24 @@ class Component extends DCLogic {
     const party = Math.max(1, this.state.editParty || 1);
     const rate = this.rateFor(program);
     const open = this.programByName(program).offerDiscounts;
-    const elig = open ? ((this.state.editPasig ? 100 : 0) + (this.state.editLocal ? 100 : 0) + (this.state.editPac ? 100 : 0)) : 0;
+    var sel = this.state.editSel || {};
+    const elig = open ? this.discountList().reduce((s, d) => s + (sel[d.id] ? d.amount : 0), 0) : 0;
     const gross = rate * party * (1 - this.discountFor(party)); // single session (1 day)
     return Math.max(0, Math.round(gross - elig * party));
   }
+  editDiscountRows() {
+    var sel = this.state.editSel || {};
+    return this.discountList().map(d => {
+      var on = !!sel[d.id];
+      return {
+        id: d.id, name: d.name, amountLabel: '−₱' + d.amount,
+        box: on ? '#7fb43f' : 'transparent',
+        border: on ? '#7fb43f' : 'rgba(244,239,228,0.2)', check: on ? '✓' : '',
+        toggle: () => this.toggleEditSel_(d.id)
+      };
+    });
+  }
+  toggleEditSel_(id) { this.setState(s => ({ editSel: { ...(s.editSel || {}), [id]: !((s.editSel || {})[id]) } })); }
   saveEdit(entry) {
     if (!this.sessionEditableByCustomer(entry.date, entry.time, null)) {
       if (typeof alert !== 'undefined') alert('This session has already taken place — please contact us to change it.');
@@ -3875,12 +3900,7 @@ class Component extends DCLogic {
     const date = this.state.editDate, time = this.state.editTime, party = Math.max(1, this.state.editParty || 1);
     if (!date || !time) { return; }
     const program = entry.program || '';
-    const oc = entry.concession || {};
-    const concession = this.programByName(program).offerDiscounts ? {
-      pasig: this.state.editPasig, pasigProof: this.state.editPasig ? (oc.pasigProof || '') : '',
-      pac: this.state.editPac, wapId: this.state.editPac ? (oc.wapId || '') : '',
-      local: this.state.editLocal, localProof: this.state.editLocal ? (oc.localProof || '') : '',
-    } : null;
+    const concession = this.programByName(program).offerDiscounts ? this.buildConcession(this.state.editSel, this.state.editProof) : null;
     const amount = this.editAmount(entry);
     const ep = this.endpoint();
     this.setState({ editBusy: true });
@@ -5543,7 +5563,7 @@ class Component extends DCLogic {
       editingEntry: editingEntry, editIsOpen: editIsOpen,
       editDate: this.state.editDate, editTime: this.state.editTime,
       editParty: editPartyN, editPartyLabel: editPartyN + (editPartyN === 1 ? ' archer' : ' archers'),
-      editPac: this.state.editPac, editLocal: this.state.editLocal, editPasig: this.state.editPasig,
+      editDiscountRows: this.editDiscountRows(),
       editSlotView: editSlotView, editLoading: this.state.editLoading, editBusy: this.state.editBusy, editNotBusy: !this.state.editBusy,
       editHasSlots: (this.state.editSlots || []).length > 0,
       editAmountLabel: editingEntry ? ('\u20B1' + Number(this.editAmount(editingEntry)).toLocaleString('en-PH')) : '',
@@ -5551,12 +5571,6 @@ class Component extends DCLogic {
       pickEditDate: (e) => { const v = e.target.value; this.setState({ editDate: v, editTime: '' }); this.loadEditSlots(v); },
       editInc: () => this.setState(s => ({ editParty: Math.min(this.capacity(), (s.editParty || 1) + 1) })),
       editDec: () => this.setState(s => ({ editParty: Math.max(1, (s.editParty || 1) - 1) })),
-      toggleEditPac: () => this.setState(s => ({ editPac: !s.editPac })),
-      toggleEditLocal: () => this.setState(s => ({ editLocal: !s.editLocal })),
-      toggleEditPasig: () => this.setState(s => ({ editPasig: !s.editPasig })),
-      editPacBox: this.state.editPac ? '#7fb43f' : 'transparent', editPacBorder: this.state.editPac ? '#7fb43f' : 'rgba(244,239,228,0.2)', editPacCheck: this.state.editPac ? '\u2713' : '',
-      editLocalBox: this.state.editLocal ? '#7fb43f' : 'transparent', editLocalBorder: this.state.editLocal ? '#7fb43f' : 'rgba(244,239,228,0.2)', editLocalCheck: this.state.editLocal ? '\u2713' : '',
-      editPasigBox: this.state.editPasig ? '#7fb43f' : 'transparent', editPasigBorder: this.state.editPasig ? '#7fb43f' : 'rgba(244,239,228,0.2)', editPasigCheck: this.state.editPasig ? '\u2713' : '',
       saveEditNow: () => { if (editingEntry) this.saveEdit(editingEntry); },
       cancelEdit: () => this.setState({ editTs: null }),
       acctMinDate: todayStr,
