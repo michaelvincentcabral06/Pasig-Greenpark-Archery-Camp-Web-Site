@@ -3218,7 +3218,7 @@ class Component extends DCLogic {
       .catch(() => this.setState({ slots: this.buildSampleSlots(dateStr), slotsLoading: false }));
   }
 
-  // ---------- MULTI-DATE (Open Range) ----------
+  // ---------- MULTI-DATE (multi-day programs) ----------
   loadMultiSlots(dateStr) {
     if (!dateStr || (this.state.multiSlots || {})[dateStr]) return;
     this.setState(s => ({ multiLoading: { ...s.multiLoading, [dateStr]: true } }));
@@ -3317,7 +3317,7 @@ class Component extends DCLogic {
       local: this.state.eligLocal, localProof: this.state.eligLocal ? this.state.localProof.trim() : ''
     } : null;
 
-    // ----- MULTI-DATE (Open Range): book every chosen (date, time) pair -----
+    // ----- MULTI-DATE (multi-day programs): book every chosen (date, time) pair -----
     if (openRange && (this.state.selectedDates || []).length) {
       const selDatesB = (this.state.selectedDates || []).slice().sort();
       const mt = this.state.multiTimes || {};
