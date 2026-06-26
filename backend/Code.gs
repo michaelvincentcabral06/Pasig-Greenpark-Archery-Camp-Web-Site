@@ -1,4 +1,4 @@
-/**
+﻿/**
  * PASIG GREENPARK ARCHERY CAMP — Unified Booking Backend
  * Google Apps Script web app that makes the camp's Google Calendar
  * the single source of truth for bookings, AND emails the customer a receipt.
@@ -32,6 +32,7 @@ var OPEN_RANGE_RATE = 400;       // "Open Range" (per archer, per session)
 
 // Business details shown on the emailed receipt.
 var BUSINESS_NAME   = 'Pasig Greenpark Archery Camp';
+var EMAIL_LOGO_URL  = 'https://michaelvincentcabral06.github.io/Pasig-Greenpark-Archery-Camp-Web-Site/assets/email-logo.png';
 var RANGE_ADDRESS   = 'Pasig Greenpark Village Clubhouse, Pasig, Metro Manila';
 var CONTACT_NUMBER  = '0917 127 6677';
 var RESCHEDULE_NOTE = 'Need to reschedule or cancel? Reply to this email or text/call us at '
@@ -406,6 +407,58 @@ function prettyDate_(dateStr) {
   } catch (e) { return dateStr; }
 }
 
+// Fetch the small email logo (cached ~6h) as a Blob for inline embedding. Null-safe:
+// any failure returns null so the email still sends, just without the logo.
+function logoBlob_() {
+  try {
+    var cache = CacheService.getScriptCache();
+    var b64 = cache ? cache.get('emailLogoB64') : null;
+    if (!b64) {
+      var resp = UrlFetchApp.fetch(EMAIL_LOGO_URL, { muteHttpExceptions: true });
+      if (resp.getResponseCode() !== 200) return null;
+      b64 = Utilities.base64Encode(resp.getBlob().getBytes());
+      if (cache && b64.length < 95000) cache.put('emailLogoB64', b64, 21600);
+    }
+    return Utilities.newBlob(Utilities.base64Decode(b64), 'image/png', 'logo');
+  } catch (e) { return null; }
+}
+
+// One branded wrapper for every transactional email: header band (logo + name),
+// body card (title in `accent` + innerHtml), footer (where/contact/business name).
+function emailShell_(title, accent, innerHtml, hasLogo) {
+  var logoCell = hasLogo
+    ? '<td style="padding-right:12px;vertical-align:middle;"><img src="cid:logo" width="40" height="40" alt="" style="display:block;border-radius:8px;" /></td>'
+    : '';
+  return '<div style="background:#eef1e6;padding:24px 0;font-family:Arial,Helvetica,sans-serif;">'
+    + '<div style="max-width:520px;margin:0 auto;background:#fffdf6;border-radius:14px;overflow:hidden;border:1px solid rgba(36,66,50,0.12);">'
+    +   '<div style="background:#244232;padding:18px 22px;">'
+    +     '<table role="presentation" cellpadding="0" cellspacing="0"><tr>' + logoCell
+    +       '<td style="vertical-align:middle;color:#f4efe4;font-size:16px;font-weight:bold;">' + escapeHtml_(BUSINESS_NAME) + '</td>'
+    +     '</tr></table>'
+    +   '</div>'
+    +   '<div style="padding:24px 22px;color:#1b2a1f;">'
+    +     '<h2 style="margin:0 0 8px;font-size:20px;color:' + accent + ';">' + escapeHtml_(title) + '</h2>'
+    +     innerHtml
+    +   '</div>'
+    +   '<div style="padding:18px 22px;border-top:1px solid rgba(36,66,50,0.1);font-size:12.5px;color:#56664f;line-height:1.6;">'
+    +     '<strong>Where</strong><br>' + escapeHtml_(RANGE_ADDRESS) + '<br>' + escapeHtml_(CONTACT_NUMBER) + '<br><br>'
+    +     escapeHtml_(RESCHEDULE_NOTE) + '<br><br>'
+    +     '<strong style="color:#244232;">' + escapeHtml_(BUSINESS_NAME) + '</strong>'
+    +   '</div>'
+    + '</div></div>';
+}
+
+// o: { to, subject, plainText, title, accent, innerHtml }
+function sendBranded_(o) {
+  if (!o || !o.to) return false;
+  var blob = logoBlob_();
+  var html = emailShell_(o.title || BUSINESS_NAME, o.accent || '#244232', o.innerHtml || '', !!blob);
+  var opts = { to: o.to, subject: o.subject, body: o.plainText || '', htmlBody: html, name: BUSINESS_NAME };
+  if (blob) opts.inlineImages = { logo: blob };
+  MailApp.sendEmail(opts);
+  return true;
+}
+
 // ---------- RECEIPT EMAIL ----------
 function sendReceipt_(o) {
   // o: { email, name, program, dateStr, times[], party, amount, ref }
@@ -454,27 +507,20 @@ function sendReceipt_(o) {
       + '<tr><td style="padding:6px 0;color:#3c6b48;">Group discount (' + discPct + '% off)</td>'
       + '<td style="padding:6px 0;text-align:right;font-weight:bold;color:#3c6b48;">-' + peso_(o.discountAmount) + '</td></tr>'
     : '';
-  var html = '<div style="font-family:Arial,Helvetica,sans-serif;color:#1b2a1f;max-width:520px;">'
-    + '<h2 style="color:#244232;margin:0 0 4px;">Booking confirmed</h2>'
-    + '<p style="color:#56664f;margin:0 0 18px;">Thanks, ' + escapeHtml_(o.name || 'there') + ' — your spot is reserved.</p>'
+  var innerHtml = '<p style="color:#56664f;margin:0 0 18px;">Thanks, ' + escapeHtml_(o.name || 'there') + ' — your spot is reserved.</p>'
     + '<table style="border-collapse:collapse;width:100%;font-size:14px;">'
     + receiptRow_('Reference', o.ref)
     + receiptRow_('Program', o.program || '')
     + receiptRow_('Date', when)
     + receiptRow_('Time(s)', timeList)
     + receiptRow_('Archers', partyTxt)
-    + ((o.roster && o.roster.length) ? receiptRow_('Who\u2019s shooting', o.roster.join('; ')) : '')
+    + ((o.roster && o.roster.length) ? receiptRow_(‘Who’s shooting’, o.roster.join(‘; ‘)) : ‘’)
     + discHtml
     + '<tr><td style="padding:10px 0;border-top:2px solid #244232;font-weight:bold;">Total to pay at the range</td>'
     + '<td style="padding:10px 0;border-top:2px solid #244232;font-weight:bold;text-align:right;color:#244232;font-size:18px;">' + peso_(o.amount) + '</td></tr>'
     + (hasDisc ? '<tr><td colspan="2" style="padding:6px 0 0;text-align:right;color:#3c6b48;font-weight:bold;font-size:13px;">You saved ' + peso_(o.discountAmount) + ' with the group discount</td></tr>' : '')
-    + '</table>'
-    + '<p style="font-size:13px;color:#56664f;margin:18px 0 4px;"><strong>Where</strong><br>' + escapeHtml_(RANGE_ADDRESS) + '<br>' + escapeHtml_(CONTACT_NUMBER) + '</p>'
-    + '<p style="font-size:13px;color:#8a9579;margin:14px 0 0;">' + escapeHtml_(RESCHEDULE_NOTE) + '</p>'
-    + '<p style="font-size:13px;color:#244232;margin:18px 0 0;font-weight:bold;">' + escapeHtml_(BUSINESS_NAME) + '</p>'
-    + '</div>';
-  MailApp.sendEmail({ to: o.email, subject: subject, body: body, htmlBody: html, name: BUSINESS_NAME });
-  return true;
+    + '</table>';
+  return sendBranded_({ to: o.email, subject: subject, plainText: body, title: 'Booking confirmed', accent: '#3c6b48', innerHtml: innerHtml });
 }
 function receiptRow_(k, v) {
   return '<tr><td style="padding:6px 0;color:#8a9579;">' + escapeHtml_(k) + '</td>'
@@ -499,8 +545,14 @@ function sendCancellation_(o) {
     '',
     BUSINESS_NAME
   ].filter(function (l) { return l !== ''; }).join('\n');
-  MailApp.sendEmail({ to: o.email, subject: subject, body: body, name: BUSINESS_NAME });
-  return true;
+  var rows = (o.ref ? receiptRow_('Reference', o.ref) : '')
+    + receiptRow_('Program', o.program || '')
+    + receiptRow_('Date', when)
+    + (o.time ? receiptRow_('Time', o.time) : '');
+  return sendBranded_({ to: o.email, subject: subject,
+    plainText: body, title: 'Booking cancelled', accent: '#b4512f',
+    innerHtml: '<p style="color:#56664f;margin:0 0 16px;">Hi ' + escapeHtml_(o.name || 'there') + ', your session has been cancelled.</p>'
+      + '<table style="border-collapse:collapse;width:100%;font-size:14px;">' + rows + '</table>' });
 }
 // Sent when a single session booking is moved to a new date/time (self-service or admin).
 function sendReschedule_(o) {
@@ -522,8 +574,14 @@ function sendReschedule_(o) {
     'See you at the range!',
     BUSINESS_NAME
   ].filter(function (l) { return l !== ''; }).join('\n');
-  MailApp.sendEmail({ to: o.email, subject: subject, body: body, name: BUSINESS_NAME });
-  return true;
+  var rows = (o.ref ? receiptRow_('Reference', o.ref) : '')
+    + receiptRow_('Program', o.program || '')
+    + receiptRow_('Was', prettyDate_(o.oldDate) + (o.oldTime ? ' · ' + o.oldTime : ''))
+    + receiptRow_('Now', prettyDate_(o.newDate) + (o.newTime ? ' · ' + o.newTime : ''));
+  return sendBranded_({ to: o.email, subject: subject,
+    plainText: body, title: 'Booking rescheduled', accent: '#8a6a1f',
+    innerHtml: '<p style="color:#56664f;margin:0 0 16px;">Hi ' + escapeHtml_(o.name || 'there') + ', your session has been rescheduled.</p>'
+      + '<table style="border-collapse:collapse;width:100%;font-size:14px;">' + rows + '</table>' });
 }
 function escapeHtml_(s) {
   return String(s == null ? '' : s)
@@ -547,25 +605,20 @@ function sendPlanReceipt_(o) {
     'Holder    : ' + (o.holder || ''),
     (totalTxt ? 'Total     : ' + totalTxt + '  (pay at the range)' : ''),
     '',
-    'Our team will assign your coach and schedule your sessions — you’ll get a separate email with the dates. You can also see everything anytime in My Bookings on our website.',
+    'Our team will assign your coach and schedule your sessions — you'll get a separate email with the dates. You can also see everything anytime in My Bookings on our website.',
     '',
     'See you on the range!',
     BUSINESS_NAME
   ].filter(function (l) { return l !== ''; });
-  var html = '<div style="font-family:Arial,Helvetica,sans-serif;color:#1b2a1f;max-width:520px;">'
-    + '<h2 style="color:#244232;margin:0 0 4px;">Pass confirmed</h2>'
-    + '<p style="color:#56664f;margin:0 0 18px;">Thanks, ' + escapeHtml_(who) + ' — your pass is ready.</p>'
+  var innerHtml = '<p style="color:#56664f;margin:0 0 18px;">Thanks, ' + escapeHtml_(who) + ' — your pass is ready.</p>'
     + '<table style="border-collapse:collapse;width:100%;font-size:14px;">'
     + (o.ref ? receiptRow_('Reference', o.ref) : '')
     + receiptRow_('Pass', o.plan || '')
     + receiptRow_('Holder', o.holder || '')
     + (totalTxt ? ('<tr><td style="padding:10px 0;border-top:2px solid #244232;font-weight:bold;">Total to pay at the range</td><td style="padding:10px 0;border-top:2px solid #244232;font-weight:bold;text-align:right;color:#244232;font-size:18px;">' + escapeHtml_(totalTxt) + '</td></tr>') : '')
     + '</table>'
-    + '<p style="font-size:13px;color:#56664f;margin:18px 0 4px;">We’ll assign your coach and schedule your sessions, then email you the dates. Track it all in <strong>My Bookings</strong>.</p>'
-    + '<p style="font-size:13px;color:#244232;margin:18px 0 0;font-weight:bold;">' + escapeHtml_(BUSINESS_NAME) + '</p>'
-    + '</div>';
-  MailApp.sendEmail({ to: o.email, subject: subject, body: lines.join('\n'), htmlBody: html, name: BUSINESS_NAME });
-  return true;
+    + '<p style="font-size:13px;color:#56664f;margin:18px 0 4px;">We’ll assign your coach and schedule your sessions, then email you the dates. Track it all in <strong>My Bookings</strong>.</p>';
+  return sendBranded_({ to: o.email, subject: subject, plainText: lines.join('\n'), title: 'Pass confirmed', accent: '#3c6b48', innerHtml: innerHtml });
 }
 // Notify the customer about their pass's schedule and/or assigned coach.
 // o.mode controls the wording:
@@ -602,7 +655,7 @@ function sendPlanSchedule_(o) {
     introTxt = 'Good news — your ' + (o.plan || 'pass') + ' sessions are scheduled:';
   }
   // For coach modes, follow the coach line with the dates (or a "to follow" note).
-  var listIntro = isCoach ? (sess.length ? 'Your scheduled sessions:' : 'We’ll email your session dates as soon as they’re set.') : '';
+  var listIntro = isCoach ? (sess.length ? 'Your scheduled sessions:' : 'We'll email your session dates as soon as they're set.') : '';
 
   var rows = sess.map(function (s) { return '  • ' + prettyDate_(s.date) + ' · ' + s.time; });
   var subject = BUSINESS_NAME + subjTail + (o.ref ? ' (' + o.ref + ')' : '');
@@ -620,18 +673,13 @@ function sendPlanSchedule_(o) {
   ]).filter(function (l) { return l !== ''; });
 
   var htmlRows = sess.map(function (s) { return '<tr><td style="padding:6px 0;color:#244232;font-weight:bold;">' + escapeHtml_(prettyDate_(s.date)) + '</td><td style="padding:6px 0;text-align:right;">' + escapeHtml_(s.time) + '</td></tr>'; }).join('');
-  var html = '<div style="font-family:Arial,Helvetica,sans-serif;color:#1b2a1f;max-width:520px;">'
-    + '<h2 style="color:#244232;margin:0 0 4px;">' + escapeHtml_(headline) + '</h2>'
-    + '<p style="color:#56664f;margin:0 0 14px;">Hi ' + escapeHtml_(who) + ' — ' + escapeHtml_(introTxt) + '</p>'
+  var innerHtml = '<p style="color:#56664f;margin:0 0 14px;">Hi ' + escapeHtml_(who) + ' — ' + escapeHtml_(introTxt) + '</p>'
     + (listIntro ? ('<p style="font-size:13px;color:#56664f;margin:0 0 6px;">' + escapeHtml_(listIntro) + '</p>') : '')
     + (sess.length ? ('<table style="border-collapse:collapse;width:100%;font-size:14px;">' + htmlRows + '</table>') : '')
     + (isCoach ? '' : (o.coachName ? ('<p style="font-size:13px;color:#56664f;margin:16px 0 0;"><strong>Coach:</strong> ' + escapeHtml_(o.coachName) + '</p>') : ''))
     + (o.ref ? ('<p style="font-size:12.5px;color:#8a9579;margin:6px 0 0;">Reference: ' + escapeHtml_(o.ref) + '</p>') : '')
-    + '<p style="font-size:13px;color:#56664f;margin:16px 0 0;">Need to change something? Reply here or text/call ' + escapeHtml_(CONTACT_NUMBER) + '.</p>'
-    + '<p style="font-size:13px;color:#244232;margin:18px 0 0;font-weight:bold;">' + escapeHtml_(BUSINESS_NAME) + '</p>'
-    + '</div>';
-  MailApp.sendEmail({ to: o.email, subject: subject, body: lines.join('\n'), htmlBody: html, name: BUSINESS_NAME });
-  return true;
+    + '<p style="font-size:13px;color:#56664f;margin:16px 0 0;">Need to change something? Reply here or text/call ' + escapeHtml_(CONTACT_NUMBER) + '.</p>';
+  return sendBranded_({ to: o.email, subject: subject, plainText: lines.join('\n'), title: headline, accent: '#3c6b48', innerHtml: innerHtml });
 }
 // Sent ONCE when a whole pass is cancelled (its sessions are removed silently).
 function sendPlanCancellation_(o) {
@@ -652,17 +700,12 @@ function sendPlanCancellation_(o) {
     lines.push('These scheduled sessions were also cancelled:');
     sess.forEach(function (s) { lines.push('  • ' + prettyDate_(s.date) + ' · ' + s.time); });
   }
-  lines = lines.concat(['', 'If this was a mistake or you’d like to rebook, just reply or text/call ' + CONTACT_NUMBER + '.', '', BUSINESS_NAME]).filter(function (l) { return l !== ''; });
+  lines = lines.concat(['', 'If this was a mistake or you'd like to rebook, just reply or text/call ' + CONTACT_NUMBER + '.', '', BUSINESS_NAME]).filter(function (l) { return l !== ''; });
   var htmlRows = sess.map(function (s) { return '<tr><td style="padding:5px 0;color:#56664f;">' + escapeHtml_(prettyDate_(s.date)) + '</td><td style="padding:5px 0;text-align:right;color:#56664f;">' + escapeHtml_(s.time) + '</td></tr>'; }).join('');
-  var html = '<div style="font-family:Arial,Helvetica,sans-serif;color:#1b2a1f;max-width:520px;">'
-    + '<h2 style="color:#b4512f;margin:0 0 4px;">Pass cancelled</h2>'
-    + '<p style="color:#56664f;margin:0 0 14px;">Hi ' + escapeHtml_(who) + ', your ' + escapeHtml_(o.plan || 'pass') + (o.ref ? ' (' + escapeHtml_(o.ref) + ')' : '') + ' has been cancelled.</p>'
+  var innerHtml = '<p style="color:#56664f;margin:0 0 14px;">Hi ' + escapeHtml_(who) + ', your ' + escapeHtml_(o.plan || 'pass') + (o.ref ? ' (' + escapeHtml_(o.ref) + ')' : '') + ' has been cancelled.</p>'
     + (sess.length ? ('<p style="font-size:13px;color:#56664f;margin:0 0 6px;">These scheduled sessions were also cancelled:</p><table style="border-collapse:collapse;width:100%;font-size:14px;">' + htmlRows + '</table>') : '')
-    + '<p style="font-size:13px;color:#56664f;margin:16px 0 0;">If this was a mistake or you’d like to rebook, reply here or text/call ' + escapeHtml_(CONTACT_NUMBER) + '.</p>'
-    + '<p style="font-size:13px;color:#244232;margin:18px 0 0;font-weight:bold;">' + escapeHtml_(BUSINESS_NAME) + '</p>'
-    + '</div>';
-  MailApp.sendEmail({ to: o.email, subject: subject, body: lines.join('\n'), htmlBody: html, name: BUSINESS_NAME });
-  return true;
+    + '<p style="font-size:13px;color:#56664f;margin:16px 0 0;">If this was a mistake or you’d like to rebook, reply here or text/call ' + escapeHtml_(CONTACT_NUMBER) + '.</p>';
+  return sendBranded_({ to: o.email, subject: subject, plainText: lines.join('\n'), title: 'Pass cancelled', accent: '#b4512f', innerHtml: innerHtml });
 }
 
 // ---------- STAFF LOGIN ----------
@@ -703,7 +746,7 @@ function doGet(e) {
     if (action === 'content') return getContent_();
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v20', auth: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true });
+      return json_({ version: 'db-v21', auth: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
