@@ -514,7 +514,7 @@ function sendReceipt_(o) {
     + receiptRow_('Date', when)
     + receiptRow_('Time(s)', timeList)
     + receiptRow_('Archers', partyTxt)
-    + ((o.roster && o.roster.length) ? receiptRow_(‘Who’s shooting’, o.roster.join(‘; ‘)) : ‘’)
+    + ((o.roster && o.roster.length) ? receiptRow_('Who’s shooting', o.roster.join('; ')) : '')
     + discHtml
     + '<tr><td style="padding:10px 0;border-top:2px solid #244232;font-weight:bold;">Total to pay at the range</td>'
     + '<td style="padding:10px 0;border-top:2px solid #244232;font-weight:bold;text-align:right;color:#244232;font-size:18px;">' + peso_(o.amount) + '</td></tr>'
@@ -605,7 +605,7 @@ function sendPlanReceipt_(o) {
     'Holder    : ' + (o.holder || ''),
     (totalTxt ? 'Total     : ' + totalTxt + '  (pay at the range)' : ''),
     '',
-    'Our team will assign your coach and schedule your sessions — you'll get a separate email with the dates. You can also see everything anytime in My Bookings on our website.',
+    'Our team will assign your coach and schedule your sessions — you’ll get a separate email with the dates. You can also see everything anytime in My Bookings on our website.',
     '',
     'See you on the range!',
     BUSINESS_NAME
@@ -655,7 +655,7 @@ function sendPlanSchedule_(o) {
     introTxt = 'Good news — your ' + (o.plan || 'pass') + ' sessions are scheduled:';
   }
   // For coach modes, follow the coach line with the dates (or a "to follow" note).
-  var listIntro = isCoach ? (sess.length ? 'Your scheduled sessions:' : 'We'll email your session dates as soon as they're set.') : '';
+  var listIntro = isCoach ? (sess.length ? 'Your scheduled sessions:' : 'We’ll email your session dates as soon as they’re set.') : '';
 
   var rows = sess.map(function (s) { return '  • ' + prettyDate_(s.date) + ' · ' + s.time; });
   var subject = BUSINESS_NAME + subjTail + (o.ref ? ' (' + o.ref + ')' : '');
@@ -700,7 +700,7 @@ function sendPlanCancellation_(o) {
     lines.push('These scheduled sessions were also cancelled:');
     sess.forEach(function (s) { lines.push('  • ' + prettyDate_(s.date) + ' · ' + s.time); });
   }
-  lines = lines.concat(['', 'If this was a mistake or you'd like to rebook, just reply or text/call ' + CONTACT_NUMBER + '.', '', BUSINESS_NAME]).filter(function (l) { return l !== ''; });
+  lines = lines.concat(['', 'If this was a mistake or you’d like to rebook, just reply or text/call ' + CONTACT_NUMBER + '.', '', BUSINESS_NAME]).filter(function (l) { return l !== ''; });
   var htmlRows = sess.map(function (s) { return '<tr><td style="padding:5px 0;color:#56664f;">' + escapeHtml_(prettyDate_(s.date)) + '</td><td style="padding:5px 0;text-align:right;color:#56664f;">' + escapeHtml_(s.time) + '</td></tr>'; }).join('');
   var innerHtml = '<p style="color:#56664f;margin:0 0 14px;">Hi ' + escapeHtml_(who) + ', your ' + escapeHtml_(o.plan || 'pass') + (o.ref ? ' (' + escapeHtml_(o.ref) + ')' : '') + ' has been cancelled.</p>'
     + (sess.length ? ('<p style="font-size:13px;color:#56664f;margin:0 0 6px;">These scheduled sessions were also cancelled:</p><table style="border-collapse:collapse;width:100%;font-size:14px;">' + htmlRows + '</table>') : '')
