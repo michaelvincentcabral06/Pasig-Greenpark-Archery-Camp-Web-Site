@@ -2196,7 +2196,7 @@
                   <div style="display:flex;flex-direction:column;gap:8px;">
                     <label style="font-size:11.5px;font-weight:700;color:#244232;">Name<input value="{{ cc.editName }}" onInput="{{ cc.setEditName }}" style="display:block;width:100%;box-sizing:border-box;margin-top:3px;padding:9px 11px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:13.5px;font-family:'Hanken Grotesk',sans-serif;"></label>
                     <label style="font-size:11.5px;font-weight:700;color:#244232;">Role<input value="{{ cc.editRole }}" onInput="{{ cc.setEditRole }}" style="display:block;width:100%;box-sizing:border-box;margin-top:3px;padding:9px 11px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:13.5px;font-family:'Hanken Grotesk',sans-serif;"></label>
-                    <label style="font-size:11.5px;font-weight:700;color:#244232;">Portal passcode<input value="{{ cc.editPass }}" onInput="{{ cc.setEditPass }}" style="display:block;width:100%;box-sizing:border-box;margin-top:3px;padding:9px 11px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:13.5px;font-family:'Spline Sans Mono',monospace;"></label>
+                    <label style="font-size:11.5px;font-weight:700;color:#244232;">New passcode (blank = keep)<input value="{{ cc.editPass }}" onInput="{{ cc.setEditPass }}" placeholder="leave blank to keep" style="display:block;width:100%;box-sizing:border-box;margin-top:3px;padding:9px 11px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:13.5px;font-family:'Spline Sans Mono',monospace;"></label>
                     <div style="display:flex;gap:8px;margin-top:4px;">
                       <button onClick="{{ cc.saveEdit }}" style="background:#4d7327;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 14px;border-radius:999px;">Save</button>
                       <button onClick="{{ cc.cancelEdit }}" style="background:#eef1ea;color:#56664f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 14px;border-radius:999px;">Cancel</button>
@@ -2714,9 +2714,9 @@ class Component extends DCLogic {
   // Each coach has their own portal passcode and sets their own per-date hours.
   coachesDefault() {
     return [
-      { id: 'michael', name: 'Michael Cabral', first: 'Michael', role: 'Head Coach', pass: 'michael2026' },
-      { id: 'james',   name: 'James Victoria', first: 'James',   role: 'Youth Program Lead', pass: 'james2026' },
-      { id: 'rotsen',  name: 'Rotsen Vinluan', first: 'Rotsen',  role: 'Range Coach', pass: 'rotsen2026' },
+      { id: 'michael', name: 'Michael Cabral', first: 'Michael', role: 'Head Coach' },
+      { id: 'james',   name: 'James Victoria', first: 'James',   role: 'Youth Program Lead' },
+      { id: 'rotsen',  name: 'Rotsen Vinluan', first: 'Rotsen',  role: 'Range Coach' },
     ];
   }
   // The live roster: backend-managed list when available (cached in state/localStorage),
@@ -2779,7 +2779,7 @@ class Component extends DCLogic {
   applyCoaches(raw) {
     const list = (raw || []).map(c => ({
       id: c.id, name: c.name, first: c.first || (c.name || '').split(' ')[0],
-      role: c.role || 'Coach', pass: c.pass || '', bio: c.bio || '', photo: c.photo || '',
+      role: c.role || 'Coach', bio: c.bio || '', photo: c.photo || '',
     }));
     try { localStorage.setItem('pgac_coaches', JSON.stringify(list)); } catch (e) {}
     this.setState({ coachList: list });
@@ -2801,7 +2801,7 @@ class Component extends DCLogic {
   }
   startEditCoach(id) {
     const c = this.coachById(id) || {};
-    this.setState({ coachEditId: id, coachEditName: c.name || '', coachEditRole: c.role || '', coachEditPass: c.pass || '' });
+    this.setState({ coachEditId: id, coachEditName: c.name || '', coachEditRole: c.role || '', coachEditPass: '' });
   }
   cancelEditCoach() { this.setState({ coachEditId: '', coachEditName: '', coachEditRole: '', coachEditPass: '' }); }
   saveEditCoach(id) {
