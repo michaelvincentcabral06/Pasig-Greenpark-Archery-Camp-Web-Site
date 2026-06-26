@@ -502,6 +502,29 @@ function sendCancellation_(o) {
   MailApp.sendEmail({ to: o.email, subject: subject, body: body, name: BUSINESS_NAME });
   return true;
 }
+// Sent when a single session booking is moved to a new date/time (self-service or admin).
+function sendReschedule_(o) {
+  // o: { email, name, program, oldDate, oldTime, newDate, newTime, ref }
+  if (!o.email) return false;
+  var subject = BUSINESS_NAME + ' — Booking rescheduled' + (o.ref ? ' (' + o.ref + ')' : '');
+  var body = [
+    'Hi ' + (o.name || 'there') + ',',
+    '',
+    'Your archery session has been rescheduled:',
+    '',
+    (o.ref ? 'Reference : ' + o.ref : ''),
+    'Program   : ' + (o.program || ''),
+    'Was       : ' + prettyDate_(o.oldDate) + (o.oldTime ? ' · ' + o.oldTime : ''),
+    'Now       : ' + prettyDate_(o.newDate) + (o.newTime ? ' · ' + o.newTime : ''),
+    '',
+    'If you didn\'t request this or need another change, just reply or text/call ' + CONTACT_NUMBER + '.',
+    '',
+    'See you at the range!',
+    BUSINESS_NAME
+  ].filter(function (l) { return l !== ''; }).join('\n');
+  MailApp.sendEmail({ to: o.email, subject: subject, body: body, name: BUSINESS_NAME });
+  return true;
+}
 function escapeHtml_(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -680,7 +703,7 @@ function doGet(e) {
     if (action === 'content') return getContent_();
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v19', auth: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true });
+      return json_({ version: 'db-v20', auth: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -1475,7 +1498,31 @@ function reschedule_(body) {
   var start = new Date(parseInt(np[0],10), parseInt(np[1],10)-1, parseInt(np[2],10), nh, 0, 0);
   var end = new Date(start.getTime() + 60 * 60 * 1000);
   try { ev.setTime(start, end); } catch (e2) { return json_({ ok: false, reason: 'move failed' }); }
-  return json_({ ok: true, eventId: ev.getId(), ref: body.ref || '' });
+
+  // Pull booking details from the event (fallbacks) so we can notify + log even if the
+  // website didn't pass them — mirrors cancel_.
+  var rdesc     = ev.getDescription() || '';
+  var emM       = rdesc.match(/Email:\s*([^\n\r]+)/i);
+  var refM      = rdesc.match(/Ref:\s*([^\n\r]+)/i);
+  var progM     = rdesc.match(/Program:\s*([^\n\r]+)/i);
+  var custEmail = (body.email || (emM ? emM[1].trim() : '')).trim();
+  var ref       = body.ref || (refM ? refM[1].trim() : '');
+  var program   = progM ? progM[1].trim() : '';
+  var nm        = body.name || (ev.getTitle() || '');
+
+  // Log to the admin Activity feed + email the customer (skip when notify===false for silent moves).
+  if (body.notify !== false) {
+    dbLog_(ref, 'Rescheduled',
+      (program || '') + ' · ' + (body.date || '') + (body.time ? ' ' + body.time : '') + ' → ' + (body.newDate || '') + (body.newTime ? ' ' + body.newTime : ''),
+      nm, custEmail, (body.by === 'admin' ? 'admin' : 'client'));
+  }
+  var emailed = false;
+  if (body.notify !== false && custEmail) {
+    try {
+      emailed = sendReschedule_({ email: custEmail, name: nm, program: program, oldDate: body.date, oldTime: body.time, newDate: body.newDate, newTime: body.newTime, ref: ref });
+    } catch (mailErr) { emailed = false; }
+  }
+  return json_({ ok: true, eventId: ev.getId(), ref: ref, emailed: emailed });
 }
 function hourFromLabel_(label) {
   var m = /(\d+):(\d+)\s*(AM|PM)/i.exec(label || ''); if (!m) return null;

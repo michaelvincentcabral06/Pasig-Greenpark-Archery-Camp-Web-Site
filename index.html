@@ -3859,7 +3859,7 @@ class Component extends DCLogic {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'reschedule', eventId: entry.eventId || '', ref: entry.ref || '', date: entry.date || '', time: entry.time || '', newDate: date, newTime: time, name: entry.name || '', email: entry.email || '' })
     }).then(function (r) { return r.json(); }).then(function (res) {
-      if (res && res.ok) { applyLocal((res.eventId || entry.eventId), (res.ref || entry.ref)); this.logAction(entry.ref || '', 'Rescheduled', this.prettyDateStr(entry.date) + ' ' + entry.time + ' → ' + this.prettyDateStr(date) + ' ' + time + ' · ' + (entry.name || ''), entry.name || '', entry.email || '', 'client'); }
+      if (res && res.ok) { applyLocal((res.eventId || entry.eventId), (res.ref || entry.ref)); } // backend reschedule_ logs to Activity + emails the customer server-side
       else { applyLocal(entry.eventId, entry.ref); }   // backend lacks reschedule → no-op move; keep one entry
     }.bind(this)).catch(function () { applyLocal(entry.eventId, entry.ref); });
   }
@@ -4182,8 +4182,7 @@ class Component extends DCLogic {
         .then(r => r.json()).then(res => {
           const newEid = (res && res.ok && res.eventId) ? res.eventId : s.eventId;
           this.mutatePlan(email, ts, p => ({ ...p, sessions: (p.sessions || []).map((x, i) => i === idx ? { ...x, date: date, time: time, eventId: newEid } : x).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)) }));
-          const planRef = this.ensurePlanRef(email, ts);
-          this.logAction(planRef, 'Rescheduled', this.prettyDateStr(s.date) + ' ' + s.time + ' → ' + this.prettyDateStr(date) + ' ' + time + ' · ' + ((plan.holder) || ''), (plan.holder) || email, email, 'client');
+          this.ensurePlanRef(email, ts); // keep the plan's stable ref; backend reschedule_ logs to Activity + emails server-side
         }).catch(() => {});
     } else {
       this.mutatePlan(email, ts, p => ({ ...p, sessions: (p.sessions || []).map((x, i) => i === idx ? { ...x, date: date, time: time } : x) }));
