@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -4661,8 +4661,6 @@ class Component extends DCLogic {
     const eligDiscountLabel = eligParts.join(' + ') + ' (\u2212\u20B1' + eligPer + ' each)';
     const eligDiscountAmountLabel = '\u2212' + peso(eligDiscountAmount);
     const discountPctLabel = Math.round(discountRate * 100) + '% group discount';
-    const unlimitedSlots = false;
-    const unlimitedActive = false;
     const acrossDays = (multiDateMode && dayCount > 1) ? (' across ' + dayCount + ' days') : '';
     const costBreakdown = (peso(rrate) + ' \u00D7 ' + party + (party === 1 ? ' archer' : ' archers') + ' \u00D7 ' + effSessions + (effSessions === 1 ? ' session' : ' sessions') + acrossDays);
     const costSubtotalLabel = peso(costSubtotal);
@@ -5511,7 +5509,6 @@ class Component extends DCLogic {
       costTotalLabel, costBreakdown,
       hasDiscount, discountPctLabel, discountAmountLabel, costSubtotalLabel, savedLabel,
       hasGroupDiscount, hasEligDiscount, groupDiscountAmountLabel, eligDiscountLabel, eligDiscountAmountLabel,
-      unlimitedSlots, unlimitedActive,
       confirmLabel: chosenTimes.length > 1 ? ('Confirm ' + chosenTimes.length + ' slots →') : 'Confirm booking →',
       confirmBooking,
       bookDisabled: slotCount !== Math.max(1, st.sessionTarget || 1),
