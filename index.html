@@ -3842,11 +3842,16 @@ class Component extends DCLogic {
     this.setState({ editBusy: true });
     const applyLocal = (newEventId, ref) => {
       const updated = { ...entry, date: date, time: time, party: party, amount: amount, concession: concession, ref: ref || entry.ref, eventId: newEventId != null ? newEventId : entry.eventId, ts: entry.ts };
-      const arr = (this.state.bookings || []).map(x => x.ts === entry.ts ? updated : x);
-      // if it wasn't on this device, add it
-      if (!arr.some(x => x.ts === entry.ts)) arr.unshift(updated);
+      // Match the existing row by its STABLE identity (eventId/ref). A reschedule changes the
+      // slot and the calendar-derived timestamp, so matching on ts alone misses it and a stale
+      // old-date row would linger as a duplicate.
+      const sameRow = (x) => (x.eventId && entry.eventId && x.eventId === entry.eventId)
+        || (x.ref && entry.ref && String(x.ref).toUpperCase() === String(entry.ref).toUpperCase())
+        || x.ts === entry.ts;
+      const arr = (this.state.bookings || []).map(x => sameRow(x) ? updated : x);
+      if (!arr.some(sameRow)) arr.unshift(updated); // wasn't on this device → add it
       this.persistBookings(arr);
-      const acct = (this.state.acctBookings || []).map(x => x.ts === entry.ts ? updated : x);
+      const acct = (this.state.acctBookings || []).map(x => sameRow(x) ? updated : x);
       this.setState({ editBusy: false, editTs: null, acctBookings: acct });
     };
     if (!ep) { applyLocal(entry.eventId, entry.ref); return; }
@@ -4861,15 +4866,18 @@ class Component extends DCLogic {
     (this.state.acctBookings || []).concat(deviceForAcct).forEach(b => {
       // Pass sessions (scheduled by admin) belong under the pass, not as standalone session cards.
       if (b && /\(plan\)\s*$/i.test(b.program || '')) return;
-      // Dedupe by the actual slot (date + time). The same session can arrive twice — once
-      // from this device and once from the calendar — with different timestamps, references,
-      // or a slightly different program string; keying on the slot alone collapses those into
-      // one card. (A customer can't hold two different sessions in the same hour.)
-      const k = (b.date && b.time)
-        ? ('s|' + b.date + '|' + b.time)
-        : (b.eventId ? 'e' + b.eventId : (b.ref ? 'r' + b.ref : 't' + b.ts));
-      if (k && acctSeen[k]) return;
-      if (k) acctSeen[k] = 1;
+      // Collapse a session by its STABLE identity (eventId/ref) FIRST — a reschedule keeps the same
+      // eventId/ref but changes the slot, so keying on the slot alone would show the moved session
+      // twice (old slot + new slot). The remote (calendar) copy is processed first, so the moved
+      // version wins and the stale device copy is dropped. Then fall back to the slot to collapse
+      // the same session arriving from both the device and the calendar.
+      const keys = [];
+      if (b.eventId) keys.push('e' + b.eventId);
+      if (b.ref) keys.push('r' + String(b.ref).toUpperCase());
+      if (b.date && b.time) keys.push('s|' + b.date + '|' + b.time);
+      if (!keys.length) keys.push('t' + b.ts);
+      if (keys.some(k => acctSeen[k])) return;
+      keys.forEach(k => { acctSeen[k] = 1; });
       acctMerged.push(b);
     });
     const acctSorted = acctMerged.slice().sort((a, b) => ((a.date || '') + (a.time || '')).localeCompare((b.date || '') + (b.time || '')));
