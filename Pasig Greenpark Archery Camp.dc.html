@@ -3309,6 +3309,7 @@ class Component extends DCLogic {
     return 'PGA-' + compact + '-' + (rnd || '0000');
   }
   bookSlot(form, archers) {
+    if (this._sendingBooking) return; // synchronous re-entry guard: never fire a second booking while one is in flight (was creating duplicate bookings + emails)
     const ep = this.endpoint();
     const dateStr = this.state.slotDate;
     const times = (this.state.slotTimes || []).slice();
@@ -3342,6 +3343,7 @@ class Component extends DCLogic {
         this.setState({ bookingStatus: 'confirmed', bookingResult: { count: pairs.length, ref: refM, emailed: false }, multiSlots: {} });
         return;
       }
+      this._sendingBooking = true;
       this.setState({ bookingStatus: 'sending' });
       const datesPayload = selDatesB.map(d => ({ date: d, times: (mt[d] || []) }));
       fetch(ep, {
@@ -3364,7 +3366,7 @@ class Component extends DCLogic {
         } else {
           this.setState({ bookingStatus: 'error' });
         }
-      }).catch(() => this.setState({ bookingStatus: 'error' }));
+      }).catch(() => this.setState({ bookingStatus: 'error' })).finally(() => { this._sendingBooking = false; });
       return;
     }
 
@@ -3386,6 +3388,7 @@ class Component extends DCLogic {
     }
     // Live: one POST books every chosen hour, sends ONE receipt email, and returns
     // a booking ref + an eventId per slot (used later for admin cancellation).
+    this._sendingBooking = true;
     this.setState({ bookingStatus: 'sending' });
     fetch(ep, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -3404,7 +3407,7 @@ class Component extends DCLogic {
       } else {
         this.setState({ bookingStatus: 'error' });
       }
-    }).catch(() => this.setState({ bookingStatus: 'error' }));
+    }).catch(() => this.setState({ bookingStatus: 'error' })).finally(() => { this._sendingBooking = false; });
   }
 
   // Admin: cancel a booking — delete its calendar event and (optionally) email the customer.
@@ -4445,6 +4448,7 @@ class Component extends DCLogic {
 
     const validEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((v || '').trim());
     const confirmBooking = () => {
+      if (this._sendingBooking) return; // guard against double/triple submit (was creating multiple bookings + emails)
       const f = this.state.form;
       const archersBlock = showArcherDetails && (!archersComplete || !archersAgeOk);
       const openRange = /Open Range/i.test(f.program || '');
