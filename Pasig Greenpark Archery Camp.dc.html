@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -1085,43 +1085,20 @@
 
               <sc-if value="{{ isOpenRange }}" hint-placeholder-val="{{ false }}">
               <div>
-                <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:3px;">Open Range concessions <span style="color:#7fb43f;font-weight:500;">— base ₱400, less ₱100 per concession (stackable)</span></label>
-                <p style="font-size:11.5px;color:#8a9579;margin:0 0 9px;line-height:1.5;">These discounts apply to Open Range only. Tick any that apply and add your proof below.</p>
+                <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:3px;">Concession discounts</label>
+                <p style="font-size:11.5px;color:#8a9579;margin:0 0 9px;line-height:1.5;">Tick any that apply and add your proof below.</p>
                 <div style="display:flex;flex-direction:column;gap:8px;">
-                  <button onClick="{{ togglePasig }}" role="checkbox" aria-checked="{{ eligPasig }}" aria-label="Pasig City resident — ₱100 off" style="display:flex;align-items:center;gap:11px;text-align:left;background:#1b3325;border:1.5px solid {{ pasigBorder }};border-radius:9px;padding:11px 13px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
-                    <span style="width:20px;height:20px;flex:none;border-radius:5px;border:1.5px solid {{ pasigBorder }};background:{{ pasigBox }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">{{ pasigCheck }}</span>
-                    <span style="flex:1;font-size:14px;color:#f4efe4;">Pasig City resident</span>
-                    <span style="font-family:'Spline Sans Mono',monospace;font-size:12.5px;font-weight:700;color:#7fb43f;white-space:nowrap;">−₱100</span>
-                  </button>
-                  <sc-if value="{{ eligPasig }}" hint-placeholder-val="{{ false }}">
-                    <label style="display:block;font-size:12px;font-weight:600;color:#cdd6c5;margin:2px 0 -2px;">Pasig City address or valid ID showing it <span style="color:#e8674a;">*</span></label>
-                    <input value="{{ pasigProof }}" onInput="{{ setPasigProof }}" placeholder="Pasig City address or ID number" style="width:100%;background:#1b3325;border:1px solid {{ pasigProofBorder }};border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
-                  </sc-if>
-                  <button onClick="{{ togglePac }}" role="checkbox" aria-checked="{{ eligPac }}" aria-label="PAC member — ₱100 off" style="display:flex;align-items:center;gap:11px;text-align:left;background:#1b3325;border:1.5px solid {{ pacBorder }};border-radius:9px;padding:11px 13px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
-                    <span style="width:20px;height:20px;flex:none;border-radius:5px;border:1.5px solid {{ pacBorder }};background:{{ pacBox }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">{{ pacCheck }}</span>
-                    <span style="flex:1;font-size:14px;color:#f4efe4;">PAC <span style="color:#9aa890;">— Pasig Archery Club member</span></span>
-                    <span style="font-family:'Spline Sans Mono',monospace;font-size:12.5px;font-weight:700;color:#7fb43f;white-space:nowrap;">−₱100</span>
-                  </button>
-                  <sc-if value="{{ eligPac }}" hint-placeholder-val="{{ false }}">
-                    <label style="display:block;font-size:12px;font-weight:600;color:#cdd6c5;margin:2px 0 -2px;">WAP ID No. <span style="color:#e8674a;">*</span></label>
-                    <input value="{{ wapId }}" onInput="{{ setWapId }}" placeholder="WAP ID No. (World Archery Philippines)" style="width:100%;background:#1b3325;border:1px solid {{ wapBorder }};border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
-                  </sc-if>
-                  <button onClick="{{ toggleLocal }}" role="checkbox" aria-checked="{{ eligLocal }}" aria-label="Greenpark resident or RHS student — ₱100 off" style="display:flex;align-items:center;gap:11px;text-align:left;background:#1b3325;border:1.5px solid {{ localBorder }};border-radius:9px;padding:11px 13px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
-                    <span style="width:20px;height:20px;flex:none;border-radius:5px;border:1.5px solid {{ localBorder }};background:{{ localBox }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">{{ localCheck }}</span>
-                    <span style="flex:1;font-size:14px;color:#f4efe4;">Greenpark resident or RHS <span style="color:#9aa890;">— Rizal High School student</span></span>
-                    <span style="font-family:'Spline Sans Mono',monospace;font-size:12.5px;font-weight:700;color:#7fb43f;white-space:nowrap;">−₱100</span>
-                  </button>
-                  <sc-if value="{{ eligLocal }}" hint-placeholder-val="{{ false }}">
-                    <label style="display:block;font-size:12px;font-weight:600;color:#cdd6c5;margin:2px 0 -2px;">Greenpark address or RHS ID <span style="color:#e8674a;">*</span></label>
-                    <input value="{{ localProof }}" onInput="{{ setLocalProof }}" placeholder="Greenpark address or RHS ID number" style="width:100%;background:#1b3325;border:1px solid {{ localProofBorder }};border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
-                  </sc-if>
+                  <sc-for list="{{ discountRows }}" as="d" hint-placeholder-count="3">
+                    <button onClick="{{ d.toggle }}" role="checkbox" aria-checked="{{ d.checked }}" style="display:flex;align-items:center;gap:11px;text-align:left;background:#1b3325;border:1.5px solid {{ d.border }};border-radius:9px;padding:11px 13px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
+                      <span style="width:20px;height:20px;flex:none;border-radius:5px;border:1.5px solid {{ d.border }};background:{{ d.box }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">{{ d.check }}</span>
+                      <span style="flex:1;font-size:14px;color:#f4efe4;">{{ d.name }}</span>
+                      <span style="font-family:'Spline Sans Mono',monospace;font-size:12.5px;font-weight:700;color:#7fb43f;white-space:nowrap;">{{ d.amountLabel }}</span>
+                    </button>
+                    <sc-if value="{{ d.proofShown }}" hint-placeholder-val="{{ false }}">
+                      <input value="{{ d.proof }}" onInput="{{ d.setProof }}" placeholder="{{ d.proofLabel }}" style="width:100%;background:#1b3325;border:1px solid {{ d.proofBorder }};border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
+                    </sc-if>
+                  </sc-for>
                 </div>
-                <sc-if value="{{ unlimitedSlots }}" hint-placeholder-val="{{ false }}">
-                  <div style="display:flex;align-items:center;gap:9px;margin-top:10px;background:rgba(127,180,63,0.14);border:1px solid rgba(127,180,63,0.35);border-radius:9px;padding:10px 13px;">
-                    <span style="font-size:15px;flex:none;">★</span>
-                    <span style="font-size:12.5px;line-height:1.45;color:#cdd6c5;">Concessions stacked — pick <span style="color:#7fb43f;font-weight:700;">as many time slots as you like</span> at no extra cost.</span>
-                  </div>
-                </sc-if>
               </div>
               </sc-if>
             </div>
@@ -1334,47 +1311,24 @@
               <p style="font-size:11.5px;color:#8a9579;margin:6px 2px 0;">Booking for a group? Each archer takes one of the {{ capacity }} hourly spots.</p>
             </div>
 
-            <sc-if value="{{ isOpenRange }}" hint-placeholder-val="{{ false }}">
-            <div>
-              <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:3px;">Open Range concessions <span style="color:#7fb43f;font-weight:500;">— base ₱400, less ₱100 per concession (stackable)</span></label>
-              <p style="font-size:11.5px;color:#8a9579;margin:0 0 9px;line-height:1.5;">These discounts apply to Open Range only. Tick any that apply and add your proof below.</p>
-              <div style="display:flex;flex-direction:column;gap:8px;">
-                <button onClick="{{ togglePasig }}" role="checkbox" aria-checked="{{ eligPasig }}" aria-label="Pasig City resident — ₱100 off" style="display:flex;align-items:center;gap:11px;text-align:left;background:#1b3325;border:1.5px solid {{ pasigBorder }};border-radius:9px;padding:11px 13px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
-                  <span style="width:20px;height:20px;flex:none;border-radius:5px;border:1.5px solid {{ pasigBorder }};background:{{ pasigBox }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">{{ pasigCheck }}</span>
-                  <span style="flex:1;font-size:14px;color:#f4efe4;">Pasig City resident</span>
-                  <span style="font-family:'Spline Sans Mono',monospace;font-size:12.5px;font-weight:700;color:#7fb43f;white-space:nowrap;">−₱100</span>
-                </button>
-                <sc-if value="{{ eligPasig }}" hint-placeholder-val="{{ false }}">
-                  <label style="display:block;font-size:12px;font-weight:600;color:#cdd6c5;margin:2px 0 -2px;">Pasig City address or valid ID showing it <span style="color:#e8674a;">*</span></label>
-                  <input value="{{ pasigProof }}" onInput="{{ setPasigProof }}" placeholder="Pasig City address or ID number" style="width:100%;background:#1b3325;border:1px solid {{ pasigProofBorder }};border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
-                </sc-if>
-                <button onClick="{{ togglePac }}" role="checkbox" aria-checked="{{ eligPac }}" aria-label="PAC member — ₱100 off" style="display:flex;align-items:center;gap:11px;text-align:left;background:#1b3325;border:1.5px solid {{ pacBorder }};border-radius:9px;padding:11px 13px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
-                  <span style="width:20px;height:20px;flex:none;border-radius:5px;border:1.5px solid {{ pacBorder }};background:{{ pacBox }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">{{ pacCheck }}</span>
-                  <span style="flex:1;font-size:14px;color:#f4efe4;">PAC <span style="color:#9aa890;">— Pasig Archery Club member</span></span>
-                  <span style="font-family:'Spline Sans Mono',monospace;font-size:12.5px;font-weight:700;color:#7fb43f;white-space:nowrap;">−₱100</span>
-                </button>
-                <sc-if value="{{ eligPac }}" hint-placeholder-val="{{ false }}">
-                  <label style="display:block;font-size:12px;font-weight:600;color:#cdd6c5;margin:2px 0 -2px;">WAP ID No. <span style="color:#e8674a;">*</span></label>
-                  <input value="{{ wapId }}" onInput="{{ setWapId }}" placeholder="WAP ID No. (World Archery Philippines)" style="width:100%;background:#1b3325;border:1px solid {{ wapBorder }};border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
-                </sc-if>
-                <button onClick="{{ toggleLocal }}" role="checkbox" aria-checked="{{ eligLocal }}" aria-label="Greenpark resident or RHS student — ₱100 off" style="display:flex;align-items:center;gap:11px;text-align:left;background:#1b3325;border:1.5px solid {{ localBorder }};border-radius:9px;padding:11px 13px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
-                  <span style="width:20px;height:20px;flex:none;border-radius:5px;border:1.5px solid {{ localBorder }};background:{{ localBox }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">{{ localCheck }}</span>
-                  <span style="flex:1;font-size:14px;color:#f4efe4;">Greenpark resident or RHS <span style="color:#9aa890;">— Rizal High School student</span></span>
-                  <span style="font-family:'Spline Sans Mono',monospace;font-size:12.5px;font-weight:700;color:#7fb43f;white-space:nowrap;">−₱100</span>
-                </button>
-                <sc-if value="{{ eligLocal }}" hint-placeholder-val="{{ false }}">
-                  <label style="display:block;font-size:12px;font-weight:600;color:#cdd6c5;margin:2px 0 -2px;">Greenpark address or RHS ID <span style="color:#e8674a;">*</span></label>
-                  <input value="{{ localProof }}" onInput="{{ setLocalProof }}" placeholder="Greenpark address or RHS ID number" style="width:100%;background:#1b3325;border:1px solid {{ localProofBorder }};border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
-                </sc-if>
-              </div>
-              <sc-if value="{{ unlimitedSlots }}" hint-placeholder-val="{{ false }}">
-                <div style="display:flex;align-items:center;gap:9px;margin-top:10px;background:rgba(127,180,63,0.14);border:1px solid rgba(127,180,63,0.35);border-radius:9px;padding:10px 13px;">
-                  <span style="font-size:15px;flex:none;">★</span>
-                  <span style="font-size:12.5px;line-height:1.45;color:#cdd6c5;">Concessions stacked — pick <span style="color:#7fb43f;font-weight:700;">as many time slots as you like</span> at no extra cost.</span>
+              <sc-if value="{{ isOpenRange }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:3px;">Concession discounts</label>
+                <p style="font-size:11.5px;color:#8a9579;margin:0 0 9px;line-height:1.5;">Tick any that apply and add your proof below.</p>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <sc-for list="{{ discountRows }}" as="d" hint-placeholder-count="3">
+                    <button onClick="{{ d.toggle }}" role="checkbox" aria-checked="{{ d.checked }}" style="display:flex;align-items:center;gap:11px;text-align:left;background:#1b3325;border:1.5px solid {{ d.border }};border-radius:9px;padding:11px 13px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
+                      <span style="width:20px;height:20px;flex:none;border-radius:5px;border:1.5px solid {{ d.border }};background:{{ d.box }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">{{ d.check }}</span>
+                      <span style="flex:1;font-size:14px;color:#f4efe4;">{{ d.name }}</span>
+                      <span style="font-family:'Spline Sans Mono',monospace;font-size:12.5px;font-weight:700;color:#7fb43f;white-space:nowrap;">{{ d.amountLabel }}</span>
+                    </button>
+                    <sc-if value="{{ d.proofShown }}" hint-placeholder-val="{{ false }}">
+                      <input value="{{ d.proof }}" onInput="{{ d.setProof }}" placeholder="{{ d.proofLabel }}" style="width:100%;background:#1b3325;border:1px solid {{ d.proofBorder }};border-radius:8px;padding:11px 13px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
+                    </sc-if>
+                  </sc-for>
                 </div>
+              </div>
               </sc-if>
-            </div>
-            </sc-if>
 
             <!-- ARCHER DETAILS -->
             <sc-if value="{{ showArcherDetails }}" hint-placeholder-val="{{ false }}">
@@ -2637,12 +2591,8 @@ class Component extends DCLogic {
     party: 1,
     sessionTarget: 1,
     coachAddon: false,
-    eligPac: false,
-    eligLocal: false,
-    eligPasig: false,
-    wapId: '',
-    localProof: '',
-    pasigProof: '',
+    eligSel: {},
+    eligProof: {},
     selectedDates: [],
     multiSlots: {},
     multiTimes: {},
@@ -3294,11 +3244,11 @@ class Component extends DCLogic {
 
   // per-archer session price, used for the receipt total
   rateFor(program) { return this.programByName(program).price; }
-  // Flat per-archer concessions (programs with offerDiscounts), ₱100 each, stackable:
-  // Pasig City resident · Greenpark resident / RHS student · PAC member.
+  // Flat per-archer concessions (programs with offerDiscounts), summed from the discount list.
   eligPerArcher() {
     if (!this.programByName(this.state.form.program).offerDiscounts) return 0;
-    return (this.state.eligPasig ? 100 : 0) + (this.state.eligLocal ? 100 : 0) + (this.state.eligPac ? 100 : 0);
+    var sel = this.state.eligSel || {};
+    return this.discountList().reduce((sum, d) => sum + (sel[d.id] ? d.amount : 0), 0);
   }
   // Group discount on the same session: 2 → 10%, 3–4 → 20%, 5–6 → 30%.
   discountFor(party) {
@@ -3308,22 +3258,42 @@ class Component extends DCLogic {
     if (party === 2) return 0.10;
     return 0;
   }
-  // Both concessions together (for programs with offerDiscounts) → flat fee, extra time slots don't add to the bill.
-  bothConcessions(program) {
-    return this.programByName(program).offerDiscounts && this.state.eligPac && this.state.eligLocal;
-  }
-  // Final price = (rate × archers × sessions, less group discount), then per-archer concessions.
-  // Final price. `sessions` = total time-slots chosen; `days` = distinct days chosen.
-  // With the both-concessions perk, extra time-slots within a day are free, so we bill
-  // per DAY; otherwise per time-slot.
+  // Final price = (rate × archers × time-slots, less group discount) − per-archer concessions.
   priceFor(program, party, sessions, days) {
     party = Math.max(1, party); sessions = Math.max(0, sessions);
-    if (days == null) days = sessions;
-    var billable = this.bothConcessions(program) ? Math.max(0, days) : sessions;
+    var billable = sessions;
     var afterGroup = this.rateFor(program) * party * billable * (1 - this.discountFor(party));
     var elig = this.eligPerArcher() * party * billable;
     return Math.max(0, Math.round(afterGroup - elig));
   }
+  buildConcession(sel, proof) {
+    sel = sel || {}; proof = proof || {};
+    var items = this.discountList().filter(d => sel[d.id]).map(d => ({
+      id: d.id, name: d.name, amount: d.amount,
+      proof: d.proofRequired ? String(proof[d.id] || '').trim() : ''
+    }));
+    if (!items.length) return null;
+    return { items: items, total: items.reduce((s, it) => s + it.amount, 0) };
+  }
+  discountRows() {
+    if (!this.programByName(this.state.form.program).offerDiscounts) return [];
+    var sel = this.state.eligSel || {}, proof = this.state.eligProof || {}, err = this.state.formError;
+    return this.discountList().map(d => {
+      var on = !!sel[d.id];
+      var missing = err && d.proofRequired && on && !String(proof[d.id] || '').trim();
+      return {
+        id: d.id, name: d.name, amountLabel: '−₱' + d.amount,
+        checked: on, box: on ? '#7fb43f' : 'transparent',
+        border: on ? '#7fb43f' : 'rgba(244,239,228,0.18)', check: on ? '✓' : '',
+        toggle: () => this.toggleElig_(d.id),
+        proofRequired: d.proofRequired, proofShown: d.proofRequired && on,
+        proof: String(proof[d.id] || ''), setProof: (e) => this.setEligProof_(d.id, e.target.value),
+        proofLabel: d.proofLabel, proofBorder: missing ? '#e8674a' : 'rgba(244,239,228,0.18)'
+      };
+    });
+  }
+  toggleElig_(id) { this.setState(s => ({ eligSel: { ...(s.eligSel || {}), [id]: !((s.eligSel || {})[id]) }, formError: false })); }
+  setEligProof_(id, v) { this.setState(s => ({ eligProof: { ...(s.eligProof || {}), [id]: v }, formError: false })); }
   bookingRef(dateStr) {
     var compact = (dateStr || '').replace(/-/g, '').slice(2); // YYMMDD
     var rnd = Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
@@ -3339,11 +3309,7 @@ class Component extends DCLogic {
     const archerList = (archers || []).slice(0, party);
     const amount = this.priceFor(form.program, party, times.length, 1);
     const openRange = this.programByName(form.program).multiDay;
-    const concession = this.programByName(form.program).offerDiscounts ? {
-      pasig: this.state.eligPasig, pasigProof: this.state.eligPasig ? this.state.pasigProof.trim() : '',
-      pac: this.state.eligPac, wapId: this.state.eligPac ? this.state.wapId.trim() : '',
-      local: this.state.eligLocal, localProof: this.state.eligLocal ? this.state.localProof.trim() : ''
-    } : null;
+    const concession = this.programByName(form.program).offerDiscounts ? this.buildConcession(this.state.eligSel, this.state.eligProof) : null;
 
     // ----- MULTI-DATE (multi-day programs): book every chosen (date, time) pair -----
     if (openRange && (this.state.selectedDates || []).length) {
@@ -4411,7 +4377,7 @@ class Component extends DCLogic {
         bookingSms: sms,
       });
     };
-    const resetForm = () => this.setState({ submitted: false, formError: false, form: { name: '', phone: '', email: '', program: 'Adult Beginners (18+)', date: '' }, slotDate: '', slotTimes: [], party: 1, sessionTarget: 1, coachAddon: false, archers: [{ name: '', dob: '' }], eligPac: false, eligLocal: false, eligPasig: false, wapId: '', localProof: '', pasigProof: '', selectedDates: [], multiSlots: {}, multiTimes: {}, multiLoading: {}, calMonth: '', slots: [], bookingStatus: '', bookingAlts: [] });
+    const resetForm = () => this.setState({ submitted: false, formError: false, form: { name: '', phone: '', email: '', program: 'Adult Beginners (18+)', date: '' }, slotDate: '', slotTimes: [], party: 1, sessionTarget: 1, coachAddon: false, archers: [{ name: '', dob: '' }], eligSel: {}, eligProof: {}, selectedDates: [], multiSlots: {}, multiTimes: {}, multiLoading: {}, calMonth: '', slots: [], bookingStatus: '', bookingAlts: [] });
 
     // ---------- BOOKING ENGINE (view) ----------
     const cap = this.capacity();
@@ -4524,7 +4490,7 @@ class Component extends DCLogic {
       const archersBlock = showArcherDetails && (!archersComplete || !archersAgeOk);
       const isMulti = this.programByName(f.program).multiDay;
       const offersDisc = this.programByName(f.program).offerDiscounts;
-      const proofBlock = offersDisc && ((this.state.eligPac && !this.state.wapId.trim()) || (this.state.eligLocal && !this.state.localProof.trim()) || (this.state.eligPasig && !this.state.pasigProof.trim()));
+      const proofBlock = offersDisc && this.discountList().some(d => d.proofRequired && (this.state.eligSel || {})[d.id] && !String((this.state.eligProof || {})[d.id] || '').trim());
       const mPairs = (this.state.selectedDates || []).reduce((n, d) => n + (((this.state.multiTimes || {})[d]) || []).length, 0);
       const noSlot = isMulti ? (mPairs === 0) : (chosenTimes.length === 0);
       const sc = isMulti ? mPairs : (this.state.slotTimes || []).length;
@@ -4621,9 +4587,8 @@ class Component extends DCLogic {
     };
     const setSession = (n) => () => this.setState({ sessionTarget: Math.min(20, Math.max(Math.max(1, slotCount), n)), bookingStatus: '' });
     const dayCount = multiDateMode ? selDates.filter(d => (multiTimesState[d] || []).length > 0).length : (chosenTimes.length > 0 ? 1 : 0);
-    const unlimitedSlots = this.bothConcessions(this.state.form.program || '');
     const effSessions = Math.max(slotCount, Math.max(1, st.sessionTarget || 1));
-    const billableSessions = unlimitedSlots ? dayCount : effSessions;
+    const billableSessions = effSessions;
     const costSubtotal = rrate * party * billableSessions;
     const discountRate = this.discountFor(party);
     const costTotal = this.priceFor(this.state.form.program || '', party, effSessions, dayCount);
@@ -4634,18 +4599,15 @@ class Component extends DCLogic {
     const hasGroupDiscount = discountRate > 0 && slotCount > 0;
     const hasEligDiscount = eligPer > 0 && slotCount > 0;
     const hasDiscount = hasGroupDiscount || hasEligDiscount;
-    const eligParts = [];
-    if (this.state.eligPasig) eligParts.push('Pasig resident');
-    if (this.state.eligLocal) eligParts.push('Greenpark / RHS');
-    if (this.state.eligPac) eligParts.push('PAC member');
-    const eligDiscountLabel = eligParts.join(' + ') + ' (\u2212\u20B1100 each)';
+    const sel = this.state.eligSel || {};
+    const eligParts = this.discountList().filter(d => sel[d.id]).map(d => d.name);
+    const eligDiscountLabel = eligParts.join(' + ') + ' (\u2212\u20B1' + eligPer + ' each)';
     const eligDiscountAmountLabel = '\u2212' + peso(eligDiscountAmount);
     const discountPctLabel = Math.round(discountRate * 100) + '% group discount';
-    const unlimitedActive = unlimitedSlots && slotCount > 0;
+    const unlimitedSlots = false;
+    const unlimitedActive = false;
     const acrossDays = (multiDateMode && dayCount > 1) ? (' across ' + dayCount + ' days') : '';
-    const costBreakdown = unlimitedActive
-      ? (peso(rrate) + ' \u00D7 ' + party + (party === 1 ? ' archer' : ' archers') + ' \u00B7 flat per day \u00D7 ' + dayCount + (dayCount === 1 ? ' day' : ' days'))
-      : (peso(rrate) + ' \u00D7 ' + party + (party === 1 ? ' archer' : ' archers') + ' \u00D7 ' + effSessions + (effSessions === 1 ? ' session' : ' sessions') + acrossDays);
+    const costBreakdown = (peso(rrate) + ' \u00D7 ' + party + (party === 1 ? ' archer' : ' archers') + ' \u00D7 ' + effSessions + (effSessions === 1 ? ' session' : ' sessions') + acrossDays);
     const costSubtotalLabel = peso(costSubtotal);
     const groupDiscountAmountLabel = '\u2212' + peso(groupDiscountAmount);
     const discountAmountLabel = '\u2212' + peso(discountAmount);
@@ -5463,33 +5425,14 @@ class Component extends DCLogic {
       sessionsChosenLabel: slotCount + ' / ' + Math.max(1, st.sessionTarget || 1) + ' slot' + (Math.max(1, st.sessionTarget||1) === 1 ? '' : 's') + ' chosen',
       sessionTargetReached: slotCount === Math.max(1, st.sessionTarget || 1),
       canInc: party < cap, canDec: party > 1, isGroup: party > 1,
-      eligPac: this.state.eligPac, eligLocal: this.state.eligLocal, eligPasig: this.state.eligPasig,
       isOpenRange: this.programByName(this.state.form.program).offerDiscounts,
+      discountRows: this.discountRows(),
       showCoachAddon: !this.programByName(this.state.form.program).needsCoach,
       programOpts: this.programList().map(function (p) { return { name: p.name }; }),
       coachAddonOn: !!this.state.coachAddon,
       coachAddonCheck: this.state.coachAddon ? '✓' : '',
       coachAddonBox: this.state.coachAddon ? '#7fb43f' : 'transparent',
       toggleCoachAddon: () => this.setState({ coachAddon: !this.state.coachAddon }),
-      wapId: this.state.wapId, localProof: this.state.localProof, pasigProof: this.state.pasigProof,
-      setWapId: (e) => this.setState({ wapId: e.target.value, formError: false }),
-      setLocalProof: (e) => this.setState({ localProof: e.target.value, formError: false }),
-      setPasigProof: (e) => this.setState({ pasigProof: e.target.value, formError: false }),
-      wapBorder: (this.state.formError && this.state.eligPac && !this.state.wapId.trim()) ? '#e8674a' : 'rgba(244,239,228,0.18)',
-      localProofBorder: (this.state.formError && this.state.eligLocal && !this.state.localProof.trim()) ? '#e8674a' : 'rgba(244,239,228,0.18)',
-      pasigProofBorder: (this.state.formError && this.state.eligPasig && !this.state.pasigProof.trim()) ? '#e8674a' : 'rgba(244,239,228,0.18)',
-      togglePac: () => this.setState(s => ({ eligPac: !s.eligPac })),
-      toggleLocal: () => this.setState(s => ({ eligLocal: !s.eligLocal })),
-      togglePasig: () => this.setState(s => ({ eligPasig: !s.eligPasig })),
-      pasigBorder: this.state.eligPasig ? '#7fb43f' : 'rgba(244,239,228,0.18)',
-      pasigBox: this.state.eligPasig ? '#7fb43f' : 'transparent',
-      pasigCheck: this.state.eligPasig ? '\u2713' : '',
-      pacBorder: this.state.eligPac ? '#7fb43f' : 'rgba(244,239,228,0.18)',
-      pacBox: this.state.eligPac ? '#7fb43f' : 'transparent',
-      pacCheck: this.state.eligPac ? '\u2713' : '',
-      localBorder: this.state.eligLocal ? '#7fb43f' : 'rgba(244,239,228,0.18)',
-      localBox: this.state.eligLocal ? '#7fb43f' : 'transparent',
-      localCheck: this.state.eligLocal ? '\u2713' : '',
       archerRows, showArcherDetails, ageRangeLabel, programGated: !!ageRange, ageMismatch,
       archerProgramLabel: ageRange ? (this.state.form.program + ' \u00B7 ages ' + ageRangeLabel) : (this.state.form.program + ' \u00B7 all ages welcome'),
       slotDate: this.state.slotDate, onPickDate, minDate: todayStr, prettyDate: effPrettyDate,
