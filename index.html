@@ -1126,8 +1126,8 @@
               </sc-if>
             </div>
 
-            <!-- CARD: Add-ons (Open Range only, visual only) -->
-            <sc-if value="{{ isOpenRange }}" hint-placeholder-val="{{ false }}">
+            <!-- CARD: Add-ons — optional coach, shown only for programs that don't require one -->
+            <sc-if value="{{ showCoachAddon }}" hint-placeholder-val="{{ false }}">
             <div data-test="card-addons" style="background:#1b3325;border:1px solid rgba(244,239,228,0.14);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px;">
               <div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#7fb43f;">Add-ons</div>
               <button onClick="{{ toggleCoachAddon }}" role="checkbox" aria-checked="{{ coachAddonOn }}" style="display:flex;align-items:flex-start;gap:11px;text-align:left;background:#244232;border:1.5px solid rgba(244,239,228,0.18);border-radius:9px;padding:13px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
@@ -5396,6 +5396,7 @@ class Component extends DCLogic {
       canInc: party < cap, canDec: party > 1, isGroup: party > 1,
       eligPac: this.state.eligPac, eligLocal: this.state.eligLocal, eligPasig: this.state.eligPasig,
       isOpenRange: this.programByName(this.state.form.program).offerDiscounts,
+      showCoachAddon: !this.programByName(this.state.form.program).needsCoach,
       programOpts: this.programList().map(function (p) { return { name: p.name }; }),
       coachAddonOn: !!this.state.coachAddon,
       coachAddonCheck: this.state.coachAddon ? '✓' : '',
