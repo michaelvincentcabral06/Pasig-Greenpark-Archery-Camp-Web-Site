@@ -799,12 +799,12 @@ function doPost(e) {
 // that date to the standard weekday template.
 function coachLogin_(body) {
   var c = coachById_(body.coach);
-  if (!c || c.pass !== (body.pass || '')) return json_({ ok: false, reason: 'bad credentials' });
+  if (!c || !c.pass || c.pass !== (body.pass || '')) return json_({ ok: false, reason: 'bad credentials' });
   return json_({ ok: true, id: c.id, name: c.name });
 }
 function setCoachAvail_(body) {
   var c = coachById_(body.coach);
-  if (!c || c.pass !== (body.pass || '')) return json_({ ok: false, reason: 'bad credentials' });
+  if (!c || !c.pass || c.pass !== (body.pass || '')) return json_({ ok: false, reason: 'bad credentials' });
   if (!body.date) return json_({ ok: false, reason: 'missing date' });
   var props = PropertiesService.getScriptProperties();
   if (body.hours == null) {

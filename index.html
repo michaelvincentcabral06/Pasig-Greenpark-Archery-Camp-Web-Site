@@ -3019,7 +3019,7 @@ class Component extends DCLogic {
         }
       }.bind(this)).catch(function () { this.setState({ coachLoginError: true }); }.bind(this));
   }
-  coachLogout() { this.setState({ coachAuthed: false, coachId: '', coachEditDate: '', coachLoginError: false }); }
+  coachLogout() { this.setState({ coachAuthed: false, coachId: '', coachEditDate: '', coachLoginError: false, authSecret: '' }); }
   coachShiftMonth(delta) {
     this.setState(s => {
       const base = s.coachCalMonth ? new Date(s.coachCalMonth + '-01T00:00:00') : new Date();
@@ -3058,7 +3058,7 @@ class Component extends DCLogic {
     try {
       fetch(ep, {
         method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'setCoachAvail', coach: coachId, pass: (this.coachById(coachId) || {}).pass, date: ds, hours: hours }),
+        body: JSON.stringify({ action: 'setCoachAvail', coach: coachId, pass: this.state.authSecret, date: ds, hours: hours }),
       }).catch(() => {});
     } catch (e) {}
   }
