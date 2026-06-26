@@ -2314,6 +2314,27 @@
             <button onClick="{{ addProgram }}" style="margin-top:14px;background:#244232;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#f4efe4;padding:10px 18px;border-radius:999px;">+ Add program</button>
           </div>
 
+          <div style="margin-top:28px;">
+            <div style="font-size:15px;font-weight:800;color:#1b2a1f;margin-bottom:4px;">Concession discounts</div>
+            <p style="font-size:13px;color:#56664f;margin:0 0 12px;">Shown on any program with Discounts on. Each is a flat &#8369; amount off per archer; customers can stack them.</p>
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <sc-for list="{{ discountEdits }}" as="dc" hint-placeholder-count="3">
+                <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:10px;">
+                  <input value="{{ dc.name }}" onInput="{{ dc.setName }}" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;color:#1b2a1f;outline:none;" />
+                  <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                    <label style="font-size:11.5px;font-weight:600;color:#56664f;">Amount (&#8369;)<input value="{{ dc.amount }}" onInput="{{ dc.setAmount }}" type="number" min="0" style="display:block;margin-top:4px;width:100px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
+                    <button onClick="{{ dc.toggleProof }}" style="background:{{ dc.proofBg }};color:{{ dc.proofFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:8px 14px;border-radius:999px;">Proof required</button>
+                  </div>
+                  <sc-if value="{{ dc.proofRequired }}" hint-placeholder-val="{{ true }}">
+                    <label style="font-size:11.5px;font-weight:600;color:#56664f;">Proof label (placeholder)<input value="{{ dc.proofLabel }}" onInput="{{ dc.setProofLabel }}" style="display:block;margin-top:4px;width:100%;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#1b2a1f;outline:none;" /></label>
+                  </sc-if>
+                  <button onClick="{{ dc.remove }}" style="align-self:flex-start;background:none;border:1px solid rgba(180,81,47,0.4);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;color:#b4512f;padding:7px 14px;border-radius:999px;">Remove this discount</button>
+                </div>
+              </sc-for>
+            </div>
+            <button onClick="{{ addDiscount }}" style="margin-top:14px;background:#244232;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;color:#f4efe4;padding:10px 18px;border-radius:999px;">+ Add discount</button>
+          </div>
+
           <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:20px;margin-top:14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
             <span style="font-size:15px;font-weight:700;color:#1b2a1f;">Fun Shoot price</span>
             <input value="{{ funShootEdit }}" onInput="{{ setFunShoot }}" style="width:120px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;color:#1b2a1f;outline:none;" />
@@ -4680,6 +4701,17 @@ class Component extends DCLogic {
       toggleCoach: toggleProg(i, 'needsCoach'), toggleMulti: toggleProg(i, 'multiDay'), toggleDisc: toggleProg(i, 'offerDiscounts'),
       remove: removeProgram(i)
     }));
+    const setDiscField = (i, key) => (e) => { const v = e.target.value; const ds = this.discountList().map((d, idx) => idx === i ? { ...d, [key]: v } : d); saveCM({ discounts: ds }); };
+    const setDiscNum   = (i, key) => (e) => { const v = (e.target.value === '' ? 0 : (Number(e.target.value) || 0)); const ds = this.discountList().map((d, idx) => idx === i ? { ...d, [key]: v } : d); saveCM({ discounts: ds }); };
+    const toggleDiscProof = (i) => () => { const ds = this.discountList().map((d, idx) => idx === i ? { ...d, proofRequired: !d.proofRequired } : d); saveCM({ discounts: ds }); };
+    const removeDiscount = (i) => () => saveCM({ discounts: this.discountList().filter((_, idx) => idx !== i) });
+    const addDiscount = () => { const ds = this.normalizeDiscounts(this.discountList().concat([{ name: 'New discount', amount: 100, proofRequired: true, proofLabel: 'Proof / ID number' }])); saveCM({ discounts: ds }); };
+    const discountEdits = this.discountList().map((d, i) => ({
+      name: d.name, amount: d.amount, proofLabel: d.proofLabel, proofRequired: !!d.proofRequired,
+      proofBg: d.proofRequired ? '#244232' : '#fffdf6', proofFg: d.proofRequired ? '#f4efe4' : '#244232',
+      setName: setDiscField(i, 'name'), setAmount: setDiscNum(i, 'amount'), setProofLabel: setDiscField(i, 'proofLabel'),
+      toggleProof: toggleDiscProof(i), remove: removeDiscount(i)
+    }));
     const pkgEdits = cm.packages.map((p, i) => ({
       name: p.name, price: p.price, unit: p.unit, desc: p.desc,
       sessions: (p.sessions != null ? p.sessions : ''), validDays: (p.validDays != null ? p.validDays : ''),
@@ -5721,7 +5753,7 @@ class Component extends DCLogic {
       clearSessFilters: clearSessFilters,
       sessMultiPage: sessPageCount > 1, sessHasPrev: sessPage > 0, sessHasNext: sessPage < sessPageCount - 1,
       sessPageLabel: ('Page ' + (sessPage + 1) + ' of ' + sessPageCount), sessPrev: sessPrev, sessNext: sessNext,
-      pkgEdits, programEdits, addProgram, scheduleEdit, testimonialEdits, addTestimonial, setReviewsRating, setReviewsCount, setReviewsUrl,
+      pkgEdits, programEdits, addProgram, discountEdits, addDiscount, scheduleEdit, testimonialEdits, addTestimonial, setReviewsRating, setReviewsCount, setReviewsUrl,
       funShootEdit: cm.funShoot,
       setFunShoot: (e) => saveCM({ funShoot: e.target.value }),
       rateOpenEdit: String((cm.rates && cm.rates.openRange) != null ? cm.rates.openRange : 400),
