@@ -2377,6 +2377,7 @@
                   <div style="display:flex;gap:8px;flex-wrap:wrap;">
                     <button onClick="{{ pg.toggleCoach }}" style="background:{{ pg.coachBg }};color:{{ pg.coachFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;">Needs a coach</button>
                     <button onClick="{{ pg.toggleDisc }}" style="background:{{ pg.discBg }};color:{{ pg.discFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;">Discounts</button>
+                    <button onClick="{{ pg.toggleGroup }}" style="background:{{ pg.groupBg }};color:{{ pg.groupFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;">Group discount</button>
                   </div>
                   <textarea value="{{ pg.blurb }}" onInput="{{ pg.setBlurb }}" rows="2" placeholder="Short description shown to customers" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#56664f;outline:none;resize:vertical;"></textarea>
                   <div style="border-top:1px solid rgba(36,66,50,0.12);padding-top:10px;">
@@ -4965,9 +4966,10 @@ class Component extends DCLogic {
       needsCoach: !!p.needsCoach, multiDay: !!p.multiDay, offerDiscounts: !!p.offerDiscounts,
       coachBg: p.needsCoach ? '#244232' : '#fffdf6', coachFg: p.needsCoach ? '#f4efe4' : '#244232',
       discBg: p.offerDiscounts ? '#244232' : '#fffdf6', discFg: p.offerDiscounts ? '#f4efe4' : '#244232',
+      groupBg: p.groupDiscount ? '#244232' : '#fffdf6', groupFg: p.groupDiscount ? '#f4efe4' : '#244232',
       setName: setProgField(i, 'name'), setPrice: setProgNum(i, 'price'),
       setMinAge: setProgNum(i, 'minAge'), setMaxAge: setProgNum(i, 'maxAge'), setBlurb: setProgField(i, 'blurb'),
-      toggleCoach: toggleProg(i, 'needsCoach'), toggleDisc: toggleProg(i, 'offerDiscounts'),
+      toggleCoach: toggleProg(i, 'needsCoach'), toggleDisc: toggleProg(i, 'offerDiscounts'), toggleGroup: toggleProg(i, 'groupDiscount'),
       remove: removeProgram(i),
       addAddon: addAddon(i),
       addonRows: this.normalizeAddons(p.addons).map((a, ai) => ({
