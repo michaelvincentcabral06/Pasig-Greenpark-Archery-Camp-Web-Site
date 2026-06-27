@@ -2276,6 +2276,20 @@
                     <button onClick="{{ pg.toggleDisc }}" style="background:{{ pg.discBg }};color:{{ pg.discFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;">Discounts</button>
                   </div>
                   <textarea value="{{ pg.blurb }}" onInput="{{ pg.setBlurb }}" rows="2" placeholder="Short description shown to customers" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#56664f;outline:none;resize:vertical;"></textarea>
+                  <div style="border-top:1px solid rgba(36,66,50,0.12);padding-top:10px;">
+                    <div style="font-size:12px;font-weight:700;color:#56664f;margin-bottom:8px;">Add-ons</div>
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                      <sc-for list="{{ pg.addonRows }}" as="ad" hint-placeholder-count="0">
+                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                          <input value="{{ ad.name }}" onInput="{{ ad.setName }}" placeholder="Add-on name" style="flex:1;min-width:120px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:8px 10px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#1b2a1f;outline:none;" />
+                          <input value="{{ ad.price }}" onInput="{{ ad.setPrice }}" type="number" min="0" style="width:84px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:8px 10px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;font-weight:700;color:#1b2a1f;outline:none;" />
+                          <button onClick="{{ ad.toggleScope }}" style="background:{{ ad.scopeBg }};color:{{ ad.scopeFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:11.5px;font-weight:700;padding:7px 12px;border-radius:999px;white-space:nowrap;">{{ ad.scopeLabel }}</button>
+                          <button onClick="{{ ad.remove }}" style="background:none;border:1px solid rgba(180,81,47,0.4);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:11.5px;font-weight:700;color:#b4512f;padding:7px 11px;border-radius:999px;">Remove</button>
+                        </div>
+                      </sc-for>
+                    </div>
+                    <button onClick="{{ pg.addAddon }}" style="margin-top:10px;background:#244232;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;color:#f4efe4;padding:8px 14px;border-radius:999px;">+ Add add-on</button>
+                  </div>
                   <button onClick="{{ pg.remove }}" style="align-self:flex-start;background:none;border:1px solid rgba(180,81,47,0.4);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;color:#b4512f;padding:7px 14px;border-radius:999px;">Remove this program</button>
                 </div>
               </sc-for>
@@ -4654,6 +4668,13 @@ class Component extends DCLogic {
     const toggleProg   = (i, key) => () => { const ps = (cm.programs || this.defaultPrograms()).map((p, idx) => idx === i ? { ...p, [key]: !p[key] } : p); saveCM({ programs: ps }); };
     const removeProgram = (i) => () => saveCM({ programs: (cm.programs || this.defaultPrograms()).filter((_, idx) => idx !== i) });
     const addProgram = () => saveCM({ programs: (cm.programs || this.defaultPrograms()).concat([{ name: 'New program', price: 600, needsCoach: true, multiDay: false, offerDiscounts: false, minAge: null, maxAge: null, blurb: '' }]) });
+    const progAddons = (pi) => ((cm.programs || this.defaultPrograms())[pi].addons || []);
+    const writeAddons = (pi, addons) => { const ps = (cm.programs || this.defaultPrograms()).map((p, idx) => idx === pi ? { ...p, addons: addons } : p); saveCM({ programs: ps }); };
+    const setAddonField = (pi, ai, key) => (e) => { const v = e.target.value; writeAddons(pi, progAddons(pi).map((a, j) => j === ai ? { ...a, [key]: v } : a)); };
+    const setAddonNum   = (pi, ai) => (e) => { const v = (e.target.value === '' ? 0 : (Number(e.target.value) || 0)); writeAddons(pi, progAddons(pi).map((a, j) => j === ai ? { ...a, price: v } : a)); };
+    const toggleAddonScope = (pi, ai) => () => { writeAddons(pi, progAddons(pi).map((a, j) => j === ai ? { ...a, scope: (a.scope === 'perBooking' ? 'perArcher' : 'perBooking') } : a)); };
+    const removeAddon = (pi, ai) => () => writeAddons(pi, progAddons(pi).filter((_, j) => j !== ai));
+    const addAddon = (pi) => () => writeAddons(pi, this.normalizeAddons(progAddons(pi).concat([{ name: 'New add-on', price: 0, scope: 'perArcher' }])));
     const programEdits = (cm.programs || this.defaultPrograms()).map((p, i) => ({
       name: p.name, price: p.price, blurb: p.blurb || '',
       minAge: (p.minAge == null ? '' : p.minAge), maxAge: (p.maxAge == null ? '' : p.maxAge),
@@ -4663,7 +4684,16 @@ class Component extends DCLogic {
       setName: setProgField(i, 'name'), setPrice: setProgNum(i, 'price'),
       setMinAge: setProgNum(i, 'minAge'), setMaxAge: setProgNum(i, 'maxAge'), setBlurb: setProgField(i, 'blurb'),
       toggleCoach: toggleProg(i, 'needsCoach'), toggleDisc: toggleProg(i, 'offerDiscounts'),
-      remove: removeProgram(i)
+      remove: removeProgram(i),
+      addAddon: addAddon(i),
+      addonRows: this.normalizeAddons(p.addons).map((a, ai) => ({
+        name: a.name, price: a.price, scope: a.scope,
+        scopeLabel: a.scope === 'perBooking' ? 'Per booking' : 'Per archer',
+        scopeBg: a.scope === 'perBooking' ? '#fffdf6' : '#244232',
+        scopeFg: a.scope === 'perBooking' ? '#244232' : '#f4efe4',
+        setName: setAddonField(i, ai, 'name'), setPrice: setAddonNum(i, ai),
+        toggleScope: toggleAddonScope(i, ai), remove: removeAddon(i, ai)
+      })),
     }));
     const setDiscField = (i, key) => (e) => { const v = e.target.value; const ds = this.discountList().map((d, idx) => idx === i ? { ...d, [key]: v } : d); saveCM({ discounts: ds }); };
     const setDiscNum   = (i, key) => (e) => { const v = (e.target.value === '' ? 0 : (Number(e.target.value) || 0)); const ds = this.discountList().map((d, idx) => idx === i ? { ...d, [key]: v } : d); saveCM({ discounts: ds }); };
