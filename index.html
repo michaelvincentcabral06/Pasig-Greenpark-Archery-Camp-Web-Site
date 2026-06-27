@@ -1060,8 +1060,59 @@
             </div>
             </sc-if>
 
-            <!-- SECTION 5: Per-archer extras placeholder (gated on stepDatesDone) -->
-            <sc-if value="{{ stepDatesDone }}"><div data-test="card-extras"></div></sc-if>
+            <!-- SECTION 5: Per-archer extras (concessions + add-ons) -->
+            <sc-if value="{{ stepDatesDone }}">
+            <div data-test="card-extras" style="display:flex;flex-direction:column;gap:14px;">
+              <sc-for list="{{ archerExtraRows }}" as="ax">
+              <sc-if value="{{ ax.hasAny }}" hint-placeholder-val="{{ false }}">
+              <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;">
+                <div style="font-size:13px;font-weight:700;color:#cdd6c5;">{{ ax.name }}</div>
+                <sc-if value="{{ ax.hasConcRows }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <label style="font-size:12px;font-weight:600;color:#9aa890;letter-spacing:0.03em;">Concession discounts</label>
+                  <sc-for list="{{ ax.concRows }}" as="d">
+                    <div style="display:flex;flex-direction:column;gap:6px;">
+                      <button onClick="{{ d.toggle }}" style="display:flex;align-items:center;gap:10px;text-align:left;width:100%;background:#244232;border:1.5px solid {{ d.border }};border-radius:9px;padding:9px 12px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
+                        <span style="width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid {{ d.border }};background:{{ d.box }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">{{ d.check }}</span>
+                        <span style="flex:1;font-size:13.5px;color:#f4efe4;">{{ d.name }}</span>
+                        <span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#7fb43f;">{{ d.amountLabel }}</span>
+                      </button>
+                      <sc-if value="{{ d.proofShown }}" hint-placeholder-val="{{ false }}">
+                      <input value="{{ d.proof }}" onInput="{{ d.setProof }}" placeholder="{{ d.proofLabel }}" style="width:100%;background:#1b3325;border:1px solid {{ d.proofBorder }};border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#f4efe4;outline:none;box-sizing:border-box;" />
+                      </sc-if>
+                    </div>
+                  </sc-for>
+                </div>
+                </sc-if>
+                <sc-if value="{{ ax.hasAddonRows }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <label style="font-size:12px;font-weight:600;color:#9aa890;letter-spacing:0.03em;">Add-ons</label>
+                  <sc-for list="{{ ax.addonRows }}" as="ad">
+                    <button onClick="{{ ad.toggle }}" style="display:flex;align-items:center;gap:10px;text-align:left;width:100%;background:#244232;border:1.5px solid {{ ad.border }};border-radius:9px;padding:9px 12px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
+                      <span style="width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid {{ ad.border }};background:{{ ad.box }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">{{ ad.check }}</span>
+                      <span style="flex:1;font-size:13.5px;color:#f4efe4;">{{ ad.name }}</span>
+                      <span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#a6c96a;">{{ ad.priceLabel }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+                </sc-if>
+              </div>
+              </sc-if>
+              </sc-for>
+              <sc-if value="{{ hasPerBookingAddons }}" hint-placeholder-val="{{ false }}">
+              <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px;">
+                <label style="font-size:12px;font-weight:600;color:#9aa890;letter-spacing:0.03em;">Booking add-ons</label>
+                <sc-for list="{{ perBookingAddonRows }}" as="pa">
+                  <button onClick="{{ pa.toggle }}" style="display:flex;align-items:center;gap:10px;text-align:left;width:100%;background:#244232;border:1.5px solid {{ pa.border }};border-radius:9px;padding:9px 12px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
+                    <span style="width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid {{ pa.border }};background:{{ pa.box }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">{{ pa.check }}</span>
+                    <span style="flex:1;font-size:13.5px;color:#f4efe4;">{{ pa.name }}</span>
+                    <span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#a6c96a;">{{ pa.priceLabel }}</span>
+                  </button>
+                </sc-for>
+              </div>
+              </sc-if>
+            </div>
+            </sc-if>
 
             <!-- SECTION 6: Your quote (gated on stepDatesDone) -->
             <sc-if value="{{ stepDatesDone }}">
@@ -1085,7 +1136,7 @@
               <div style="font-size:13.5px;line-height:1.5;color:#f0b48a;background:rgba(240,180,138,0.08);border:1px solid rgba(240,180,138,0.2);border-radius:10px;padding:12px 14px;">You already have a session booked at that date and time. To bring more people, increase the archer count instead of booking again.</div>
             </sc-if>
             <sc-if value="{{ formError }}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:13.5px;color:#f0b48a;">Please complete your name, mobile number, a valid email, every archer's name &amp; birthdate, your concession proof (WAP ID or Greenpark address / RHS ID), and pick an available time.</div>
+              <div style="font-size:13.5px;color:#f0b48a;">Please complete your name, mobile number, a valid email, every archer's name &amp; birthdate, and pick an available time.</div>
             </sc-if>
             <sc-if value="{{ statusSessionMismatch }}" hint-placeholder-val="{{ false }}"><div style="font-size:13.5px;color:#f0b48a;">{{ bookHint }}</div></sc-if>
             <div data-test="card-quote" style="background:#1b3325;border:1px solid rgba(244,239,228,0.14);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:16px;">
@@ -1419,8 +1470,59 @@
             </sc-if>
             </sc-if>
 
-            <!-- SECTION 5: Per-archer extras placeholder (gated on stepDatesDone) -->
-            <sc-if value="{{ stepDatesDone }}"><div data-test="card-extras"></div></sc-if>
+            <!-- SECTION 5: Per-archer extras (concessions + add-ons) -->
+            <sc-if value="{{ stepDatesDone }}">
+            <div data-test="card-extras" style="display:flex;flex-direction:column;gap:14px;">
+              <sc-for list="{{ archerExtraRows }}" as="ax">
+              <sc-if value="{{ ax.hasAny }}" hint-placeholder-val="{{ false }}">
+              <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;">
+                <div style="font-size:13px;font-weight:700;color:#cdd6c5;">{{ ax.name }}</div>
+                <sc-if value="{{ ax.hasConcRows }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <label style="font-size:12px;font-weight:600;color:#9aa890;letter-spacing:0.03em;">Concession discounts</label>
+                  <sc-for list="{{ ax.concRows }}" as="d">
+                    <div style="display:flex;flex-direction:column;gap:6px;">
+                      <button onClick="{{ d.toggle }}" style="display:flex;align-items:center;gap:10px;text-align:left;width:100%;background:#244232;border:1.5px solid {{ d.border }};border-radius:9px;padding:9px 12px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
+                        <span style="width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid {{ d.border }};background:{{ d.box }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">{{ d.check }}</span>
+                        <span style="flex:1;font-size:13.5px;color:#f4efe4;">{{ d.name }}</span>
+                        <span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#7fb43f;">{{ d.amountLabel }}</span>
+                      </button>
+                      <sc-if value="{{ d.proofShown }}" hint-placeholder-val="{{ false }}">
+                      <input value="{{ d.proof }}" onInput="{{ d.setProof }}" placeholder="{{ d.proofLabel }}" style="width:100%;background:#1b3325;border:1px solid {{ d.proofBorder }};border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#f4efe4;outline:none;box-sizing:border-box;" />
+                      </sc-if>
+                    </div>
+                  </sc-for>
+                </div>
+                </sc-if>
+                <sc-if value="{{ ax.hasAddonRows }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <label style="font-size:12px;font-weight:600;color:#9aa890;letter-spacing:0.03em;">Add-ons</label>
+                  <sc-for list="{{ ax.addonRows }}" as="ad">
+                    <button onClick="{{ ad.toggle }}" style="display:flex;align-items:center;gap:10px;text-align:left;width:100%;background:#244232;border:1.5px solid {{ ad.border }};border-radius:9px;padding:9px 12px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
+                      <span style="width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid {{ ad.border }};background:{{ ad.box }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">{{ ad.check }}</span>
+                      <span style="flex:1;font-size:13.5px;color:#f4efe4;">{{ ad.name }}</span>
+                      <span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#a6c96a;">{{ ad.priceLabel }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+                </sc-if>
+              </div>
+              </sc-if>
+              </sc-for>
+              <sc-if value="{{ hasPerBookingAddons }}" hint-placeholder-val="{{ false }}">
+              <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px;">
+                <label style="font-size:12px;font-weight:600;color:#9aa890;letter-spacing:0.03em;">Booking add-ons</label>
+                <sc-for list="{{ perBookingAddonRows }}" as="pa">
+                  <button onClick="{{ pa.toggle }}" style="display:flex;align-items:center;gap:10px;text-align:left;width:100%;background:#244232;border:1.5px solid {{ pa.border }};border-radius:9px;padding:9px 12px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
+                    <span style="width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid {{ pa.border }};background:{{ pa.box }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">{{ pa.check }}</span>
+                    <span style="flex:1;font-size:13.5px;color:#f4efe4;">{{ pa.name }}</span>
+                    <span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#a6c96a;">{{ pa.priceLabel }}</span>
+                  </button>
+                </sc-for>
+              </div>
+              </sc-if>
+            </div>
+            </sc-if>
 
             <!-- SECTION 6: Your quote (gated on stepDatesDone) -->
             <sc-if value="{{ stepDatesDone }}">
@@ -1444,7 +1546,7 @@
               <div style="font-size:13.5px;line-height:1.5;color:#f0b48a;background:rgba(240,180,138,0.08);border:1px solid rgba(240,180,138,0.2);border-radius:10px;padding:12px 14px;">You already have a session booked at that date and time. To bring more people, increase the archer count instead of booking again.</div>
             </sc-if>
             <sc-if value="{{ formError }}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:13.5px;color:#f0b48a;">Please complete your name, mobile number, a valid email, every archer's name &amp; birthdate, your concession proof (WAP ID or Greenpark address / RHS ID), and pick an available time.</div>
+              <div style="font-size:13.5px;color:#f0b48a;">Please complete your name, mobile number, a valid email, every archer's name &amp; birthdate, and pick an available time.</div>
             </sc-if>
             <sc-if value="{{ slotChosen }}" hint-placeholder-val="{{ false }}">
               <div style="font-size:13px;color:#cdd6c5;background:rgba(127,180,63,0.12);border:1px solid rgba(127,180,63,0.3);border-radius:8px;padding:9px 12px;">Selected: <span style="font-weight:700;color:#f4efe4;">{{ chosenLabel }}</span></div>
@@ -3315,6 +3417,107 @@ class Component extends DCLogic {
   }
   toggleElig_(id) { this.setState(s => ({ eligSel: { ...(s.eligSel || {}), [id]: !((s.eligSel || {})[id]) }, formError: false })); }
   setEligProof_(id, v) { this.setState(s => ({ eligProof: { ...(s.eligProof || {}), [id]: v }, formError: false })); }
+  toggleArcherConc_(i, id) {
+    this.setState(function (s) {
+      var ar = (s.archers || []).slice();
+      var a = Object.assign({}, ar[i] || { dob: '', sel: {}, proof: {}, addons: {} });
+      a.sel = Object.assign({}, a.sel || {});
+      a.sel[id] = !a.sel[id];
+      ar[i] = a;
+      return { archers: ar, formError: false };
+    });
+  }
+  setArcherProof_(i, id, v) {
+    this.setState(function (s) {
+      var ar = (s.archers || []).slice();
+      var a = Object.assign({}, ar[i] || { dob: '', sel: {}, proof: {}, addons: {} });
+      a.proof = Object.assign({}, a.proof || {});
+      a.proof[id] = v;
+      ar[i] = a;
+      return { archers: ar, formError: false };
+    });
+  }
+  toggleArcherAddon_(i, id) {
+    this.setState(function (s) {
+      var ar = (s.archers || []).slice();
+      var a = Object.assign({}, ar[i] || { dob: '', sel: {}, proof: {}, addons: {} });
+      a.addons = Object.assign({}, a.addons || {});
+      a.addons[id] = !a.addons[id];
+      ar[i] = a;
+      return { archers: ar };
+    });
+  }
+  toggleBookingAddon_(id) {
+    this.setState(function (s) {
+      var pb = Object.assign({}, s.perBookingAddons || {});
+      pb[id] = !pb[id];
+      return { perBookingAddons: pb };
+    });
+  }
+  archerExtraRows() {
+    var party = Math.max(1, this.state.party || 1);
+    var archers = this.state.archers || [];
+    var program = this.state.form.program;
+    var offerDisc = this.programByName(program).offerDiscounts;
+    var dList = offerDisc ? this.discountList() : [];
+    var aList = this.programAddons(program).filter(function (a) { return a.scope === 'perArcher'; });
+    var err = this.state.formError;
+    var self = this;
+    var rows = [];
+    for (var i = 0; i < party; i++) {
+      (function (idx) {
+        var a = archers[idx] || { dob: '', sel: {}, proof: {}, addons: {} };
+        var sel = a.sel || {}, proof = a.proof || {}, addons = a.addons || {};
+        var concRows = dList.map(function (d) {
+          var on = !!sel[d.id];
+          var missing = err && d.proofRequired && on && !String(proof[d.id] || '').trim();
+          return {
+            id: d.id, name: d.name, amountLabel: '−₱' + d.amount,
+            checked: on, box: on ? '#7fb43f' : 'transparent',
+            border: on ? '#7fb43f' : 'rgba(244,239,228,0.18)', check: on ? '✓' : '',
+            proofRequired: d.proofRequired, proofShown: d.proofRequired && on,
+            proof: String(proof[d.id] || ''), proofLabel: d.proofLabel,
+            proofBorder: missing ? '#e8674a' : 'rgba(244,239,228,0.18)',
+            toggle: (function (ii, did) { return function () { self.toggleArcherConc_(ii, did); }; })(idx, d.id),
+            setProof: (function (ii, did) { return function (e) { self.setArcherProof_(ii, did, e.target.value); }; })(idx, d.id)
+          };
+        });
+        var addonRows = aList.map(function (ad) {
+          var on = !!addons[ad.id];
+          return {
+            id: ad.id, name: ad.name, priceLabel: '+₱' + ad.price,
+            checked: on, box: on ? '#7fb43f' : 'transparent',
+            border: on ? '#7fb43f' : 'rgba(244,239,228,0.18)', check: on ? '✓' : '',
+            toggle: (function (ii, aid) { return function () { self.toggleArcherAddon_(ii, aid); }; })(idx, ad.id)
+          };
+        });
+        rows.push({
+          name: (a.name || '').trim() || ('Archer ' + (idx + 1)),
+          hasAny: concRows.length > 0 || addonRows.length > 0,
+          hasConcRows: concRows.length > 0,
+          hasAddonRows: addonRows.length > 0,
+          concRows: concRows,
+          addonRows: addonRows
+        });
+      })(i);
+    }
+    return rows;
+  }
+  perBookingAddonRows() {
+    var program = this.state.form.program;
+    var pb = this.programAddons(program).filter(function (a) { return a.scope === 'perBooking'; });
+    var sel = this.state.perBookingAddons || {};
+    var self = this;
+    return pb.map(function (ad) {
+      var on = !!sel[ad.id];
+      return {
+        id: ad.id, name: ad.name, priceLabel: '+₱' + ad.price,
+        checked: on, box: on ? '#7fb43f' : 'transparent',
+        border: on ? '#7fb43f' : 'rgba(244,239,228,0.18)', check: on ? '✓' : '',
+        toggle: (function (aid) { return function () { self.toggleBookingAddon_(aid); }; })(ad.id)
+      };
+    });
+  }
   bookingRef(dateStr) {
     var compact = (dateStr || '').replace(/-/g, '').slice(2); // YYMMDD
     var rnd = Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
@@ -4609,7 +4812,7 @@ class Component extends DCLogic {
     const ageMismatch = !!ageRange && archerRows.some(r => r.age != null && !r.fit);
     // Collect archer details for groups, and for any age-gated program (so even a
     // solo booking's age can be checked against the program).
-    const showArcherDetails = party > 1 || !!ageRange;
+    const showArcherDetails = true;
 
     const validEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((v || '').trim());
     const confirmBooking = () => {
@@ -4618,7 +4821,8 @@ class Component extends DCLogic {
       const archersBlock = showArcherDetails && (!archersComplete || !archersAgeOk);
       const isMulti = true; // Foundation #2: every program is multi-day
       const offersDisc = this.programByName(f.program).offerDiscounts;
-      const proofBlock = offersDisc && this.discountList().some(d => d.proofRequired && (this.state.eligSel || {})[d.id] && !String((this.state.eligProof || {})[d.id] || '').trim());
+      const archers_ = (this.state.archers || []).slice(0, party);
+      const proofBlock = offersDisc && this.discountList().some(d => d.proofRequired && archers_.some(a => (a.sel || {})[d.id] && !String((a.proof || {})[d.id] || '').trim()));
       const mPairs = (this.state.selectedDates || []).reduce((n, d) => n + (((this.state.multiTimes || {})[d]) || []).length, 0);
       const noSlot = isMulti ? (mPairs === 0) : (chosenTimes.length === 0);
       if (!f.name.trim() || !f.phone.trim() || !validEmail(f.email) || noSlot || archersBlock || proofBlock) { this.setState({ formError: true }); return; }
@@ -5559,6 +5763,9 @@ class Component extends DCLogic {
       canInc: party < cap, canDec: party > 1, isGroup: party > 1,
       isOpenRange: this.programByName(this.state.form.program).offerDiscounts,
       discountRows: this.discountRows(),
+      archerExtraRows: this.archerExtraRows(),
+      perBookingAddonRows: this.perBookingAddonRows(),
+      hasPerBookingAddons: this.perBookingAddonRows().length > 0,
       programOpts: this.programsFittingArchers().map(function (p) { return { name: p.name }; }),
       toggleSameAsBooker: () => this.setState(function (s) {
         var on = !s.sameAsBooker; var ar = (s.archers || []).slice();
