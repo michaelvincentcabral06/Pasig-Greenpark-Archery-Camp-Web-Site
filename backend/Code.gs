@@ -1032,11 +1032,47 @@ function asTimeStr_(v) {
   if (v instanceof Date) return Utilities.formatDate(v, TIMEZONE, 'h:mm a');
   return String(v || '');
 }
+// ---------- ACCOUNTING: add-on bucket breakdown (db-v29) ----------
+// Resolve an add-on's destination bucket from the saved program config (CONTENT).
+// Matches by add-on NAME within the booking's program. Untagged/unknown -> 'equip'.
+function addonBucketByName_(programsCfg, programName, name) {
+  var progs = programsCfg || [];
+  for (var i = 0; i < progs.length; i++) {
+    if (String(progs[i].name) === String(programName)) {
+      var ad = progs[i].addons || [];
+      for (var j = 0; j < ad.length; j++) {
+        if (String(ad[j].name) === String(name)) {
+          var b = String(ad[j].bucket || 'equip').toLowerCase();
+          return (b === 'coach' || b === 'range') ? b : 'equip';
+        }
+      }
+    }
+  }
+  return 'equip';
+}
+// Parse the "Add-ons:" / "Booking add-ons:" lines from an event description into
+// peso totals grouped by bucket. Each entry is "Name (₱<price>[ ×<n>])".
+function addonBreakdown_(desc, programName, programsCfg) {
+  var buckets = { coach: 0, equip: 0, range: 0 }, total = 0;
+  if (!desc) return { total: 0, buckets: buckets };
+  var re = /([^,(\n]+?)\s*\(₱\s*(\d+)\s*(?:×\s*(\d+))?\)/g, m;
+  while ((m = re.exec(desc)) !== null) {
+    var name = String(m[1] || '').replace(/^(?:booking\s+)?add-ons?\s*:\s*/i, '').trim();
+    if (!name) continue;
+    var amt = (parseInt(m[2], 10) || 0) * (m[3] ? (parseInt(m[3], 10) || 1) : 1);
+    if (!amt) continue;
+    total += amt;
+    buckets[addonBucketByName_(programsCfg, programName, name)] += amt;
+  }
+  return { total: total, buckets: buckets };
+}
 // All bookings for the admin dashboard + bookings tab. The CALENDAR is the source of
 // truth for live sessions (exactly what My Bookings shows); the sheet overlays status
 // (approved / cancelled) and amount. This keeps the admin list in sync with My Bookings.
 function listBookings_() {
   try {
+    var programsCfg = [];
+    try { var rawC = PropertiesService.getScriptProperties().getProperty('CONTENT'); if (rawC) { var cc = JSON.parse(rawC); programsCfg = cc.programs || []; } } catch (eC) {}
     // 1) Read the sheet (status, amount, cancelled records) and index by event id.
     var sheetRows = [], sheetByEvent = {};
     try {
@@ -1104,14 +1140,22 @@ function listBookings_() {
             phone: field(d, 'Mobile') || (srow ? srow.phone : ''),
             archers: 0,
             amount: 0,
+            baseAmount: 0,
+            addonBuckets: { coach: 0, equip: 0, range: 0 },
+            __addonTotal: 0,
             coach: field(d, 'Coach') || (srow ? srow.coach : ''),
             eventId: id
           };
         }
         byKey[key].archers += seats;
         byKey[key].amount += amt;
+        var bd = addonBreakdown_(d, program, programsCfg);
+        byKey[key].__addonTotal += bd.total;
+        byKey[key].addonBuckets.coach += bd.buckets.coach;
+        byKey[key].addonBuckets.equip += bd.buckets.equip;
+        byKey[key].addonBuckets.range += bd.buckets.range;
       });
-      for (var k in byKey) out.push(byKey[k]);
+      for (var k in byKey) { byKey[k].baseAmount = Math.max(0, (byKey[k].amount || 0) - (byKey[k].__addonTotal || 0)); delete byKey[k].__addonTotal; out.push(byKey[k]); }
     } catch (e) {}
 
     // 3) Add sheet rows that aren't on the live calendar (cancelled events were deleted;
@@ -1120,6 +1164,7 @@ function listBookings_() {
       if (rec.eventId && usedEvent[rec.eventId]) return;
       var stl = String(rec.status).toLowerCase();
       if (isPlan(rec.program) && stl !== 'approved' && stl !== 'cancelled') return;
+      rec.baseAmount = rec.amount; rec.addonBuckets = { coach: 0, equip: 0, range: 0 };
       out.push(rec);
     });
 
