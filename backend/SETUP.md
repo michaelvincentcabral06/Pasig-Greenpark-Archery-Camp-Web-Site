@@ -386,3 +386,24 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 - [ ] **Per-booking add-ons once:** if you ticked a per-booking add-on (e.g. target face), only **one** of the events carries the `Booking add-ons:` line.
 - [ ] **One email, one ref** as before.
 - [ ] **Legacy bookings unaffected:** a booking made before db-v27 still displays, cancels, and reschedules correctly.
+
+---
+
+## db-v28 deploy & verify
+
+**What changed:** `setBookingCoach_` now accepts a coach LIST and writes the joined names to all of a booking's per-archer events + sheet rows, capped at `ceil(archers/2)`; reuses the existing `Coach` field/column (comma-joined), no schema change; the frontend multi-coach picker (next plan) sends `coaches:[ids]` + back-compat `coach:ids[0]`. Backend-only.
+
+### Deploy steps
+
+1. Open the Apps Script project in your browser.
+2. Paste the entire contents of `backend/Code.gs` (overwriting the old code), then click **Save** (💾).
+3. Click **Deploy → Manage deployments → edit (✏️) → Version: New version → Deploy.** (Edit the EXISTING deployment so the same `/exec` URL updates — do NOT create a new deployment.)
+
+### Verification checklist
+
+- [ ] Open `…/exec?action=version` in a browser — confirm `"version":"db-v28"`, `"multiCoach":true`, and all prior flags (`perArcherExtras:true`, `perArcherEvents:true`, etc.) still present.
+- [ ] In the admin **Sessions** view, assign **2 coaches** to a **3-archer** booking → both coach names show on the booking AND on every one of its per-archer calendar events.
+- [ ] Try to assign a **3rd** coach to that 3-archer booking → rejected (cap is `ceil(3/2)=2`).
+- [ ] A **1–2-archer** booking caps at **1** coach.
+- [ ] Clearing all coaches empties the `Coach` field on the booking and its events.
+- [ ] A pre-db-v28 single-coach booking still displays its coach.
