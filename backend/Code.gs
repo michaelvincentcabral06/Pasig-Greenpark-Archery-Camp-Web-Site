@@ -746,7 +746,7 @@ function doGet(e) {
     if (action === 'content') return getContent_();
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v23', auth: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true });
+      return json_({ version: 'db-v24', auth: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -982,6 +982,12 @@ function asDateStr_(v) {
   if (v instanceof Date) return Utilities.formatDate(v, TIMEZONE, 'yyyy-MM-dd');
   return String(v || '');
 }
+// Time column may be auto-coerced by Sheets into a time-typed cell (a Date at the
+// 1899-12-30 epoch). Format Date cells as a clean "7:00 PM" label; pass text through.
+function asTimeStr_(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, TIMEZONE, 'h:mm a');
+  return String(v || '');
+}
 // All bookings for the admin dashboard + bookings tab. The CALENDAR is the source of
 // truth for live sessions (exactly what My Bookings shows); the sheet overlays status
 // (approved / cancelled) and amount. This keeps the admin list in sync with My Bookings.
@@ -998,7 +1004,7 @@ function listBookings_() {
         var rec = {
           bookedAt: (row[ix['Booked At']] instanceof Date) ? Utilities.formatDate(row[ix['Booked At']], TIMEZONE, 'yyyy-MM-dd HH:mm') : String(row[ix['Booked At']] || ''),
           ref: String(row[ix['Ref']] || ''), status: String(row[ix['Status']] || 'booked'),
-          date: asDateStr_(row[ix['Date']]), time: String(row[ix['Time']] || ''),
+          date: asDateStr_(row[ix['Date']]), time: asTimeStr_(row[ix['Time']]),
           program: String(row[ix['Program']] || ''), name: String(row[ix['Name']] || ''),
           email: String(row[ix['Email']] || ''), phone: String(row[ix['Mobile']] || ''),
           archers: Number(row[ix['Archers']] || 0) || 0, amount: Number(row[ix['Amount']] || 0) || 0,

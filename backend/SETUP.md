@@ -303,3 +303,21 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 - [x] **Custom discount survives the round-trip (the key fix):** In admin **Pricing → Concession discounts**, add a new discount (e.g. `Senior citizen`, ₱150, proof required). Book an Open Range session with **only that new discount** ticked. Confirm the calendar event is created, then reload admin / My Bookings — the booking must still display **Senior citizen** (not blank, not a fallback). Before this re-deploy the custom name would vanish on round-trip. *(Verified 2026-06-27 via API — see note above.)*
 - [ ] **Legacy bookings still display:** Open an older Open Range booking made before this change (one with a Pasig/PAC/Greenpark concession) — confirm its concession label still renders correctly in admin and My Bookings.
 - [ ] **Stackable + per-slot pricing:** Book Open Range with **two** discounts ticked across **two** time slots — confirm the receipt subtracts both amounts **per slot** (no "extra slots free" perk; that was removed in Phase 2).
+
+---
+
+## db-v24 deploy & verify
+
+**What changed:** Fix for the admin Sessions/Bookings view showing a garbled time like `Sat Dec 30 1899 19:00:00 GMT+0800 (Standard na Oras sa Pilipinas)`. Root cause: Google Sheets auto-coerces the Bookings **Time** column into a time-typed cell (a Date at the 1899-12-30 epoch); `listBookings_` was reading it with a bare `String()`. New `asTimeStr_()` helper formats a Date cell as `7:00 PM` (mirrors the existing `asDateStr_()`), applied to the Time-column read. Backend-only.
+
+### Deploy steps
+
+1. Open the Apps Script project in your browser.
+2. Paste the entire contents of `backend/Code.gs` (overwriting the old code), then click **Save** (💾).
+3. Click **Deploy → Manage deployments → edit (✏️) → Version: New version → Deploy.**
+   - This keeps the same `/exec` URL — no changes needed in the website.
+
+### Verification checklist
+
+- [ ] Open `…/exec?action=version` in a browser — confirm the response shows `"version":"db-v24"`, `"timeCellFix":true`, and all prior flags (`editableDiscounts:true`, etc.) still present.
+- [ ] **Times render cleanly:** In admin, open the Bookings/Sessions view. Confirm every booking's time shows as a normal label (e.g. `7:00 PM`) — no `Sat Dec 30 1899 …` strings anywhere, including on older rows whose Time cell was coerced.
