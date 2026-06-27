@@ -407,3 +407,22 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 - [ ] A **1–2-archer** booking caps at **1** coach.
 - [ ] Clearing all coaches empties the `Coach` field on the booking and its events.
 - [ ] A pre-db-v28 single-coach booking still displays its coach.
+
+---
+
+## db-v29 deploy & verify
+
+**What changed:** `listBookings_` now emits a per-booking `baseAmount` (charged amount minus add-ons) and `addonBuckets {coach,equip,range}` (add-on pesos grouped by each add-on's configured bucket, read from the program config; untagged → Equipment), so the Earnings dashboard can allocate add-on revenue correctly and split the coach share across multiple coaches. Additive/back-compatible — the frontend falls back to the whole-amount split until it ships. Backend-only.
+
+### Deploy steps
+
+1. Open the Apps Script project in your browser.
+2. Paste the entire contents of `backend/Code.gs` (overwriting the old code), then click **Save** (💾).
+3. Click **Deploy → Manage deployments → edit (✏️) → Version: New version → Deploy.** (Edit the EXISTING deployment so the same `/exec` URL updates — do NOT create a new deployment.)
+
+### Verification checklist
+
+- [ ] Open `…/exec?action=version` in a browser — confirm `"version":"db-v29"`, `"acctBreakdown":true`, and all prior flags (`multiCoach:true`, `perArcherExtras:true`, etc.) still present.
+- [ ] Book a session with an **equipment add-on** (e.g. bow rental) → in the admin Earnings dashboard the add-on pesos appear in the **Equipment** bucket and the **Coach** share is computed on the base fee only (the coach does NOT earn a % of the add-on).
+- [ ] A booking with **no add-ons** shows `baseAmount === amount` (coach/equip/range split unchanged).
+- [ ] A booking with **2 coaches** has its coach share split between them (verified live once the frontend Plan B is also deployed; pre-frontend, confirm the payload carries the breakdown).
