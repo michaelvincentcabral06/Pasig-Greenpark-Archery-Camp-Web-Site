@@ -3295,7 +3295,7 @@ class Component extends DCLogic {
     const email = (form.email || '').trim();
     const archerList = (archers || []).slice(0, party);
     const amount = this.priceFor(form.program, party, times.length, 1);
-    const openRange = this.programByName(form.program).multiDay;
+    const openRange = true; // Foundation #2: every program is multi-day
     const concession = this.programByName(form.program).offerDiscounts ? this.buildConcession(this.state.eligSel, this.state.eligProof) : null;
 
     // ----- MULTI-DATE (multi-day programs): book every chosen (date, time) pair -----
@@ -4512,7 +4512,7 @@ class Component extends DCLogic {
       if (this._sendingBooking) return; // guard against double/triple submit (was creating multiple bookings + emails)
       const f = this.state.form;
       const archersBlock = showArcherDetails && (!archersComplete || !archersAgeOk);
-      const isMulti = this.programByName(f.program).multiDay;
+      const isMulti = true; // Foundation #2: every program is multi-day
       const offersDisc = this.programByName(f.program).offerDiscounts;
       const proofBlock = offersDisc && this.discountList().some(d => d.proofRequired && (this.state.eligSel || {})[d.id] && !String((this.state.eligProof || {})[d.id] || '').trim());
       const mPairs = (this.state.selectedDates || []).reduce((n, d) => n + (((this.state.multiTimes || {})[d]) || []).length, 0);
