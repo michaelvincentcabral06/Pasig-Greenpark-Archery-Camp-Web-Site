@@ -345,3 +345,23 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 - [ ] **Admin shows it once:** In the admin Bookings view, the booking appears as **one row** with 3 archers and the correct total.
 - [ ] **Cancel/reschedule move all together:** Cancel (or reschedule) that booking — confirm **all 3** calendar events are removed (or moved) together and the slot frees up by 3.
 - [ ] **Legacy bookings still work:** Open an older booking made before this deploy — confirm it still displays (correct archer count), cancels, and reschedules correctly.
+
+---
+
+## db-v26 deploy & verify
+
+**What changed:** Two small fixes surfaced by the db-v25 live verification, both backend-only:
+1. **`bookMulti_` now honors `noEmail`** — multi-day bookings sent with `noEmail:true` (admin-scheduled / no-receipt) no longer send a customer receipt (it previously always sent; now mirrors `book_`). Matters because every program is multi-day, so all bookings flow through `bookMulti_`.
+2. **`cancel_` name fallback** — when cancelling without an `eventId`, the booker-name check now matches the event's description `Name:` line instead of the title (titles are per-archer now). The website/admin cancel by stored `eventId` already worked; this only fixes the name-only fallback path.
+
+### Deploy steps
+
+1. Open the Apps Script project in your browser.
+2. Paste the entire contents of `backend/Code.gs` (overwriting the old code), then click **Save** (💾).
+3. Click **Deploy → Manage deployments → edit (✏️) → Version: New version → Deploy.** (Edit the EXISTING deployment so the same `/exec` URL updates — do NOT create a new deployment.)
+
+### Verification checklist
+
+- [ ] Open `…/exec?action=version` in a browser — confirm `"version":"db-v26"`, `"multiDayNoEmail":true`, and all prior flags (`perArcherEvents:true`, `timeCellFix:true`, etc.) still present.
+- [ ] **noEmail respected:** (admin/dev) POST a booking with `noEmail:true` → the response shows `"emailed":false` and no receipt is sent. A normal customer booking (no `noEmail`) still receives its one receipt.
+- [ ] **Normal booking flow unaffected:** Book a session from the website — confirm it still works end to end (one email, correct calendar events) exactly as on db-v25.

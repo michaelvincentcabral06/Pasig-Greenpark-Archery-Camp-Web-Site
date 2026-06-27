@@ -768,7 +768,7 @@ function doGet(e) {
     if (action === 'content') return getContent_();
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v25', auth: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true });
+      return json_({ version: 'db-v26', auth: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -1604,12 +1604,16 @@ function bookMulti_(body) {
 
   var emailed = false;
   try {
-    emailed = sendReceipt_({
-      email: (body.email || '').trim(), name: body.name, program: body.program,
-      dateStr: dates[0].date, times: allLabels, party: party, amount: amount, ref: ref,
-      subtotal: subtotal, discountRate: discRate, discountAmount: subtotal - amount,
-      roster: roster
-    });
+    if (body.noEmail) {
+      emailed = false; // admin-scheduled / no-receipt booking — skip the customer email (mirrors book_)
+    } else {
+      emailed = sendReceipt_({
+        email: (body.email || '').trim(), name: body.name, program: body.program,
+        dateStr: dates[0].date, times: allLabels, party: party, amount: amount, ref: ref,
+        subtotal: subtotal, discountRate: discRate, discountAmount: subtotal - amount,
+        roster: roster
+      });
+    }
   } catch (mailErr) {
     emailed = false;
   }
@@ -1715,7 +1719,7 @@ function cancel_(body) {
       var lbl = fmtLabel_(parseInt(Utilities.formatDate(evs[i].getStartTime(), TIMEZONE, 'H'), 10));
       var desc = evs[i].getDescription() || '';
       var refOk = !body.ref || desc.indexOf(body.ref) !== -1;
-      var nameOk = !body.name || (evs[i].getTitle() || '').indexOf(body.name) !== -1;
+      var nameOk = !body.name || desc.indexOf(body.name) !== -1; // booker name lives in the description Name: line (titles are per-archer now)
       if (lbl === body.time && refOk && nameOk) { ev = evs[i]; break; }
     }
   }
