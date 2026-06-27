@@ -321,3 +321,27 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 
 - [ ] Open `…/exec?action=version` in a browser — confirm the response shows `"version":"db-v24"`, `"timeCellFix":true`, and all prior flags (`editableDiscounts:true`, etc.) still present.
 - [ ] **Times render cleanly:** In admin, open the Bookings/Sessions view. Confirm every booking's time shows as a normal label (e.g. `7:00 PM`) — no `Sat Dec 30 1899 …` strings anywhere, including on older rows whose Time cell was coerced.
+
+---
+
+## db-v25 deploy & verify
+
+**What changed:** Every booking now creates **one Google Calendar event per archer per slot** (instead of one event holding N seats), so the owner's calendar shows the exact number of archers in each time slot. One confirmation email + one reference per booking is unchanged; the read paths (`lookup_`, `listBookings_`) group the per-archer events back into one booking per slot, and cancel/reschedule act on all of a slot's events together. Capacity counting is unchanged. Backend-only.
+
+### Deploy steps
+
+1. Open the Apps Script project in your browser.
+2. Paste the entire contents of `backend/Code.gs` (overwriting the old code), then click **Save** (💾).
+3. Click **Deploy → Manage deployments → edit (✏️) → Version: New version → Deploy.**
+   - This keeps the same `/exec` URL — no changes needed in the website.
+
+### Verification checklist
+
+- [ ] Open `…/exec?action=version` in a browser — confirm the response shows `"version":"db-v25"`, `"perArcherEvents":true`, and all prior flags (`timeCellFix:true`, `editableDiscounts:true`, etc.) still present.
+- [ ] **One event per archer:** Book a session for **3 archers** in one time slot. In your Google Calendar, confirm **3 separate events** appear in that slot (one per archer, each titled with the archer's name) — not one "group of 3" event.
+- [ ] **One email, one ref:** Confirm the booker received **one** confirmation email with **one** reference number (not three).
+- [ ] **Availability reflects archers:** Re-open that slot in the booking page — its remaining capacity dropped by **3**.
+- [ ] **My Bookings shows it once:** As the customer, open My Bookings — the booking appears **once** for that slot with the correct archer count (3), not three separate rows.
+- [ ] **Admin shows it once:** In the admin Bookings view, the booking appears as **one row** with 3 archers and the correct total.
+- [ ] **Cancel/reschedule move all together:** Cancel (or reschedule) that booking — confirm **all 3** calendar events are removed (or moved) together and the slot frees up by 3.
+- [ ] **Legacy bookings still work:** Open an older booking made before this deploy — confirm it still displays (correct archer count), cancels, and reschedules correctly.
