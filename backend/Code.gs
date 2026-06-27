@@ -790,23 +790,32 @@ function lookup_(email, ref) {
   var events = cal.getEvents(from, to);
   var out = [], name = '';
   function field(d, key) { var m = new RegExp(key + ':\\s*(.+)', 'i').exec(d); return m ? m[1].trim() : ''; }
+  var groups = {};
   events.forEach(function (ev) {
     var d = ev.getDescription() || '';
     var em = field(d, 'Email').toLowerCase();
-    if (!inGroup[em]) return;                       // any email in the group (was: single email)
+    if (!inGroup[em]) return;
     if (/\(plan\)\s*$/i.test(field(d, 'Program'))) return;
-    var conc = field(d, 'Concession');
-    var c = conc ? { label: conc, pasig: /Pasig/i.test(conc), local: /Greenpark|RHS/i.test(conc), pac: /PAC/i.test(conc) } : null;
+    var ref = field(d, 'Ref').toUpperCase();
     var st = ev.getStartTime();
+    var dateStr = Utilities.formatDate(st, TIMEZONE, 'yyyy-MM-dd');
+    var timeLbl = fmtLabel_(parseInt(Utilities.formatDate(st, TIMEZONE, 'H'), 10));
+    var seats = parseInt(field(d, 'Archers') || '1', 10) || 1;
+    var amt = parseInt(field(d, 'Amount') || '0', 10) || 0;
+    var key = ref + '|' + dateStr + '|' + timeLbl;
     var nm = field(d, 'Name'); if (nm) name = nm;
-    out.push({ name: nm, phone: field(d, 'Mobile'), email: em, program: field(d, 'Program'),
-      date: Utilities.formatDate(st, TIMEZONE, 'yyyy-MM-dd'),
-      time: fmtLabel_(parseInt(Utilities.formatDate(st, TIMEZONE, 'H'), 10)),
-      party: parseInt(field(d, 'Archers') || '1', 10) || 1,
-      amount: parseInt(field(d, 'Amount') || '0', 10) || 0,
-      coachName: field(d, 'Coach'), ref: field(d, 'Ref').toUpperCase(),
-      eventId: ev.getId(), concession: c, ts: st.getTime(), __remote: true });
+    if (!groups[key]) {
+      var conc = field(d, 'Concession');
+      groups[key] = { name: nm, phone: field(d, 'Mobile'), email: em, program: field(d, 'Program'),
+        date: dateStr, time: timeLbl, party: 0, amount: 0,
+        coachName: field(d, 'Coach'), ref: ref,
+        eventId: ev.getId(), concession: (conc ? { label: conc, pasig: /Pasig/i.test(conc), local: /Greenpark|RHS/i.test(conc), pac: /PAC/i.test(conc) } : null),
+        ts: st.getTime(), __remote: true };
+    }
+    groups[key].party += seats;
+    groups[key].amount += amt;
   });
+  for (var k in groups) out.push(groups[k]);
   return json_({ bookings: out, name: name, emails: group, primary: email });
 }
 
