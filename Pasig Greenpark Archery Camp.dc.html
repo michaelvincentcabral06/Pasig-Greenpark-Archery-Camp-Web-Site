@@ -2593,14 +2593,13 @@ class Component extends DCLogic {
     slotDate: '',
     slotTimes: [],
     party: 1,
-    eligSel: {},
-    eligProof: {},
+    sameAsBooker: false,
     selectedDates: [],
     multiSlots: {},
     multiTimes: {},
     multiLoading: {},
     calMonth: '',
-    archers: [{ name: '', dob: '' }],
+    archers: [{ name: '', dob: '', sel: {}, proof: {}, addons: {} }],
     slots: [],
     slotsLoading: false,
     bookingStatus: '',
@@ -2910,6 +2909,7 @@ class Component extends DCLogic {
       packages: c.packages || defaults.packages,
       programs: c.programs || defaults.programs,
       discounts: c.discounts || defaults.discounts,
+      groupTiers: c.groupTiers || defaults.groupTiers,
       scheduleNote: c.scheduleNote != null ? c.scheduleNote : defaults.scheduleNote,
       schedule: c.schedule || defaults.schedule,
       funShoot: c.funShoot != null ? c.funShoot : defaults.funShoot,
@@ -3461,12 +3461,12 @@ class Component extends DCLogic {
   }
   defaultPrograms() {
     return [
-      { name: 'Little Archers (6–10)', price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, minAge: 6,  maxAge: 10,  blurb: '', addons: [] },
-      { name: 'Youth Squad (11–17)',   price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, minAge: 11, maxAge: 17,  blurb: '', addons: [] },
-      { name: 'Adult Beginners (18+)',      price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, minAge: 18, maxAge: null, blurb: '', addons: [] },
-      { name: 'Open Range',                 price: 400, needsCoach: false, multiDay: true,  offerDiscounts: true,  minAge: null, maxAge: null, blurb: '', addons: [] },
-      { name: 'Private Coaching',           price: 1200, needsCoach: true, multiDay: false, offerDiscounts: false, minAge: null, maxAge: null, blurb: '', addons: [] },
-      { name: 'Group & Corporate',          price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, minAge: null, maxAge: null, blurb: '', addons: [] }
+      { name: 'Little Archers (6–10)', price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: 6,  maxAge: 10,  blurb: '', addons: [] },
+      { name: 'Youth Squad (11–17)',   price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: 11, maxAge: 17,  blurb: '', addons: [] },
+      { name: 'Adult Beginners (18+)',      price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: 18, maxAge: null, blurb: '', addons: [] },
+      { name: 'Open Range',                 price: 400, needsCoach: false, multiDay: true,  offerDiscounts: true,  groupDiscount: true, minAge: null, maxAge: null, blurb: '', addons: [] },
+      { name: 'Private Coaching',           price: 1200, needsCoach: true, multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: null, maxAge: null, blurb: '', addons: [] },
+      { name: 'Group & Corporate',          price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: null, maxAge: null, blurb: '', addons: [] }
     ];
   }
   normalizeAddons(list) {
@@ -3484,6 +3484,7 @@ class Component extends DCLogic {
     return list.map(p => ({
       name: p.name || 'Program', price: Number(p.price) || 0,
       needsCoach: !!p.needsCoach, multiDay: !!p.multiDay, offerDiscounts: !!p.offerDiscounts,
+      groupDiscount: (p.groupDiscount === undefined ? true : !!p.groupDiscount),
       minAge: (p.minAge == null || p.minAge === '') ? null : (parseInt(p.minAge, 10) || null),
       maxAge: (p.maxAge == null || p.maxAge === '') ? null : (parseInt(p.maxAge, 10) || null),
       blurb: p.blurb || '', addons: this.normalizeAddons(p.addons)
@@ -3493,9 +3494,17 @@ class Component extends DCLogic {
   programByName(name) {
     var list = this.programList();
     for (var i = 0; i < list.length; i++) { if (list[i].name === name) return list[i]; }
-    return { name: name || '', price: 600, needsCoach: true, multiDay: false, offerDiscounts: false, minAge: null, maxAge: null, blurb: '', addons: [] };
+    return { name: name || '', price: 600, needsCoach: true, multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: null, maxAge: null, blurb: '', addons: [] };
   }
   programAddons(name) { return this.programByName(name).addons || []; }
+  defaultGroupTiers() { return [ { minParty: 2, pct: 10 }, { minParty: 3, pct: 20 }, { minParty: 5, pct: 30 } ]; }
+  normalizeGroupTiers(list) {
+    var src = (list && list.length) ? list : this.defaultGroupTiers();
+    return src.map(function (t) { return { minParty: Math.max(1, parseInt(t.minParty, 10) || 1), pct: Math.max(0, Number(t.pct) || 0) }; })
+      .sort(function (a, b) { return a.minParty - b.minParty; });
+  }
+  groupTiers() { var c = this.state.content || {}; return this.normalizeGroupTiers(c.groupTiers); }
+  tierPctFor(party) { party = Math.max(1, party || 1); var ts = this.groupTiers(), pct = 0; for (var i = 0; i < ts.length; i++) { if (party >= ts[i].minParty) pct = ts[i].pct; } return pct / 100; }
   defaultDiscounts() {
     return [
       { id: 'pasig', name: 'Pasig City resident',      amount: 100, proofRequired: true, proofLabel: 'Pasig City address or ID number' },
@@ -4324,7 +4333,7 @@ class Component extends DCLogic {
       Sat: [ { time: '9:00 AM', name: 'Little Archers', level: 'ages 6–10' }, { time: '10:30 AM', name: 'Adult Beginners', level: 'beginner' }, { time: '1:00 PM', name: 'Open Range', level: 'all levels' }, { time: '3:00 PM', name: 'Youth Squad', level: 'ages 11–17' } ],
       Sun: [ { time: '9:00 AM', name: 'Open Range', level: 'all levels' }, { time: '10:30 AM', name: 'Little Archers', level: 'ages 6–10' }, { time: '1:00 PM', name: 'Private Coaching', level: 'by appt' } ],
     };
-    const cm = this.mergedContent({ packages: defaultPackages, programs: this.defaultPrograms(), discounts: this.defaultDiscounts(), scheduleNote: defaultScheduleNote, schedule: defaultSchedule, funShoot: '₱10', rates: { openRange: 400, session: 600, private: 1200 }, capacity: 6, reviewsRating: '5.0', reviewsCount: '', reviewsUrl: '', testimonials: [
+    const cm = this.mergedContent({ packages: defaultPackages, programs: this.defaultPrograms(), discounts: this.defaultDiscounts(), groupTiers: this.defaultGroupTiers(), scheduleNote: defaultScheduleNote, schedule: defaultSchedule, funShoot: '₱10', rates: { openRange: 400, session: 600, private: 1200 }, capacity: 6, reviewsRating: '5.0', reviewsCount: '', reviewsUrl: '', testimonials: [
         { quote: 'My two kids beg to come back every weekend. The coaches make it safe and genuinely fun.', name: 'Liza M.', role: 'parent', rating: 5, date: '' },
         { quote: "Walked in never having held a bow. Six weeks later I'm hooked and hitting golds.", name: 'Daniel R.', role: 'adult beginner', rating: 5, date: '' },
         { quote: 'Cleanest, friendliest range in the metro. The Greenpark setting is unbeatable.', name: 'Coach Pia', role: 'visiting club', rating: 5, date: '' },
@@ -4426,7 +4435,7 @@ class Component extends DCLogic {
         bookingSms: sms,
       });
     };
-    const resetForm = () => this.setState({ submitted: false, formError: false, form: { name: '', phone: '', email: '', program: 'Adult Beginners (18+)', date: '' }, slotDate: '', slotTimes: [], party: 1, archers: [{ name: '', dob: '' }], eligSel: {}, eligProof: {}, selectedDates: [], multiSlots: {}, multiTimes: {}, multiLoading: {}, calMonth: '', slots: [], bookingStatus: '', bookingAlts: [] });
+    const resetForm = () => this.setState({ submitted: false, formError: false, form: { name: '', phone: '', email: '', program: 'Adult Beginners (18+)', date: '' }, slotDate: '', slotTimes: [], party: 1, sameAsBooker: false, archers: [{ name: '', dob: '', sel: {}, proof: {}, addons: {} }], selectedDates: [], multiSlots: {}, multiTimes: {}, multiLoading: {}, calMonth: '', slots: [], bookingStatus: '', bookingAlts: [] });
 
     // ---------- BOOKING ENGINE (view) ----------
     const cap = this.capacity();
@@ -4667,7 +4676,7 @@ class Component extends DCLogic {
     const setProgNum   = (i, key) => (e) => { const v = (e.target.value === '' ? null : (Number(e.target.value) || 0)); const ps = (cm.programs || this.defaultPrograms()).map((p, idx) => idx === i ? { ...p, [key]: v } : p); saveCM({ programs: ps }); };
     const toggleProg   = (i, key) => () => { const ps = (cm.programs || this.defaultPrograms()).map((p, idx) => idx === i ? { ...p, [key]: !p[key] } : p); saveCM({ programs: ps }); };
     const removeProgram = (i) => () => saveCM({ programs: (cm.programs || this.defaultPrograms()).filter((_, idx) => idx !== i) });
-    const addProgram = () => saveCM({ programs: (cm.programs || this.defaultPrograms()).concat([{ name: 'New program', price: 600, needsCoach: true, multiDay: false, offerDiscounts: false, minAge: null, maxAge: null, blurb: '' }]) });
+    const addProgram = () => saveCM({ programs: (cm.programs || this.defaultPrograms()).concat([{ name: 'New program', price: 600, needsCoach: true, multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: null, maxAge: null, blurb: '' }]) });
     const progAddons = (pi) => ((cm.programs || this.defaultPrograms())[pi].addons || []);
     const writeAddons = (pi, addons) => { const ps = (cm.programs || this.defaultPrograms()).map((p, idx) => idx === pi ? { ...p, addons: addons } : p); saveCM({ programs: ps }); };
     const setAddonField = (pi, ai, key) => (e) => { const v = e.target.value; writeAddons(pi, progAddons(pi).map((a, j) => j === ai ? { ...a, [key]: v } : a)); };
