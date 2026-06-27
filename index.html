@@ -2395,6 +2395,7 @@
                           <input value="{{ ad.name }}" onInput="{{ ad.setName }}" placeholder="Add-on name" style="flex:1;min-width:120px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:8px 10px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#1b2a1f;outline:none;" />
                           <input value="{{ ad.price }}" onInput="{{ ad.setPrice }}" type="number" min="0" style="width:84px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:8px 10px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;font-weight:700;color:#1b2a1f;outline:none;" />
                           <button onClick="{{ ad.toggleScope }}" style="background:{{ ad.scopeBg }};color:{{ ad.scopeFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:11.5px;font-weight:700;padding:7px 12px;border-radius:999px;white-space:nowrap;">{{ ad.scopeLabel }}</button>
+                          <button onClick="{{ ad.toggleBucket }}" style="background:{{ ad.bucketBg }};color:{{ ad.bucketFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:11.5px;font-weight:700;padding:7px 12px;border-radius:999px;white-space:nowrap;">{{ ad.bucketLabel }}</button>
                           <button onClick="{{ ad.remove }}" style="background:none;border:1px solid rgba(180,81,47,0.4);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:11.5px;font-weight:700;color:#b4512f;padding:7px 11px;border-radius:999px;">Remove</button>
                         </div>
                       </sc-for>
@@ -3754,7 +3755,7 @@ class Component extends DCLogic {
       var id = a.id ? String(a.id) : this.slugify_(a.name);
       while (seen[id]) { id = id + '-' + i; }
       seen[id] = true;
-      return { id: id, name: a.name || 'Add-on', price: Number(a.price) || 0, scope: (a.scope === 'perBooking' ? 'perBooking' : 'perArcher') };
+      return { id: id, name: a.name || 'Add-on', price: Number(a.price) || 0, scope: (a.scope === 'perBooking' ? 'perBooking' : 'perArcher'), bucket: ((a.bucket === 'coach' || a.bucket === 'range') ? a.bucket : 'equip') };
     });
   }
   normalizePrograms(progs) {
@@ -4995,6 +4996,9 @@ class Component extends DCLogic {
     const setAddonField = (pi, ai, key) => (e) => { const v = e.target.value; writeAddons(pi, progAddons(pi).map((a, j) => j === ai ? { ...a, [key]: v } : a)); };
     const setAddonNum   = (pi, ai) => (e) => { const v = (e.target.value === '' ? 0 : (Number(e.target.value) || 0)); writeAddons(pi, progAddons(pi).map((a, j) => j === ai ? { ...a, price: v } : a)); };
     const toggleAddonScope = (pi, ai) => () => { writeAddons(pi, progAddons(pi).map((a, j) => j === ai ? { ...a, scope: (a.scope === 'perBooking' ? 'perArcher' : 'perBooking') } : a)); };
+    const nextBucket = (b) => (b === 'equip' ? 'coach' : (b === 'coach' ? 'range' : 'equip'));
+    const toggleAddonBucket = (pi, ai) => () => { writeAddons(pi, progAddons(pi).map((a, j) => j === ai ? { ...a, bucket: nextBucket(a.bucket || 'equip') } : a)); };
+    const bucketLabelOf = (b) => 'Goes to: ' + (b === 'coach' ? 'Coach' : (b === 'range' ? 'Range' : 'Equipment'));
     const removeAddon = (pi, ai) => () => writeAddons(pi, progAddons(pi).filter((_, j) => j !== ai));
     const addAddon = (pi) => () => writeAddons(pi, this.normalizeAddons(progAddons(pi).concat([{ name: 'New add-on', price: 0, scope: 'perArcher' }])));
     const programEdits = (cm.programs || this.defaultPrograms()).map((p, i) => ({
@@ -5015,7 +5019,10 @@ class Component extends DCLogic {
         scopeBg: a.scope === 'perBooking' ? '#fffdf6' : '#244232',
         scopeFg: a.scope === 'perBooking' ? '#244232' : '#f4efe4',
         setName: setAddonField(i, ai, 'name'), setPrice: setAddonNum(i, ai),
-        toggleScope: toggleAddonScope(i, ai), remove: removeAddon(i, ai)
+        toggleScope: toggleAddonScope(i, ai), remove: removeAddon(i, ai),
+        bucketLabel: bucketLabelOf(a.bucket),
+        bucketBg: '#fffdf6', bucketFg: '#244232',
+        toggleBucket: toggleAddonBucket(i, ai)
       })),
     }));
     const setDiscField = (i, key) => (e) => { const v = e.target.value; const ds = this.discountList().map((d, idx) => idx === i ? { ...d, [key]: v } : d); saveCM({ discounts: ds }); };
