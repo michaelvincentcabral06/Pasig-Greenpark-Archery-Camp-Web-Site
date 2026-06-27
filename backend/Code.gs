@@ -145,9 +145,12 @@ function dbMarkCancelled_(eventId, ref, dateStr, time) {
     var data = sh.getDataRange().getValues();
     var h = data[0];
     var evCol = h.indexOf('Event ID'), stCol = h.indexOf('Status'), refCol = h.indexOf('Ref'), dCol = h.indexOf('Date'), tCol = h.indexOf('Time');
+    // Mark ALL rows for the slot (multi-archer bookings share ref+date+time).
+    // eventId match is a secondary per-row check; ref+date+time catches all archers' rows.
     for (var r = 1; r < data.length; r++) {
-      var match = (eventId && data[r][evCol] === eventId) || (!eventId && data[r][refCol] === ref && data[r][dCol] === dateStr && data[r][tCol] === time);
-      if (match) { sh.getRange(r + 1, stCol + 1).setValue('cancelled'); break; }
+      var match = (eventId && data[r][evCol] === eventId) ||
+                  (ref && dateStr && time && data[r][refCol] === ref && data[r][dCol] === dateStr && data[r][tCol] === time);
+      if (match) { sh.getRange(r + 1, stCol + 1).setValue('cancelled'); }
     }
   } catch (e) {}
 }
@@ -1636,7 +1639,14 @@ function reschedule_(body) {
   if (np.length !== 3 || nh == null) return json_({ ok: false, reason: 'bad new slot' });
   var start = new Date(parseInt(np[0],10), parseInt(np[1],10)-1, parseInt(np[2],10), nh, 0, 0);
   var end = new Date(start.getTime() + 60 * 60 * 1000);
-  try { ev.setTime(start, end); } catch (e2) { return json_({ ok: false, reason: 'move failed' }); }
+  // Move ALL per-archer events for this slot. Fall back to single [ev] for legacy bookings.
+  var rdescPre = ev.getDescription() || '';
+  var refPre   = body.ref || (function (s) { var m = /Ref:\s*([^\n\r]+)/i.exec(s); return m ? m[1].trim() : ''; })(rdescPre);
+  var slotEvs  = (refPre && body.date && body.time) ? eventsForSlot_(cal, refPre, body.date, body.time) : [];
+  if (!slotEvs.length) slotEvs = [ev];
+  var moveOk = false;
+  slotEvs.forEach(function (e) { try { e.setTime(start, end); moveOk = true; } catch (x) {} });
+  if (!moveOk) return json_({ ok: false, reason: 'move failed' });
 
   // Pull booking details from the event (fallbacks) so we can notify + log even if the
   // website didn't pass them — mirrors cancel_.
@@ -1666,6 +1676,25 @@ function reschedule_(body) {
 function hourFromLabel_(label) {
   var m = /(\d+):(\d+)\s*(AM|PM)/i.exec(label || ''); if (!m) return null;
   var h = parseInt(m[1], 10) % 12; if (/PM/i.test(m[3])) h += 12; return h;
+}
+
+// All calendar events for a booking slot (ref + date + time-label). Used so a cancel/reschedule
+// affects every per-archer event in that slot, not just one.
+function eventsForSlot_(cal, ref, dateStr, timeLabel) {
+  var parts = dateStr.split('-');
+  var ds = new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10), 0,0,0);
+  var de = new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10), 23,59,59);
+  var evs = cal.getEvents(ds, de), out = [];
+  var want = (ref || '').toUpperCase();
+  for (var i = 0; i < evs.length; i++) {
+    var d = evs[i].getDescription() || '';
+    var lbl = fmtLabel_(parseInt(Utilities.formatDate(evs[i].getStartTime(), TIMEZONE, 'H'), 10));
+    if (lbl !== timeLabel) continue;
+    var evRef = (function (s) { var m = /Ref:\s*([^\n\r]+)/i.exec(s); return m ? m[1].trim().toUpperCase() : ''; })(d);
+    if (want && evRef !== want) continue;
+    out.push(evs[i]);
+  }
+  return out;
 }
 
 function cancel_(body) {
@@ -1706,7 +1735,19 @@ function cancel_(body) {
   var dateStr    = body.date || Utilities.formatDate(ev.getStartTime(), TIMEZONE, 'yyyy-MM-dd');
 
   var evId = ev.getId();
-  ev.deleteEvent();
+  // Delete ALL per-archer events for this slot. If ref+date+time are known, use
+  // eventsForSlot_ to find every event in the group; otherwise fall back to the
+  // single event (legacy / no-ref path).
+  if (ref && dateStr && time) {
+    var slotEvents = eventsForSlot_(cal, ref, dateStr, time);
+    if (slotEvents.length) {
+      slotEvents.forEach(function (e) { try { e.deleteEvent(); } catch (x) {} });
+    } else {
+      try { ev.deleteEvent(); } catch (x) {}
+    }
+  } else {
+    try { ev.deleteEvent(); } catch (x) {}
+  }
 
   // Record the cancellation (who + when) and mark the booking row cancelled.
   dbMarkCancelled_(evId, ref, dateStr, time);
