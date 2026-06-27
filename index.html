@@ -2600,6 +2600,7 @@ class Component extends DCLogic {
     multiLoading: {},
     calMonth: '',
     archers: [{ name: '', dob: '', sel: {}, proof: {}, addons: {} }],
+    perBookingAddons: {},
     slots: [],
     slotsLoading: false,
     bookingStatus: '',
@@ -3251,21 +3252,39 @@ class Component extends DCLogic {
     var sel = this.state.eligSel || {};
     return this.discountList().reduce((sum, d) => sum + (sel[d.id] ? d.amount : 0), 0);
   }
-  // Group discount on the same session: 2 → 10%, 3–4 → 20%, 5–6 → 30%.
-  discountFor(party) {
-    party = Math.max(1, party || 1);
-    if (party >= 5) return 0.30;
-    if (party >= 3) return 0.20;
-    if (party === 2) return 0.10;
-    return 0;
+  // Group discount from config tiers; returns 0 if program has groupDiscount:false.
+  discountFor(party, program) {
+    if (program != null && !this.programByName(program).groupDiscount) return 0;
+    return this.tierPctFor(party);
   }
-  // Final price = (rate × archers × time-slots, less group discount) − per-archer concessions.
-  priceFor(program, party, sessions, days) {
+  // Per-archer helpers (per slot).
+  archerConcessionPerSlot(archer) {
+    if (!this.programByName(this.state.form.program).offerDiscounts) return 0;
+    var sel = (archer && archer.sel) || {};
+    return this.discountList().reduce(function (s, d) { return s + (sel[d.id] ? d.amount : 0); }, 0);
+  }
+  archerAddonPerSlot(archer) {
+    var sel = (archer && archer.addons) || {};
+    var per = this.programAddons(this.state.form.program).filter(function (a) { return a.scope === 'perArcher'; });
+    return per.reduce(function (s, a) { return s + (sel[a.id] ? a.price : 0); }, 0);
+  }
+  perBookingAddonPerSlot() {
+    var sel = this.state.perBookingAddons || {};
+    var pb = this.programAddons(this.state.form.program).filter(function (a) { return a.scope === 'perBooking'; });
+    return pb.reduce(function (s, a) { return s + (sel[a.id] ? a.price : 0); }, 0);
+  }
+  // Final price = Σ archers (rate×(1−groupPct) − concessions + perArcher addons) × slots + perBooking addons × slots.
+  priceFor(program, party, sessions) {
     party = Math.max(1, party); sessions = Math.max(0, sessions);
-    var billable = sessions;
-    var afterGroup = this.rateFor(program) * party * billable * (1 - this.discountFor(party));
-    var elig = this.eligPerArcher() * party * billable;
-    return Math.max(0, Math.round(afterGroup - elig));
+    var rate = this.rateFor(program), pct = this.discountFor(party, program);
+    var archers = this.state.archers || [];
+    var per = 0;
+    for (var i = 0; i < party; i++) {
+      var a = archers[i] || {};
+      per += Math.round(rate * (1 - pct)) - this.archerConcessionPerSlot(a) + this.archerAddonPerSlot(a);
+    }
+    per += this.perBookingAddonPerSlot();
+    return Math.max(0, Math.round(per * sessions));
   }
   buildConcession(sel, proof) {
     sel = sel || {}; proof = proof || {};
@@ -3307,10 +3326,8 @@ class Component extends DCLogic {
     const times = (this.state.slotTimes || []).slice();
     const party = Math.max(1, this.state.party || 1);
     const email = (form.email || '').trim();
-    const archerList = (archers || []).slice(0, party);
-    const amount = this.priceFor(form.program, party, times.length, 1);
+    const amount = this.priceFor(form.program, party, times.length);
     const openRange = true; // Foundation #2: every program is multi-day
-    const concession = this.programByName(form.program).offerDiscounts ? this.buildConcession(this.state.eligSel, this.state.eligProof) : null;
 
     // ----- MULTI-DATE (multi-day programs): book every chosen (date, time) pair -----
     if (openRange && (this.state.selectedDates || []).length) {
@@ -3319,14 +3336,24 @@ class Component extends DCLogic {
       const pairs = [];
       selDatesB.forEach(d => (mt[d] || []).forEach(t => pairs.push({ date: d, time: t })));
       if (!pairs.length) { this.setState({ formError: true }); return; }
-      const mAmount = this.priceFor(form.program, party, pairs.length, selDatesB.filter(d => (mt[d] || []).length > 0).length);
+      const mAmount = this.priceFor(form.program, party, pairs.length);
+      // Build per-archer line items for multi-date path
+      const mSlots = pairs.length;
+      const mRate = this.rateFor(form.program), mPct = this.discountFor(party, form.program);
+      const mArcherItems = (this.state.archers || []).slice(0, party).map((a) => ({
+        name: (a.name || '').trim(), dob: a.dob || '',
+        concession: this.programByName(form.program).offerDiscounts ? this.buildConcession(a.sel, a.proof) : null,
+        addons: this.programAddons(form.program).filter(x => x.scope === 'perArcher' && (a.addons || {})[x.id]).map(x => ({ id: x.id, name: x.name, price: x.price })),
+        amount: Math.max(0, Math.round((Math.round(mRate * (1 - mPct)) - this.archerConcessionPerSlot(a) + this.archerAddonPerSlot(a)) * mSlots))
+      }));
+      const mPerBookingAddons = this.programAddons(form.program).filter(x => x.scope === 'perBooking' && (this.state.perBookingAddons || {})[x.id]).map(x => ({ id: x.id, name: x.name, price: x.price }));
       if (!ep) {
         const ms = this.state.multiSlots || {};
         const bad = pairs.filter(p => { const s = (ms[p.date] || []).find(x => x.time === p.time); return !s || s.left < party; });
         if (bad.length) { this.setState({ bookingStatus: 'full', bookingAlts: [] }); return; }
         const refM = this.bookingRef(selDatesB[0]);
         const nowM = Date.now();
-        const entriesM = pairs.map((p, i) => ({ name: form.name.trim(), phone: form.phone.trim(), email: email, program: form.program, date: p.date, time: p.time, party: party, ref: refM, amount: mAmount, archers: archerList, concession: concession, ts: nowM + i, contacted: false }));
+        const entriesM = pairs.map((p, i) => ({ name: form.name.trim(), phone: form.phone.trim(), email: email, program: form.program, date: p.date, time: p.time, party: party, ref: refM, amount: mAmount, archers: mArcherItems, perBookingAddons: mPerBookingAddons, total: mAmount, ts: nowM + i, contacted: false }));
         this.persistBookings([...entriesM.reverse(), ...(this.state.bookings || [])]);
         this.setState({ bookingStatus: 'confirmed', bookingResult: { count: pairs.length, ref: refM, emailed: false }, multiSlots: {} });
         return;
@@ -3336,7 +3363,7 @@ class Component extends DCLogic {
       const datesPayload = selDatesB.map(d => ({ date: d, times: (mt[d] || []) }));
       fetch(ep, {
         method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'book', name: form.name, phone: form.phone, email: email, program: form.program, dates: datesPayload, date: selDatesB[0], times: (mt[selDatesB[0]] || []), time: (mt[selDatesB[0]] || [])[0], party: party, amount: mAmount, archers: archerList, concession: concession, coach: this.needsCoach(form.program) ? this.state.coach : '' })
+        body: JSON.stringify({ action: 'book', name: form.name, phone: form.phone, email: email, program: form.program, dates: datesPayload, date: selDatesB[0], times: (mt[selDatesB[0]] || []), time: (mt[selDatesB[0]] || [])[0], party: party, amount: mAmount, archers: mArcherItems, perBookingAddons: mPerBookingAddons, total: mAmount, coach: this.needsCoach(form.program) ? this.state.coach : '' })
       }).then(r => r.json()).then(res => {
         if (res && res.ok) {
           const refM = res.ref || this.bookingRef(selDatesB[0]);
@@ -3346,7 +3373,7 @@ class Component extends DCLogic {
             confirmedPairs = res.bookedPairs.map(bp => ({ date: bp.date, time: bp.time }));
             ids = res.bookedPairs.map(bp => bp.eventId || '');
           }
-          const entriesM = confirmedPairs.map((p, i) => ({ name: form.name.trim(), phone: form.phone.trim(), email: email, program: form.program, date: p.date, time: p.time, party: party, ref: refM, amount: mAmount, archers: archerList, concession: concession, eventId: ids[i] || '', ts: nowM + i, contacted: false }));
+          const entriesM = confirmedPairs.map((p, i) => ({ name: form.name.trim(), phone: form.phone.trim(), email: email, program: form.program, date: p.date, time: p.time, party: party, ref: refM, amount: mAmount, archers: mArcherItems, perBookingAddons: mPerBookingAddons, total: mAmount, eventId: ids[i] || '', ts: nowM + i, contacted: false }));
           this.persistBookings([...entriesM.reverse(), ...(this.state.bookings || [])]);
           this.setState({ bookingStatus: 'confirmed', bookingResult: { count: confirmedPairs.length, ref: refM, emailed: res.emailed !== false }, multiSlots: {} });
         } else if (res && res.reason === 'duplicate') {
@@ -3360,6 +3387,17 @@ class Component extends DCLogic {
       return;
     }
 
+    // Build per-archer line items for single-date path
+    const sSlots = times.length;
+    const sRate = this.rateFor(form.program), sPct = this.discountFor(party, form.program);
+    const archerItems = (this.state.archers || []).slice(0, party).map((a) => ({
+      name: (a.name || '').trim(), dob: a.dob || '',
+      concession: this.programByName(form.program).offerDiscounts ? this.buildConcession(a.sel, a.proof) : null,
+      addons: this.programAddons(form.program).filter(x => x.scope === 'perArcher' && (a.addons || {})[x.id]).map(x => ({ id: x.id, name: x.name, price: x.price })),
+      amount: Math.max(0, Math.round((Math.round(sRate * (1 - sPct)) - this.archerConcessionPerSlot(a) + this.archerAddonPerSlot(a)) * sSlots))
+    }));
+    const perBookingAddons = this.programAddons(form.program).filter(x => x.scope === 'perBooking' && (this.state.perBookingAddons || {})[x.id]).map(x => ({ id: x.id, name: x.name, price: x.price }));
+
     if (!ep) {
       // demo mode — no real calendar write / email
       const slots = this.state.slots || [];
@@ -3371,7 +3409,7 @@ class Component extends DCLogic {
       }
       const ref = this.bookingRef(dateStr);
       const now = Date.now();
-      const entries = times.map((t, i) => ({ name: form.name.trim(), phone: form.phone.trim(), email: email, program: form.program, date: dateStr, time: t, party: party, ref: ref, amount: amount, archers: archerList, concession: concession, ts: now + i, contacted: false }));
+      const entries = times.map((t, i) => ({ name: form.name.trim(), phone: form.phone.trim(), email: email, program: form.program, date: dateStr, time: t, party: party, ref: ref, amount: amount, archers: archerItems, perBookingAddons: perBookingAddons, total: amount, ts: now + i, contacted: false }));
       this.persistBookings([...entries.reverse(), ...(this.state.bookings || [])]);
       this.setState({ bookingStatus: 'confirmed', bookingResult: { count: times.length, ref: ref, emailed: false }, slots: this.buildSampleSlots(dateStr) });
       return;
@@ -3382,14 +3420,14 @@ class Component extends DCLogic {
     this.setState({ bookingStatus: 'sending' });
     fetch(ep, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'book', name: form.name, phone: form.phone, email: email, program: form.program, date: dateStr, times: times, time: times[0], party: party, amount: amount, archers: archerList, concession: concession, coach: this.needsCoach(form.program) ? this.state.coach : '' })
+      body: JSON.stringify({ action: 'book', name: form.name, phone: form.phone, email: email, program: form.program, date: dateStr, times: times, time: times[0], party: party, amount: amount, archers: archerItems, perBookingAddons: perBookingAddons, total: amount, coach: this.needsCoach(form.program) ? this.state.coach : '' })
     }).then(r => r.json()).then(res => {
       if (res && res.ok) {
         const bookedTimes = (res.booked && res.booked.length) ? res.booked : times;
         const ids = res.eventIds || [];
         const ref = res.ref || this.bookingRef(dateStr);
         const now = Date.now();
-        const entries = bookedTimes.map((t, i) => ({ name: form.name.trim(), phone: form.phone.trim(), email: email, program: form.program, date: dateStr, time: t, party: party, ref: ref, amount: amount, archers: archerList, concession: concession, eventId: ids[i] || '', ts: now + i, contacted: false }));
+        const entries = bookedTimes.map((t, i) => ({ name: form.name.trim(), phone: form.phone.trim(), email: email, program: form.program, date: dateStr, time: t, party: party, ref: ref, amount: amount, archers: archerItems, perBookingAddons: perBookingAddons, total: amount, eventId: ids[i] || '', ts: now + i, contacted: false }));
         this.persistBookings([...entries.reverse(), ...(this.state.bookings || [])]);
         this.setState({ bookingStatus: 'confirmed', bookingResult: { count: bookedTimes.length, ref: ref, emailed: res.emailed !== false }, slotTimes: bookedTimes, bookingAlts: [] });
       } else if (res && res.reason === 'duplicate') {
@@ -3914,7 +3952,7 @@ class Component extends DCLogic {
     const open = this.programByName(program).offerDiscounts;
     var sel = this.state.editSel || {};
     const elig = open ? this.discountList().reduce((s, d) => s + (sel[d.id] ? d.amount : 0), 0) : 0;
-    const gross = rate * party * (1 - this.discountFor(party)); // single session (1 day)
+    const gross = rate * party * (1 - this.discountFor(party, program)); // single session (1 day)
     return Math.max(0, Math.round(gross - elig * party));
   }
   editDiscountRows() {
@@ -4435,7 +4473,7 @@ class Component extends DCLogic {
         bookingSms: sms,
       });
     };
-    const resetForm = () => this.setState({ submitted: false, formError: false, form: { name: '', phone: '', email: '', program: 'Adult Beginners (18+)', date: '' }, slotDate: '', slotTimes: [], party: 1, sameAsBooker: false, archers: [{ name: '', dob: '', sel: {}, proof: {}, addons: {} }], selectedDates: [], multiSlots: {}, multiTimes: {}, multiLoading: {}, calMonth: '', slots: [], bookingStatus: '', bookingAlts: [] });
+    const resetForm = () => this.setState({ submitted: false, formError: false, form: { name: '', phone: '', email: '', program: 'Adult Beginners (18+)', date: '' }, slotDate: '', slotTimes: [], party: 1, sameAsBooker: false, archers: [{ name: '', dob: '', sel: {}, proof: {}, addons: {} }], perBookingAddons: {}, selectedDates: [], multiSlots: {}, multiTimes: {}, multiLoading: {}, calMonth: '', slots: [], bookingStatus: '', bookingAlts: [] });
 
     // ---------- BOOKING ENGINE (view) ----------
     const cap = this.capacity();
@@ -4637,18 +4675,19 @@ class Component extends DCLogic {
     const effSessions = slotCount;
     const billableSessions = effSessions;
     const costSubtotal = rrate * party * billableSessions;
-    const discountRate = this.discountFor(party);
-    const costTotal = this.priceFor(this.state.form.program || '', party, effSessions, dayCount);
+    const discountRate = this.discountFor(party, this.state.form.program);
+    const costTotal = this.priceFor(this.state.form.program || '', party, effSessions);
     const groupDiscountAmount = Math.round(costSubtotal * discountRate);
-    const eligPer = this.eligPerArcher();
-    const eligDiscountAmount = eligPer * party * billableSessions;
+    const archersList = this.state.archers || [];
+    const eligPer = archersList.slice(0, party).reduce((s, a) => s + this.archerConcessionPerSlot(a), 0);
+    const eligDiscountAmount = eligPer * billableSessions;
     const discountAmount = costSubtotal - costTotal;
     const hasGroupDiscount = discountRate > 0 && slotCount > 0;
     const hasEligDiscount = eligPer > 0 && slotCount > 0;
     const hasDiscount = hasGroupDiscount || hasEligDiscount;
     const sel = this.state.eligSel || {};
     const eligParts = this.discountList().filter(d => sel[d.id]).map(d => d.name);
-    const eligDiscountLabel = eligParts.join(' + ') + ' (\u2212\u20B1' + eligPer + ' each)';
+    const eligDiscountLabel = eligParts.join(' + ') + ' (\u2212\u20B1' + (party > 0 ? Math.round(eligPer / party) : 0) + ' each)';
     const eligDiscountAmountLabel = '\u2212' + peso(eligDiscountAmount);
     const discountPctLabel = Math.round(discountRate * 100) + '% group discount';
     const acrossDays = (multiDateMode && dayCount > 1) ? (' across ' + dayCount + ' days') : '';
