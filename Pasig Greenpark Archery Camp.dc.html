@@ -5185,7 +5185,6 @@ class Component extends DCLogic {
     const sessStatusOpts = [{ id: 'all', name: 'All statuses' }, { id: 'approved', name: 'Approved' }, { id: 'pending', name: 'Pending' }, { id: 'cancelled', name: 'Cancelled' }];
     const sessRangeOpts = [{ id: 'all', name: 'All time' }, { id: 'upcoming', name: 'Upcoming' }, { id: 'past', name: 'Past' }];
     const sessCoachOpts = [{ id: 'all', name: 'All coaches' }].concat(this.coaches().map(c => ({ id: c.id, name: c.name })));
-    const sessAssignOpts = [{ id: '', name: 'Any coach' }].concat(this.coaches().map(c => ({ id: c.id, name: c.name })));
     const setSess = (key) => (e) => this.setState({ [key]: e.target.value, sessPage: 0 });
     const sessPrev = () => this.setState({ sessPage: Math.max(0, sessPage - 1) });
     const sessNext = () => this.setState({ sessPage: Math.min(sessPageCount - 1, sessPage + 1) });
@@ -6085,7 +6084,7 @@ class Component extends DCLogic {
       sessFiltered: sessFilteredActive,
       sessEmptyLabel: sessFilteredActive ? 'No sessions match these filters.' : 'No sessions booked yet.',
       sessSearch: this.state.sessSearch || '', sessStatus: sessStatus, sessCoach: sessCoach, sessRange: sessRange,
-      sessStatusOpts: sessStatusOpts, sessRangeOpts: sessRangeOpts, sessCoachOpts: sessCoachOpts, sessAssignOpts: sessAssignOpts,
+      sessStatusOpts: sessStatusOpts, sessRangeOpts: sessRangeOpts, sessCoachOpts: sessCoachOpts,
       setSessSearch: setSess('sessSearch'), setSessStatus: setSess('sessStatus'), setSessCoach: setSess('sessCoach'), setSessRange: setSess('sessRange'),
       clearSessFilters: clearSessFilters,
       sessMultiPage: sessPageCount > 1, sessHasPrev: sessPage > 0, sessHasNext: sessPage < sessPageCount - 1,
