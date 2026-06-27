@@ -903,22 +903,6 @@
                   <sc-for list="{{ programOpts }}" as="po" hint-placeholder-count="5"><option value="{{ po.name }}">{{ po.name }}</option></sc-for>
                 </select>
               </div>
-              <div>
-                <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">How many sessions?</label>
-                <div style="display:flex;align-items:center;justify-content:space-between;background:#244232;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:7px 10px;">
-                  <button onClick="{{ decSession }}" aria-label="Fewer sessions" style="width:44px;height:44px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;">−</button>
-                  <div data-test="session-target" style="font-size:17px;font-weight:800;color:#f4efe4;">{{ sessionTargetLabel }}</div>
-                  <button onClick="{{ incSession }}" aria-label="More sessions" style="width:44px;height:44px;flex:none;border-radius:8px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;">+</button>
-                </div>
-                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px;">
-                  <button onClick="{{ setSession1 }}" style="padding:9px;background:#244232;border:1px solid rgba(244,239,228,0.18);border-radius:8px;color:#cdd6c5;font-family:'Hanken Grotesk',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;">1</button>
-                  <button onClick="{{ setSession3 }}" style="padding:9px;background:#244232;border:1px solid rgba(244,239,228,0.18);border-radius:8px;color:#cdd6c5;font-family:'Hanken Grotesk',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;">3</button>
-                  <button onClick="{{ setSession5 }}" style="padding:9px;background:#244232;border:1px solid rgba(244,239,228,0.18);border-radius:8px;color:#cdd6c5;font-family:'Hanken Grotesk',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;">5</button>
-                  <button onClick="{{ setSession10 }}" style="padding:9px;background:#244232;border:1px solid rgba(244,239,228,0.18);border-radius:8px;color:#cdd6c5;font-family:'Hanken Grotesk',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;">10</button>
-                </div>
-                <p style="font-size:11.5px;color:#8a9579;margin:6px 2px 0;font-family:'Spline Sans Mono',monospace;">{{ sessionsChosenLabel }}</p>
-              </div>
-
               <!-- ARCHER DETAILS -->
               <sc-if value="{{ showArcherDetails }}" hint-placeholder-val="{{ false }}">
               <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:10px;padding:16px;">
@@ -2289,7 +2273,6 @@
                   </div>
                   <div style="display:flex;gap:8px;flex-wrap:wrap;">
                     <button onClick="{{ pg.toggleCoach }}" style="background:{{ pg.coachBg }};color:{{ pg.coachFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;">Needs a coach</button>
-                    <button onClick="{{ pg.toggleMulti }}" style="background:{{ pg.multiBg }};color:{{ pg.multiFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;">Multiple days</button>
                     <button onClick="{{ pg.toggleDisc }}" style="background:{{ pg.discBg }};color:{{ pg.discFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;">Discounts</button>
                   </div>
                   <textarea value="{{ pg.blurb }}" onInput="{{ pg.setBlurb }}" rows="2" placeholder="Short description shown to customers" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#56664f;outline:none;resize:vertical;"></textarea>
@@ -2596,7 +2579,6 @@ class Component extends DCLogic {
     slotDate: '',
     slotTimes: [],
     party: 1,
-    sessionTarget: 1,
     eligSel: {},
     eligProof: {},
     selectedDates: [],
@@ -4419,7 +4401,7 @@ class Component extends DCLogic {
         bookingSms: sms,
       });
     };
-    const resetForm = () => this.setState({ submitted: false, formError: false, form: { name: '', phone: '', email: '', program: 'Adult Beginners (18+)', date: '' }, slotDate: '', slotTimes: [], party: 1, sessionTarget: 1, archers: [{ name: '', dob: '' }], eligSel: {}, eligProof: {}, selectedDates: [], multiSlots: {}, multiTimes: {}, multiLoading: {}, calMonth: '', slots: [], bookingStatus: '', bookingAlts: [] });
+    const resetForm = () => this.setState({ submitted: false, formError: false, form: { name: '', phone: '', email: '', program: 'Adult Beginners (18+)', date: '' }, slotDate: '', slotTimes: [], party: 1, archers: [{ name: '', dob: '' }], eligSel: {}, eligProof: {}, selectedDates: [], multiSlots: {}, multiTimes: {}, multiLoading: {}, calMonth: '', slots: [], bookingStatus: '', bookingAlts: [] });
 
     // ---------- BOOKING ENGINE (view) ----------
     const cap = this.capacity();
@@ -4535,9 +4517,6 @@ class Component extends DCLogic {
       const proofBlock = offersDisc && this.discountList().some(d => d.proofRequired && (this.state.eligSel || {})[d.id] && !String((this.state.eligProof || {})[d.id] || '').trim());
       const mPairs = (this.state.selectedDates || []).reduce((n, d) => n + (((this.state.multiTimes || {})[d]) || []).length, 0);
       const noSlot = isMulti ? (mPairs === 0) : (chosenTimes.length === 0);
-      const sc = isMulti ? mPairs : (this.state.slotTimes || []).length;
-      const target = Math.max(1, this.state.sessionTarget || 1);
-      if (this.state.page === 'book' && sc !== target) { this.setState({ bookingStatus: 'sessionMismatch' }); return; }
       if (!f.name.trim() || !f.phone.trim() || !validEmail(f.email) || noSlot || archersBlock || proofBlock) { this.setState({ formError: true }); return; }
       this.setState({ formError: false });
       this.bookSlot(f, resolvedArchers);
@@ -4548,7 +4527,7 @@ class Component extends DCLogic {
     const chosenLabel = chosenSorted.join(' · ');
 
     // ---------- MULTI-DATE (multi-day programs): mini calendar + per-day time picker ----------
-    const multiDateMode = this.programByName(this.state.form.program).multiDay;
+    const multiDateMode = true; // Foundation #2: every program is multi-day
     const multiTimesState = st.multiTimes || {};
     const selDates = (st.selectedDates || []).slice().sort();
     const calBase = st.calMonth ? new Date(st.calMonth + '-01T00:00:00') : new Date(todayStr + 'T00:00:00');
@@ -4620,16 +4599,8 @@ class Component extends DCLogic {
     const peso = (n) => '\u20B1' + Number(n || 0).toLocaleString('en-PH');
     const rrate = this.rateFor(this.state.form.program || '');
     const slotCount = multiDateMode ? multiPairCount : chosenTimes.length;
-    const bumpSession = (delta) => () => {
-      const cur = Math.max(1, st.sessionTarget || 1);
-      const floor = Math.max(1, slotCount); // can't drop below slots already chosen
-      let next = Math.min(20, Math.max(floor, cur + delta));
-      if (next === cur) { if (delta < 0 && cur <= floor) this.setState({ bookingStatus: 'sessionFloor' }); return; }
-      this.setState({ sessionTarget: next, bookingStatus: '' });
-    };
-    const setSession = (n) => () => this.setState({ sessionTarget: Math.min(20, Math.max(Math.max(1, slotCount), n)), bookingStatus: '' });
     const dayCount = multiDateMode ? selDates.filter(d => (multiTimesState[d] || []).length > 0).length : (chosenTimes.length > 0 ? 1 : 0);
-    const effSessions = Math.max(slotCount, Math.max(1, st.sessionTarget || 1));
+    const effSessions = slotCount;
     const billableSessions = effSessions;
     const costSubtotal = rrate * party * billableSessions;
     const discountRate = this.discountFor(party);
@@ -4677,11 +4648,10 @@ class Component extends DCLogic {
       minAge: (p.minAge == null ? '' : p.minAge), maxAge: (p.maxAge == null ? '' : p.maxAge),
       needsCoach: !!p.needsCoach, multiDay: !!p.multiDay, offerDiscounts: !!p.offerDiscounts,
       coachBg: p.needsCoach ? '#244232' : '#fffdf6', coachFg: p.needsCoach ? '#f4efe4' : '#244232',
-      multiBg: p.multiDay ? '#244232' : '#fffdf6', multiFg: p.multiDay ? '#f4efe4' : '#244232',
       discBg: p.offerDiscounts ? '#244232' : '#fffdf6', discFg: p.offerDiscounts ? '#f4efe4' : '#244232',
       setName: setProgField(i, 'name'), setPrice: setProgNum(i, 'price'),
       setMinAge: setProgNum(i, 'minAge'), setMaxAge: setProgNum(i, 'maxAge'), setBlurb: setProgField(i, 'blurb'),
-      toggleCoach: toggleProg(i, 'needsCoach'), toggleMulti: toggleProg(i, 'multiDay'), toggleDisc: toggleProg(i, 'offerDiscounts'),
+      toggleCoach: toggleProg(i, 'needsCoach'), toggleDisc: toggleProg(i, 'offerDiscounts'),
       remove: removeProgram(i)
     }));
     const setDiscField = (i, key) => (e) => { const v = e.target.value; const ds = this.discountList().map((d, idx) => idx === i ? { ...d, [key]: v } : d); saveCM({ discounts: ds }); };
@@ -5464,13 +5434,7 @@ class Component extends DCLogic {
       capacity: cap, demoMode: !this.endpoint(),
       party, partyLabel: party + (party === 1 ? ' archer' : ' archers'),
       incParty: bumpParty(1), decParty: bumpParty(-1),
-      sessionTarget: Math.max(1, st.sessionTarget || 1),
-      sessionTargetLabel: String(Math.max(1, st.sessionTarget || 1)) + (Math.max(1, st.sessionTarget||1) === 1 ? ' session' : ' sessions'),
-      incSession: bumpSession(1), decSession: bumpSession(-1),
-      setSession1: setSession(1), setSession3: setSession(3), setSession5: setSession(5), setSession10: setSession(10),
       slotCount: slotCount,
-      sessionsChosenLabel: slotCount + ' / ' + Math.max(1, st.sessionTarget || 1) + ' slot' + (Math.max(1, st.sessionTarget||1) === 1 ? '' : 's') + ' chosen',
-      sessionTargetReached: slotCount === Math.max(1, st.sessionTarget || 1),
       canInc: party < cap, canDec: party > 1, isGroup: party > 1,
       isOpenRange: this.programByName(this.state.form.program).offerDiscounts,
       discountRows: this.discountRows(),
@@ -5491,12 +5455,10 @@ class Component extends DCLogic {
       hasGroupDiscount, hasEligDiscount, groupDiscountAmountLabel, eligDiscountLabel, eligDiscountAmountLabel,
       confirmLabel: chosenTimes.length > 1 ? ('Confirm ' + chosenTimes.length + ' slots →') : 'Confirm booking →',
       confirmBooking,
-      bookDisabled: slotCount !== Math.max(1, st.sessionTarget || 1),
-      bookHint: slotCount < Math.max(1, st.sessionTarget||1)
-        ? ('Pick ' + (Math.max(1, st.sessionTarget||1) - slotCount) + ' more slot' + ((Math.max(1, st.sessionTarget||1)-slotCount)===1?'':'s') + ' to book')
-        : (slotCount > Math.max(1, st.sessionTarget||1) ? 'Remove a slot or raise the session count' : ''),
-      bookOpacity: (slotCount !== Math.max(1, st.sessionTarget||1)) ? '0.5' : '1',
-      statusSessionMismatch: this.state.bookingStatus === 'sessionMismatch',
+      bookDisabled: slotCount === 0,
+      bookHint: slotCount === 0 ? 'Pick at least one slot to book' : '',
+      bookOpacity: slotCount === 0 ? '0.5' : '1',
+      statusSessionMismatch: false,
       statusIdle: !this.state.bookingStatus || this.state.bookingStatus === 'sending',
       isSending: this.state.bookingStatus === 'sending',
       statusConfirmed: this.state.bookingStatus === 'confirmed',
