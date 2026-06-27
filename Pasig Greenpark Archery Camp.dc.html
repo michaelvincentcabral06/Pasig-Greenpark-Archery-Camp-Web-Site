@@ -1103,20 +1103,6 @@
               </sc-if>
             </div>
 
-            <!-- CARD: Add-ons — optional coach, shown only for programs that don't require one -->
-            <sc-if value="{{ showCoachAddon }}" hint-placeholder-val="{{ false }}">
-            <div data-test="card-addons" style="background:#1b3325;border:1px solid rgba(244,239,228,0.14);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px;">
-              <div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#7fb43f;">Add-ons</div>
-              <button onClick="{{ toggleCoachAddon }}" role="checkbox" aria-checked="{{ coachAddonOn }}" style="display:flex;align-items:flex-start;gap:11px;text-align:left;background:#244232;border:1.5px solid rgba(244,239,228,0.18);border-radius:9px;padding:13px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
-                <span style="width:20px;height:20px;flex:none;margin-top:2px;border-radius:5px;border:1.5px solid #7fb43f;background:{{ coachAddonBox }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;">{{ coachAddonCheck }}</span>
-                <span style="flex:1;">
-                  <span style="display:flex;justify-content:space-between;gap:10px;"><span style="font-size:14px;font-weight:700;color:#f4efe4;">Professional coach</span><span style="font-family:'Spline Sans Mono',monospace;font-size:13px;font-weight:700;color:#9aa890;">₱1,200</span></span>
-                  <span style="display:block;font-size:12px;color:#9aa890;margin-top:4px;line-height:1.45;">1-on-1 guidance for your session. <span style="color:#f0b48a;">Ask staff to add a coach — not charged online yet.</span></span>
-                </span>
-              </button>
-            </div>
-            </sc-if>
-
             <!-- CARD: Your quote -->
             <div data-test="card-quote" style="background:#1b3325;border:1px solid rgba(244,239,228,0.14);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:16px;">
               <div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#7fb43f;">Your quote</div>
@@ -2611,7 +2597,6 @@ class Component extends DCLogic {
     slotTimes: [],
     party: 1,
     sessionTarget: 1,
-    coachAddon: false,
     eligSel: {},
     eligProof: {},
     selectedDates: [],
@@ -4434,7 +4419,7 @@ class Component extends DCLogic {
         bookingSms: sms,
       });
     };
-    const resetForm = () => this.setState({ submitted: false, formError: false, form: { name: '', phone: '', email: '', program: 'Adult Beginners (18+)', date: '' }, slotDate: '', slotTimes: [], party: 1, sessionTarget: 1, coachAddon: false, archers: [{ name: '', dob: '' }], eligSel: {}, eligProof: {}, selectedDates: [], multiSlots: {}, multiTimes: {}, multiLoading: {}, calMonth: '', slots: [], bookingStatus: '', bookingAlts: [] });
+    const resetForm = () => this.setState({ submitted: false, formError: false, form: { name: '', phone: '', email: '', program: 'Adult Beginners (18+)', date: '' }, slotDate: '', slotTimes: [], party: 1, sessionTarget: 1, archers: [{ name: '', dob: '' }], eligSel: {}, eligProof: {}, selectedDates: [], multiSlots: {}, multiTimes: {}, multiLoading: {}, calMonth: '', slots: [], bookingStatus: '', bookingAlts: [] });
 
     // ---------- BOOKING ENGINE (view) ----------
     const cap = this.capacity();
@@ -5489,12 +5474,7 @@ class Component extends DCLogic {
       canInc: party < cap, canDec: party > 1, isGroup: party > 1,
       isOpenRange: this.programByName(this.state.form.program).offerDiscounts,
       discountRows: this.discountRows(),
-      showCoachAddon: !this.programByName(this.state.form.program).needsCoach,
       programOpts: this.programList().map(function (p) { return { name: p.name }; }),
-      coachAddonOn: !!this.state.coachAddon,
-      coachAddonCheck: this.state.coachAddon ? '✓' : '',
-      coachAddonBox: this.state.coachAddon ? '#7fb43f' : 'transparent',
-      toggleCoachAddon: () => this.setState({ coachAddon: !this.state.coachAddon }),
       archerRows, showArcherDetails, ageRangeLabel, programGated: !!ageRange, ageMismatch,
       archerProgramLabel: ageRange ? (this.state.form.program + ' \u00B7 ages ' + ageRangeLabel) : (this.state.form.program + ' \u00B7 all ages welcome'),
       slotDate: this.state.slotDate, onPickDate, minDate: todayStr, prettyDate: effPrettyDate,
