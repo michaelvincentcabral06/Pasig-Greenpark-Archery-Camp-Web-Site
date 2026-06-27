@@ -308,6 +308,25 @@ function seatsOf_(ev) {
   var m = text.match(/Archers:\s*(\d+)/i) || text.match(/\(x\s*(\d+)\)/i);
   return m ? parseInt(m[1], 10) : 1;
 }
+// Split an integer total into n parts that sum exactly to total (remainder on the last part).
+function splitAmount_(total, n) {
+  total = Math.round(Number(total) || 0); n = Math.max(1, n | 0);
+  var base = Math.floor(total / n), out = [];
+  for (var i = 0; i < n - 1; i++) out.push(base);
+  out.push(total - base * (n - 1));
+  return out;
+}
+// Always return exactly `party` archer slots. Pad from body.archers; fill missing with "Archer k".
+function archerListFor_(body, party) {
+  var src = (body.archers && body.archers.length) ? body.archers : [];
+  var out = [];
+  for (var i = 0; i < party; i++) {
+    var a = src[i] || {};
+    out.push({ name: (a && a.name) ? String(a.name) : ('Archer ' + (i + 1)),
+               dob: (a && a.dob) ? String(a.dob) : '', age: (a && a.age != null && a.age !== '') ? a.age : '' });
+  }
+  return out;
+}
 function countByHour_(dateStr) {
   var parts = dateStr.split('-');
   var y = parseInt(parts[0], 10), m = parseInt(parts[1], 10) - 1, d = parseInt(parts[2], 10);
@@ -1419,38 +1438,39 @@ function book_(body) {
       })
     : [];
 
-  // Create one event per requested hour. A group of N is a single event that holds N seats.
+  // Create one event per archer per requested hour.
   var parts = date.split('-');
   var cal = getCalendar_();
   var booked = [];
   var eventIds = [];
-  var who = (body.name || 'Archer') + (party > 1 ? ' (group of ' + party + ')' : '');
+  var archersBook = archerListFor_(body, party);
+  var sharesBook = splitAmount_(amount, party * requested.length);
+  var k = 0;
   requested.forEach(function (label) {
     var slot = findSlot(label);
     var start = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), slot.hour, 0, 0);
     var end   = new Date(start.getTime() + 60 * 60 * 1000);
-    var title = who + ' — ' + (body.program || 'Session') + coachTitle_(body);
-    var ev = cal.createEvent(title, start, end, {
-      description: 'Booked via website'
-        + '\nRef: ' + ref
-        + '\nArchers: ' + party
-        + '\nName: ' + (body.name || '')
-        + '\nMobile: ' + (body.phone || '')
-        + '\nEmail: ' + (body.email || '')
-        + '\nProgram: ' + (body.program || '')
-        + (roster.length ? '\nRoster: ' + roster.join('; ') : '')
-        + '\nAmount: ' + amount
-        + concLine_(body)
-        + coachLine_(body)
+    archersBook.forEach(function (ar) {
+      var per = sharesBook[k++];
+      var title = ar.name + ' — ' + (body.program || 'Session') + coachTitle_(body);
+      var ev = cal.createEvent(title, start, end, {
+        description: 'Booked via website'
+          + '\nRef: ' + ref
+          + '\nArchers: 1'
+          + '\nArcher: ' + ar.name + (ar.dob ? (' (b. ' + ar.dob + ')') : '')
+          + '\nName: ' + (body.name || '')
+          + '\nMobile: ' + (body.phone || '')
+          + '\nEmail: ' + (body.email || '')
+          + '\nProgram: ' + (body.program || '')
+          + '\nAmount: ' + per
+          + concLine_(body)
+          + coachLine_(body)
+      });
+      eventIds.push(ev.getId());
+      dbRecordBooking_({ ref: ref, date: date, time: label, program: body.program, name: body.name, email: body.email, phone: body.phone, party: 1, amount: per, coach: (body.coachName || body.coach || ''), concession: concSummary_(body), roster: ar.name + (ar.dob ? (' (b. ' + ar.dob + ')') : ''), eventId: ev.getId() });
     });
     booked.push(label);
-    eventIds.push(ev.getId());
   });
-
-  // Record each booked hour in the database sheet.
-  for (var bi = 0; bi < booked.length; bi++) {
-    dbRecordBooking_({ ref: ref, date: date, time: booked[bi], program: body.program, name: body.name, email: body.email, phone: body.phone, party: party, amount: amount, coach: (body.coachName || body.coach || ''), concession: concSummary_(body), roster: roster.join('; '), eventId: eventIds[bi] || '' });
-  }
 
   // One receipt email for the whole booking.
   var emailed = false;
@@ -1513,10 +1533,13 @@ function bookMulti_(body) {
     : [];
 
   var cal = getCalendar_();
-  var who = (body.name || 'Archer') + (party > 1 ? ' (group of ' + party + ')' : '');
+  var archers = archerListFor_(body, party);
+  var totalEvents = party * pairCount;
+  var shares = splitAmount_(amount, totalEvents);
   var bookedPairs = [];
   var eventIds = [];
   var allLabels = [];
+  var shareIdx = 0;
   dates.forEach(function (d) {
     var parts = d.date.split('-');
     var slots = slotsByDate[d.date];
@@ -1524,28 +1547,27 @@ function bookMulti_(body) {
       var slot = null; for (var i = 0; i < slots.length; i++) { if (slots[i].time === label) { slot = slots[i]; break; } }
       var start = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), slot.hour, 0, 0);
       var end = new Date(start.getTime() + 60 * 60 * 1000);
-      var title = who + ' — ' + (body.program || 'Session');
-      var ev = cal.createEvent(title, start, end, {
-        description: 'Booked via website'
-          + '\nRef: ' + ref
-          + '\nArchers: ' + party
-          + '\nName: ' + (body.name || '')
-          + '\nMobile: ' + (body.phone || '')
-          + '\nEmail: ' + (body.email || '')
-          + '\nProgram: ' + (body.program || '')
-          + (roster.length ? '\nRoster: ' + roster.join('; ') : '')
-          + '\nAmount: ' + amount
-          + concLine_(body)
+      archers.forEach(function (ar) {
+        var per = shares[shareIdx++];
+        var title = ar.name + ' — ' + (body.program || 'Session');
+        var ev = cal.createEvent(title, start, end, {
+          description: 'Booked via website'
+            + '\nRef: ' + ref
+            + '\nArchers: 1'
+            + '\nArcher: ' + ar.name + (ar.dob ? (' (b. ' + ar.dob + ')') : '')
+            + '\nName: ' + (body.name || '')
+            + '\nMobile: ' + (body.phone || '')
+            + '\nEmail: ' + (body.email || '')
+            + '\nProgram: ' + (body.program || '')
+            + '\nAmount: ' + per
+            + concLine_(body)
+        });
+        bookedPairs.push({ date: d.date, time: label, eventId: ev.getId() });
+        eventIds.push(ev.getId());
+        dbRecordBooking_({ ref: ref, date: d.date, time: label, program: body.program, name: body.name, email: body.email, phone: body.phone, party: 1, amount: per, coach: (body.coachName || body.coach || ''), concession: concSummary_(body), roster: ar.name + (ar.dob ? (' (b. ' + ar.dob + ')') : ''), eventId: ev.getId() });
       });
-      bookedPairs.push({ date: d.date, time: label, eventId: ev.getId() });
-      eventIds.push(ev.getId());
       allLabels.push(prettyDate_(d.date) + ' · ' + label);
     });
-  });
-
-  // Record each booked (date, time) pair in the database sheet.
-  bookedPairs.forEach(function (bp) {
-    dbRecordBooking_({ ref: ref, date: bp.date, time: bp.time, program: body.program, name: body.name, email: body.email, phone: body.phone, party: party, amount: amount, coach: (body.coachName || body.coach || ''), concession: concSummary_(body), roster: roster.join('; '), eventId: bp.eventId || '' });
   });
 
   var emailed = false;
