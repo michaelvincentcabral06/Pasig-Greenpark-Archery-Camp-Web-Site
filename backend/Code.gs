@@ -1485,15 +1485,27 @@ function book_(body) {
   var booked = [];
   var eventIds = [];
   var archersBook = archerListFor_(body, party);
-  var sharesBook = splitAmount_(amount, party * requested.length);
-  var k = 0;
+  var srcArchersBook = (body.archers && body.archers.length) ? body.archers : [];
+  var perArcherBook = srcArchersBook.some(function (a) { return a && a.amount != null; });
+  // Per-archer slot shares: each archer's total split evenly across their requested slots.
+  var archerSlotSharesBook = [];
+  for (var bi = 0; bi < party; bi++) {
+    var bsrc = srcArchersBook[bi] || {};
+    archerSlotSharesBook.push(perArcherBook ? splitAmount_(Number(bsrc.amount) || 0, requested.length) : null);
+  }
+  var fallbackSharesBook = perArcherBook ? null : splitAmount_(amount, party * requested.length);
+  var fbIdxBook = 0, slotIdxBook = 0, firstEventBook = true;
   requested.forEach(function (label) {
     var slot = findSlot(label);
     var start = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), slot.hour, 0, 0);
     var end   = new Date(start.getTime() + 60 * 60 * 1000);
     var slotEventId = null;
-    archersBook.forEach(function (ar) {
-      var per = sharesBook[k++];
+    for (var bk = 0; bk < party; bk++) {
+      var ar = archersBook[bk];
+      var bsrc2 = srcArchersBook[bk] || {};
+      var per = perArcherBook ? archerSlotSharesBook[bk][slotIdxBook] : fallbackSharesBook[fbIdxBook++];
+      var concObjBook = perArcherBook ? bsrc2.concession : body.concession;
+      var addonsArrBook = perArcherBook ? bsrc2.addons : null;
       var title = ar.name + ' — ' + (body.program || 'Session') + coachTitle_(body);
       var ev = cal.createEvent(title, start, end, {
         description: 'Booked via website'
@@ -1505,14 +1517,18 @@ function book_(body) {
           + '\nEmail: ' + (body.email || '')
           + '\nProgram: ' + (body.program || '')
           + '\nAmount: ' + per
-          + concLine_(body)
+          + concLineOf_(concObjBook)
+          + addonLine_(addonsArrBook)
+          + (firstEventBook ? bookingAddonLine_(body.perBookingAddons, requested.length) : '')
           + coachLine_(body)
       });
       if (slotEventId === null) slotEventId = ev.getId();
-      dbRecordBooking_({ ref: ref, date: date, time: label, program: body.program, name: body.name, email: body.email, phone: body.phone, party: 1, amount: per, coach: (body.coachName || body.coach || ''), concession: concSummary_(body), roster: ar.name + (ar.dob ? (' (b. ' + ar.dob + ')') : ''), eventId: ev.getId() });
-    });
+      dbRecordBooking_({ ref: ref, date: date, time: label, program: body.program, name: body.name, email: body.email, phone: body.phone, party: 1, amount: per, coach: (body.coachName || body.coach || ''), concession: concSummary_({ concession: concObjBook }), roster: ar.name + (ar.dob ? (' (b. ' + ar.dob + ')') : ''), eventId: ev.getId() });
+      firstEventBook = false;
+    }
     eventIds.push(slotEventId);
     booked.push(label);
+    slotIdxBook++;
   });
 
   // One receipt email for the whole booking.
@@ -1577,12 +1593,19 @@ function bookMulti_(body) {
 
   var cal = getCalendar_();
   var archers = archerListFor_(body, party);
-  var totalEvents = party * pairCount;
-  var shares = splitAmount_(amount, totalEvents);
+  var srcArchers = (body.archers && body.archers.length) ? body.archers : [];
+  var perArcher = srcArchers.some(function (a) { return a && a.amount != null; });
+  // Per-archer slot shares: each archer's total split evenly across their pairCount slots (remainder on last).
+  var archerSlotShares = [];
+  for (var ai = 0; ai < party; ai++) {
+    var src = srcArchers[ai] || {};
+    archerSlotShares.push(perArcher ? splitAmount_(Number(src.amount) || 0, pairCount) : null);
+  }
+  var fallbackShares = perArcher ? null : splitAmount_(amount, party * pairCount);
+  var fbIdx = 0, slotIdx = 0, firstEvent = true;
   var bookedPairs = [];
   var eventIds = [];
   var allLabels = [];
-  var shareIdx = 0;
   dates.forEach(function (d) {
     var parts = d.date.split('-');
     var slots = slotsByDate[d.date];
@@ -1591,8 +1614,12 @@ function bookMulti_(body) {
       var start = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), slot.hour, 0, 0);
       var end = new Date(start.getTime() + 60 * 60 * 1000);
       var slotEventId = null;
-      archers.forEach(function (ar) {
-        var per = shares[shareIdx++];
+      for (var k = 0; k < party; k++) {
+        var ar = archers[k];
+        var src2 = srcArchers[k] || {};
+        var per = perArcher ? archerSlotShares[k][slotIdx] : fallbackShares[fbIdx++];
+        var concObj = perArcher ? src2.concession : body.concession;
+        var addonsArr = perArcher ? src2.addons : null;
         var title = ar.name + ' — ' + (body.program || 'Session');
         var ev = cal.createEvent(title, start, end, {
           description: 'Booked via website'
@@ -1604,14 +1631,18 @@ function bookMulti_(body) {
             + '\nEmail: ' + (body.email || '')
             + '\nProgram: ' + (body.program || '')
             + '\nAmount: ' + per
-            + concLine_(body)
+            + concLineOf_(concObj)
+            + addonLine_(addonsArr)
+            + (firstEvent ? bookingAddonLine_(body.perBookingAddons, pairCount) : '')
         });
         if (slotEventId === null) slotEventId = ev.getId();
-        dbRecordBooking_({ ref: ref, date: d.date, time: label, program: body.program, name: body.name, email: body.email, phone: body.phone, party: 1, amount: per, coach: (body.coachName || body.coach || ''), concession: concSummary_(body), roster: ar.name + (ar.dob ? (' (b. ' + ar.dob + ')') : ''), eventId: ev.getId() });
-      });
+        dbRecordBooking_({ ref: ref, date: d.date, time: label, program: body.program, name: body.name, email: body.email, phone: body.phone, party: 1, amount: per, coach: (body.coachName || body.coach || ''), concession: concSummary_({ concession: concObj }), roster: ar.name + (ar.dob ? (' (b. ' + ar.dob + ')') : ''), eventId: ev.getId() });
+        firstEvent = false;
+      }
       bookedPairs.push({ date: d.date, time: label, eventId: slotEventId });
       eventIds.push(slotEventId);
       allLabels.push(prettyDate_(d.date) + ' · ' + label);
+      slotIdx++;
     });
   });
 
