@@ -2044,7 +2044,14 @@
                   </div>
                   <span style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;background:{{ r.statusBg }};color:{{ r.statusFg }};padding:5px 11px;border-radius:999px;">{{ r.statusLabel }}</span>
                   <sc-if value="{{ r.hasAmount }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;font-weight:700;color:#4d7327;font-family:'Spline Sans Mono',monospace;">{{ r.amountLabel }}</span></sc-if>
-                  <select value="{{ r.coachId }}" onChange="{{ r.setCoach }}" style="padding:8px 11px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:12.5px;font-family:'Hanken Grotesk',sans-serif;background:#f4efe4;color:#244232;"><sc-for list="{{ sessAssignOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o.id }}">{{ o.name }}</option></sc-for></select>
+                  <div style="display:flex;flex-direction:column;gap:5px;min-width:150px;">
+                    <span style="font-size:10px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#8a9579;font-family:'Spline Sans Mono',monospace;">{{ r.coachCapLabel }}</span>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                      <sc-for list="{{ r.coachChips }}" as="ch" hint-placeholder-count="0">
+                        <button onClick="{{ ch.toggle }}" style="background:{{ ch.bg }};color:{{ ch.fg }};border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;">{{ ch.name }}</button>
+                      </sc-for>
+                    </div>
+                  </div>
                   <button onClick="{{ r.cancel }}" style="background:none;border:1px solid rgba(180,81,47,0.35);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12.5px;font-weight:700;color:#b4512f;padding:7px 13px;border-radius:999px;">Cancel</button>
                 </div>
               </sc-for>
@@ -4031,10 +4038,12 @@ class Component extends DCLogic {
     this.mutatePlan(email, ts, p => ({ ...p, ref: p.ref || ref }));
     return (plan && plan.ref) || ref;
   }
-  // Assign / change the coach on a booking (updates the calendar event + Bookings sheet).
-  assignBookingCoach(b, coachId) {
+  // #6: assign a LIST of coaches to a booking (multi-coach; backend caps at ceil(archers/2)).
+  // Sends `coaches` (full id list) + `coach: ids[0]` so it also works against a pre-db-v28 backend.
+  setBookingCoaches(b, ids) {
     if (!b) return;
-    this.adminPost({ action: 'setBookingCoach', eventId: b.eventId || '', ref: b.ref || '', date: b.date || '', time: b.time || '', coach: coachId })
+    const list = (ids || []).filter(Boolean);
+    this.adminPost({ action: 'setBookingCoach', eventId: b.eventId || '', ref: b.ref || '', date: b.date || '', time: b.time || '', coaches: list, coach: list[0] || '' })
       .then(() => this.loadAllBookings()).catch(() => {});
   }
   cancelSessionBooking(b) {
@@ -5145,17 +5154,29 @@ class Component extends DCLogic {
     const sessPageCount = Math.max(1, Math.ceil(sessTotal / SESS_PAGE));
     const sessPage = Math.min(Math.max(0, this.state.sessPage || 0), sessPageCount - 1);
     const sessionRows = sessFiltered.slice(sessPage * SESS_PAGE, sessPage * SESS_PAGE + SESS_PAGE).map(b => {
-      const c = b.coach ? this.coachById(b.coach) : null;
       const si = sessStatusInfo(b.status);
       let when = b.date; try { when = new Date(b.date + 'T00:00:00').toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' }); } catch (e) {}
+      const selIds = this.coachIdsFromNames(b.coachName);
+      const maxC = this.maxCoachesFor(b.party);
+      const atCap = selIds.length >= maxC;
+      const coachChips = this.coaches().map(c => {
+        const selected = selIds.indexOf(c.id) !== -1;
+        const disabled = !selected && atCap;
+        const nextIds = selected ? selIds.filter(id => id !== c.id) : selIds.concat([c.id]);
+        return {
+          name: c.name,
+          bg: selected ? '#244232' : (disabled ? '#ece7d8' : '#f4efe4'),
+          fg: selected ? '#f4efe4' : (disabled ? '#b8c0ad' : '#244232'),
+          toggle: disabled ? (() => {}) : (() => this.setBookingCoaches(b, nextIds)),
+        };
+      });
       return {
         when: when, time: b.time || '', name: b.name || 'Guest', program: b.program || '',
-        coachName: c ? c.name : 'Any coach', coachId: b.coach || '',
+        coachCapLabel: 'Coaches · up to ' + maxC, coachChips: coachChips,
         amountLabel: b.amount ? ('₱' + Number(b.amount).toLocaleString('en-PH')) : '', hasAmount: !!b.amount,
         statusLabel: si.label, statusBg: si.bg, statusFg: si.fg,
         ref: b.ref || '', hasRef: !!b.ref,
         phone: b.phone || '', hasPhone: !!b.phone, callHref: 'tel:' + (b.phone || '').replace(/[^0-9+]/g, ''),
-        setCoach: (e) => this.assignBookingCoach(b, e.target.value),
         cancel: () => this.cancelSessionBooking(b),
         isCancelled: String(b.status || '').toLowerCase() === 'cancelled',
       };
