@@ -365,3 +365,24 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 - [ ] Open `…/exec?action=version` in a browser — confirm `"version":"db-v26"`, `"multiDayNoEmail":true`, and all prior flags (`perArcherEvents:true`, `timeCellFix:true`, etc.) still present.
 - [ ] **noEmail respected:** (admin/dev) POST a booking with `noEmail:true` → the response shows `"emailed":false` and no receipt is sent. A normal customer booking (no `noEmail`) still receives its one receipt.
 - [ ] **Normal booking flow unaffected:** Book a session from the website — confirm it still works end to end (one email, correct calendar events) exactly as on db-v25.
+
+---
+
+## db-v27 deploy & verify
+
+**What changed:** each per-archer calendar event now stores **that archer's own** concession, add-ons, and amount (instead of an even-split of the total + a booking-level concession), and per-booking add-ons are recorded once on the booking's first event. The frontend already sends the enriched per-archer data (live since the per-archer flow shipped); this re-deploy makes the backend store it. The customer-facing total/flow were already correct on db-v26; this enables the per-archer breakdown that admin coach-assignment (#6) and accounting (#7) consume. Backend-only.
+
+### Deploy steps
+
+1. Open the Apps Script project in your browser.
+2. Paste the entire contents of `backend/Code.gs` (overwriting the old code), then click **Save** (💾).
+3. Click **Deploy → Manage deployments → edit (✏️) → Version: New version → Deploy.** (Edit the EXISTING deployment so the same `/exec` URL updates — do NOT create a new deployment.)
+
+### Verification checklist
+
+- [ ] Open `…/exec?action=version` in a browser — confirm `"version":"db-v27"`, `"perArcherExtras":true`, and all prior flags (`perArcherEvents:true`, `multiDayNoEmail:true`, etc.) still present.
+- [ ] **Per-archer extras stored:** Book a **2-archer** Open Range session where the two archers pick **different** concessions and/or add-ons. In your Google Calendar, confirm each archer's event description shows **that archer's own** `Concession:` / `Add-ons:` line and `Amount:` — not the same on both.
+- [ ] **Amounts reconcile:** the two events' `Amount:` values plus any per-booking add-on total sum to the booking total.
+- [ ] **Per-booking add-ons once:** if you ticked a per-booking add-on (e.g. target face), only **one** of the events carries the `Booking add-ons:` line.
+- [ ] **One email, one ref** as before.
+- [ ] **Legacy bookings unaffected:** a booking made before db-v27 still displays, cancels, and reschedules correctly.
