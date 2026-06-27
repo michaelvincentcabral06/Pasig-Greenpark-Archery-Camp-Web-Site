@@ -1048,11 +1048,16 @@ function listBookings_() {
     function isPlan(p) { return /\(plan\)\s*$/i.test(p || ''); }
 
     // 2) Scan the calendar for every booking event (same window/source as My Bookings).
+    //    Group by (ref, date, time) so N per-archer events for the same slot become ONE
+    //    admin row with archers = N and amount = sum. Legacy single-event bookings pass
+    //    through unchanged (they form a singleton group). Every contributing event id is
+    //    marked usedEvent so step (3) does not re-append them.
     try {
       var cal = getCalendar_();
       var from = new Date(); from.setDate(from.getDate() - 180);
       var to = new Date(); to.setDate(to.getDate() + 365);
       var events = cal.getEvents(from, to);
+      var byKey = {};
       events.forEach(function (ev) {
         var d = ev.getDescription() || '';
         var ref = field(d, 'Ref');
@@ -1062,24 +1067,35 @@ function listBookings_() {
         var program = field(d, 'Program') || (srow ? srow.program : '');
         // Pending plan sessions live in the Plans tab; only surface them here once approved.
         if (isPlan(program) && !(srow && String(srow.status).toLowerCase() === 'approved')) return;
+        // Mark EVERY contributing event as used so step (3) never double-appends.
         usedEvent[id] = true;
         var stt = ev.getStartTime();
-        out.push({
-          bookedAt: srow ? srow.bookedAt : '',
-          ref: ref || (srow ? srow.ref : ''),
-          status: srow ? srow.status : 'booked',
-          date: Utilities.formatDate(stt, TIMEZONE, 'yyyy-MM-dd'),
-          time: fmtLabel_(parseInt(Utilities.formatDate(stt, TIMEZONE, 'H'), 10)),
-          program: program,
-          name: field(d, 'Name') || (srow ? srow.name : ''),
-          email: field(d, 'Email') || (srow ? srow.email : ''),
-          phone: field(d, 'Mobile') || (srow ? srow.phone : ''),
-          archers: parseInt(field(d, 'Archers') || '1', 10) || 1,
-          amount: srow ? srow.amount : (parseInt(field(d, 'Amount') || '0', 10) || 0),
-          coach: field(d, 'Coach') || (srow ? srow.coach : ''),
-          eventId: id
-        });
+        var dateStr = Utilities.formatDate(stt, TIMEZONE, 'yyyy-MM-dd');
+        var timeLbl = fmtLabel_(parseInt(Utilities.formatDate(stt, TIMEZONE, 'H'), 10));
+        var seats = parseInt(field(d, 'Archers') || '1', 10) || 1;
+        var amt = srow ? srow.amount : (parseInt(field(d, 'Amount') || '0', 10) || 0);
+        var key = (ref || (srow ? srow.ref : '')) + '|' + dateStr + '|' + timeLbl;
+        if (!byKey[key]) {
+          byKey[key] = {
+            bookedAt: srow ? srow.bookedAt : '',
+            ref: ref || (srow ? srow.ref : ''),
+            status: srow ? srow.status : 'booked',
+            date: dateStr,
+            time: timeLbl,
+            program: program,
+            name: field(d, 'Name') || (srow ? srow.name : ''),
+            email: field(d, 'Email') || (srow ? srow.email : ''),
+            phone: field(d, 'Mobile') || (srow ? srow.phone : ''),
+            archers: 0,
+            amount: 0,
+            coach: field(d, 'Coach') || (srow ? srow.coach : ''),
+            eventId: id
+          };
+        }
+        byKey[key].archers += seats;
+        byKey[key].amount += amt;
       });
+      for (var k in byKey) out.push(byKey[k]);
     } catch (e) {}
 
     // 3) Add sheet rows that aren't on the live calendar (cancelled events were deleted;
