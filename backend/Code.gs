@@ -1450,6 +1450,7 @@ function book_(body) {
     var slot = findSlot(label);
     var start = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), slot.hour, 0, 0);
     var end   = new Date(start.getTime() + 60 * 60 * 1000);
+    var slotEventId = null;
     archersBook.forEach(function (ar) {
       var per = sharesBook[k++];
       var title = ar.name + ' — ' + (body.program || 'Session') + coachTitle_(body);
@@ -1466,9 +1467,10 @@ function book_(body) {
           + concLine_(body)
           + coachLine_(body)
       });
-      eventIds.push(ev.getId());
+      if (slotEventId === null) slotEventId = ev.getId();
       dbRecordBooking_({ ref: ref, date: date, time: label, program: body.program, name: body.name, email: body.email, phone: body.phone, party: 1, amount: per, coach: (body.coachName || body.coach || ''), concession: concSummary_(body), roster: ar.name + (ar.dob ? (' (b. ' + ar.dob + ')') : ''), eventId: ev.getId() });
     });
+    eventIds.push(slotEventId);
     booked.push(label);
   });
 
@@ -1547,6 +1549,7 @@ function bookMulti_(body) {
       var slot = null; for (var i = 0; i < slots.length; i++) { if (slots[i].time === label) { slot = slots[i]; break; } }
       var start = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), slot.hour, 0, 0);
       var end = new Date(start.getTime() + 60 * 60 * 1000);
+      var slotEventId = null;
       archers.forEach(function (ar) {
         var per = shares[shareIdx++];
         var title = ar.name + ' — ' + (body.program || 'Session');
@@ -1562,10 +1565,11 @@ function bookMulti_(body) {
             + '\nAmount: ' + per
             + concLine_(body)
         });
-        bookedPairs.push({ date: d.date, time: label, eventId: ev.getId() });
-        eventIds.push(ev.getId());
+        if (slotEventId === null) slotEventId = ev.getId();
         dbRecordBooking_({ ref: ref, date: d.date, time: label, program: body.program, name: body.name, email: body.email, phone: body.phone, party: 1, amount: per, coach: (body.coachName || body.coach || ''), concession: concSummary_(body), roster: ar.name + (ar.dob ? (' (b. ' + ar.dob + ')') : ''), eventId: ev.getId() });
       });
+      bookedPairs.push({ date: d.date, time: label, eventId: slotEventId });
+      eventIds.push(slotEventId);
       allLabels.push(prettyDate_(d.date) + ' · ' + label);
     });
   });
