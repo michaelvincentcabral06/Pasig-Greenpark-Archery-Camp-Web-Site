@@ -823,19 +823,32 @@ function lookup_(email, ref) {
 }
 
 // Compact concession summary written into the calendar event so lookup_ can read it back.
-function concLine_(body) {
-  var c = body.concession;
+// Format any concession object (Phase-2 {items} shape, or legacy booleans) into a Concession line.
+function concLineOf_(c) {
   if (!c) return '';
   if (c.items && c.items.length) {
     var parts = c.items.map(function (it) { return (it.name || '') + (it.proof ? (' (' + it.proof + ')') : ''); });
     return parts.length ? ('\nConcession: ' + parts.join(', ')) : '';
   }
-  // legacy shape (pre-Phase-2 requests)
   var p = [];
   if (c.pasig) p.push('Pasig');
   if (c.local) p.push('Greenpark/RHS');
   if (c.pac) p.push('PAC');
   return p.length ? ('\nConcession: ' + p.join(',')) : '';
+}
+function concLine_(body) { return concLineOf_(body.concession); }
+// Per-archer add-ons line from [{name, price}]. e.g. "\nAdd-ons: Bow rental (₱150)"
+function addonLine_(addons) {
+  if (!addons || !addons.length) return '';
+  var parts = addons.map(function (a) { return (a.name || '') + ' (₱' + (Number(a.price) || 0) + ')'; });
+  return '\nAdd-ons: ' + parts.join(', ');
+}
+// Per-booking add-ons line (recorded once on the booking), priced × slots. e.g. "\nBooking add-ons: Target face (₱50 ×2)"
+function bookingAddonLine_(addons, slots) {
+  if (!addons || !addons.length) return '';
+  slots = Math.max(1, slots || 1);
+  var parts = addons.map(function (a) { return (a.name || '') + ' (₱' + (Number(a.price) || 0) + ' ×' + slots + ')'; });
+  return '\nBooking add-ons: ' + parts.join(', ');
 }
 
 // Coach line written into the calendar event (coach-led programs only).
