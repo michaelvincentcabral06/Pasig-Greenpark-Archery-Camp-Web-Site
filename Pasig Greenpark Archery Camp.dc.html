@@ -2817,6 +2817,19 @@ class Component extends DCLogic {
     return (list && list.length) ? list : this.coachesDefault();
   }
   coachById(id) { return this.coaches().find(c => c.id === id) || null; }
+  // #6: max coaches the admin may assign to a booking = ceil(archers / 2) (1-2->1, 3-4->2, 5-6->3).
+  maxCoachesFor(party) { return Math.max(1, Math.ceil((Number(party) || 1) / 2)); }
+  // Resolve a stored Coach field ("Coach A, Coach B") back to coach ids, matching by exact name.
+  coachIdsFromNames(coachName) {
+    if (!coachName) return [];
+    const all = this.coaches();
+    const out = [];
+    String(coachName).split(',').map(s => s.trim()).filter(Boolean).forEach(nm => {
+      const c = all.find(x => x.name === nm);
+      if (c && out.indexOf(c.id) === -1) out.push(c.id);
+    });
+    return out;
+  }
   coachInitials(name) {
     const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
     if (!parts.length) return '?';
