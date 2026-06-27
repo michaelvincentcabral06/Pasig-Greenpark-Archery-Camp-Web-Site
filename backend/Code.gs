@@ -768,7 +768,7 @@ function doGet(e) {
     if (action === 'content') return getContent_();
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v27', auth: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true });
+      return json_({ version: 'db-v28', auth: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true, multiCoach: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -1313,35 +1313,53 @@ function approveSession_(body) {
   } catch (e) { return json_({ ok: false, error: String(e) }); }
 }
 
-// Assign/change the coach on an existing booking: update the calendar event's Coach line
-// and the Bookings sheet Coach column. body: { eventId | (ref,date,time), coach: id-or-name }.
+// Assign/change the coach(es) on an existing booking: update every per-archer calendar event's
+// Coach line and the Bookings sheet Coach column for the slot. Accepts body.coaches (array of
+// ids) or back-compat body.coach (single id). Rejects when coaches > ceil(archers/2).
 function setBookingCoach_(body) {
   try {
-    var coachName = '';
-    if (body.coach) { var c = coachById_(body.coach); coachName = c ? c.name : String(body.coach); }
-    if (body.eventId) {
-      try {
-        var ev = getCalendar_().getEventById(body.eventId);
-        if (ev) {
-          var d = ev.getDescription() || '';
-          if (/\nCoach:[^\n]*/i.test(d)) d = d.replace(/\nCoach:[^\n]*/i, coachName ? ('\nCoach: ' + coachName) : '');
-          else if (coachName) d = d + '\nCoach: ' + coachName;
-          ev.setDescription(d);
-        }
-      } catch (e) {}
+    // Coach list: new `coaches` array of ids, or back-compat single `coach`.
+    var ids = (body.coaches && body.coaches.length) ? body.coaches : (body.coach ? [body.coach] : []);
+    var names = [];
+    for (var i = 0; i < ids.length; i++) { var c = coachById_(ids[i]); var nm = c ? c.name : String(ids[i]); if (nm) names.push(nm); }
+    var coachName = names.join(', ');
+    var cal = getCalendar_();
+
+    // Gather the booking's events for the slot (all per-archer events); fall back to the single event by id.
+    var slotEvents = [];
+    if (body.ref && body.date && body.time) slotEvents = eventsForSlot_(cal, body.ref, body.date, body.time);
+    if (!slotEvents.length && body.eventId) { try { var one = cal.getEventById(body.eventId); if (one) slotEvents = [one]; } catch (e1) {} }
+
+    // Defensive cap: max coaches = ceil(archers / 2); archers = sum of the slot events' Archers (default 1 each).
+    var archerCount = 0;
+    for (var a = 0; a < slotEvents.length; a++) archerCount += seatsOf_(slotEvents[a]);
+    if (archerCount > 0 && names.length > Math.ceil(archerCount / 2)) {
+      return json_({ ok: false, reason: 'too many coaches', max: Math.ceil(archerCount / 2) });
     }
+
+    // Write the Coach line to every slot event.
+    for (var e = 0; e < slotEvents.length; e++) {
+      var ev = slotEvents[e];
+      var d = ev.getDescription() || '';
+      if (/\nCoach:[^\n]*/i.test(d)) d = d.replace(/\nCoach:[^\n]*/i, coachName ? ('\nCoach: ' + coachName) : '');
+      else if (coachName) d = d + '\nCoach: ' + coachName;
+      try { ev.setDescription(d); } catch (e2) {}
+    }
+
+    // Write the Coach column to every matching sheet row (ref+date+time, or eventId fallback).
     try {
       var sh = dbSheet_('bookings');
       var data = sh.getDataRange().getValues();
       var h = data[0];
       var evCol = h.indexOf('Event ID'), cCol = h.indexOf('Coach'), refCol = h.indexOf('Ref'), dCol = h.indexOf('Date'), tCol = h.indexOf('Time');
       for (var r = 1; r < data.length; r++) {
-        var match = (body.eventId && String(data[r][evCol]) === String(body.eventId)) ||
-          (!body.eventId && String(data[r][refCol]) === String(body.ref || '') && asDateStr_(data[r][dCol]) === String(body.date || '') && String(data[r][tCol]) === String(body.time || ''));
-        if (match) { if (cCol >= 0) sh.getRange(r + 1, cCol + 1).setValue(coachName); if (body.eventId) break; }
+        var match = (body.ref && String(data[r][refCol]) === String(body.ref) && asDateStr_(data[r][dCol]) === String(body.date || '') && String(data[r][tCol]) === String(body.time || ''))
+          || (body.eventId && String(data[r][evCol]) === String(body.eventId));
+        if (match && cCol >= 0) sh.getRange(r + 1, cCol + 1).setValue(coachName);
       }
-    } catch (e) {}
-    return json_({ ok: true, coach: coachName });
+    } catch (e3) {}
+
+    return json_({ ok: true, coach: coachName, coaches: names });
   } catch (e) { return json_({ ok: false, error: String(e) }); }
 }
 
