@@ -919,6 +919,10 @@
               <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:10px;padding:16px;">
                 <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:3px;">Who's shooting? <span style="color:#e8674a;">*</span></label>
                 <p style="font-size:11.5px;color:#8a9579;margin:0 0 12px;line-height:1.5;">We match each archer's age to your program (<span style="color:#7fb43f;">{{ archerProgramLabel }}</span>). Add a name and birthdate for each.</p>
+                <button onClick="{{ toggleSameAsBooker }}" role="checkbox" aria-checked="{{ sameAsBookerOn }}" style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;padding:0;margin-bottom:12px;font-family:'Hanken Grotesk',sans-serif;text-align:left;">
+                  <span style="width:18px;height:18px;flex:none;border-radius:4px;background:{{ sameAsBookerBox }};border:1.5px solid #7fb43f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#1b2a1f;">{{ sameAsBookerCheck }}</span>
+                  <span style="font-size:13px;color:#cdd6c5;">Archer 1 is me (same as booker)</span>
+                </button>
                 <div style="display:flex;flex-direction:column;gap:12px;">
                   <sc-for list="{{ archerRows }}" as="ar" hint-placeholder-count="2">
                     <div style="background:#244232;border:1px solid rgba(244,239,228,0.12);border-radius:8px;padding:11px 12px;">
@@ -927,10 +931,10 @@
                         <sc-if value="{{ ar.hasNote }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;font-weight:600;font-family:'Spline Sans Mono',monospace;color:{{ ar.noteColor }};">{{ ar.note }}</span></sc-if>
                       </div>
                       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                        <sc-if value="{{ ar.isExtra }}" hint-placeholder-val="{{ true }}">
+                        <sc-if value="{{ ar.showNameInput }}" hint-placeholder-val="{{ true }}">
                           <input value="{{ ar.name }}" onInput="{{ ar.setName }}" placeholder="Full name" style="flex:1;min-width:130px;background:#1b3325;border:1px solid {{ ar.nameBorder }};border-radius:7px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
                         </sc-if>
-                        <sc-if value="{{ ar.isLead }}" hint-placeholder-val="{{ false }}">
+                        <sc-if value="{{ ar.showLeadDiv }}" hint-placeholder-val="{{ false }}">
                           <div style="flex:1;min-width:130px;display:flex;align-items:center;background:rgba(244,239,228,0.05);border:1px solid rgba(244,239,228,0.1);border-radius:7px;padding:10px 12px;font-size:14px;color:#cdd6c5;">{{ ar.leadName }}</div>
                         </sc-if>
                         <input value="{{ ar.dob }}" onInput="{{ ar.setDob }}" max="{{ minDate }}" type="date" aria-label="Birthdate" style="width:158px;background:#1b3325;border:1px solid {{ ar.dobBorder }};border-radius:7px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
@@ -1279,6 +1283,10 @@
             <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:10px;padding:16px;">
               <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:3px;">Who's shooting? <span style="color:#e8674a;">*</span></label>
               <p style="font-size:11.5px;color:#8a9579;margin:0 0 12px;line-height:1.5;">We match each archer's age to your program (<span style="color:#7fb43f;">{{ archerProgramLabel }}</span>). Add a name and birthdate for each.</p>
+              <button onClick="{{ toggleSameAsBooker }}" role="checkbox" aria-checked="{{ sameAsBookerOn }}" style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;padding:0;margin-bottom:12px;font-family:'Hanken Grotesk',sans-serif;text-align:left;">
+                <span style="width:18px;height:18px;flex:none;border-radius:4px;background:{{ sameAsBookerBox }};border:1.5px solid #7fb43f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#1b2a1f;">{{ sameAsBookerCheck }}</span>
+                <span style="font-size:13px;color:#cdd6c5;">Archer 1 is me (same as booker)</span>
+              </button>
               <div style="display:flex;flex-direction:column;gap:12px;">
                 <sc-for list="{{ archerRows }}" as="ar" hint-placeholder-count="2">
                   <div style="background:#244232;border:1px solid rgba(244,239,228,0.12);border-radius:8px;padding:11px 12px;">
@@ -1287,10 +1295,10 @@
                       <sc-if value="{{ ar.hasNote }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;font-weight:600;font-family:'Spline Sans Mono',monospace;color:{{ ar.noteColor }};">{{ ar.note }}</span></sc-if>
                     </div>
                     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                      <sc-if value="{{ ar.isExtra }}" hint-placeholder-val="{{ true }}">
+                      <sc-if value="{{ ar.showNameInput }}" hint-placeholder-val="{{ true }}">
                         <input value="{{ ar.name }}" onInput="{{ ar.setName }}" placeholder="Full name" style="flex:1;min-width:130px;background:#1b3325;border:1px solid {{ ar.nameBorder }};border-radius:7px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
                       </sc-if>
-                      <sc-if value="{{ ar.isLead }}" hint-placeholder-val="{{ false }}">
+                      <sc-if value="{{ ar.showLeadDiv }}" hint-placeholder-val="{{ false }}">
                         <div style="flex:1;min-width:130px;display:flex;align-items:center;background:rgba(244,239,228,0.05);border:1px solid rgba(244,239,228,0.1);border-radius:7px;padding:10px 12px;font-size:14px;color:#cdd6c5;">{{ ar.leadName }}</div>
                       </sc-if>
                       <input value="{{ ar.dob }}" onInput="{{ ar.setDob }}" max="{{ minDate }}" type="date" aria-label="Birthdate" style="width:158px;background:#1b3325;border:1px solid {{ ar.dobBorder }};border-radius:7px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#f4efe4;outline:none;" />
@@ -3527,6 +3535,32 @@ class Component extends DCLogic {
     for (var i = 0; i < list.length; i++) { if (list[i].name === name) return list[i]; }
     return { name: name || '', price: 600, needsCoach: true, multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: null, maxAge: null, blurb: '', addons: [] };
   }
+  programsFittingArchers() {
+    var st = this.state;
+    var party = Math.max(1, st.party || 1);
+    var archersState = st.archers || [];
+    var ageOnDate = (function() { if (st.slotDate) { try { var dd = new Date(st.slotDate + 'T00:00:00'); if (!isNaN(dd.getTime())) return dd; } catch(e) {} } return new Date(); })();
+    var archerAge = function(dob) {
+      if (!dob) return null;
+      var b = new Date(dob + 'T00:00:00');
+      if (isNaN(b.getTime())) return null;
+      var a = ageOnDate.getFullYear() - b.getFullYear();
+      var m = ageOnDate.getMonth() - b.getMonth();
+      if (m < 0 || (m === 0 && ageOnDate.getDate() < b.getDate())) a--;
+      return a;
+    };
+    return this.programList().filter(function(p) {
+      if (p.minAge == null && p.maxAge == null) return true;
+      var maxAge = p.maxAge != null ? p.maxAge : 120;
+      for (var i = 0; i < party; i++) {
+        var a = archersState[i] || {};
+        var age = archerAge(a.dob || '');
+        if (age == null) continue; // no DOB yet — no constraint
+        if (age < p.minAge || age > maxAge) return false;
+      }
+      return true;
+    });
+  }
   programAddons(name) { return this.programByName(name).addons || []; }
   defaultGroupTiers() { return [ { minParty: 2, pct: 10 }, { minParty: 3, pct: 20 }, { minParty: 5, pct: 30 } ]; }
   normalizeGroupTiers(list) {
@@ -4539,11 +4573,12 @@ class Component extends DCLogic {
         return { archers: arr, formError: false };
       });
     };
+    const sameAsBooker = !!this.state.sameAsBooker;
     const archerRows = [];
     for (let i = 0; i < party; i++) {
       const a = archersState[i] || { name: '', dob: '' };
       const isLead = i === 0;
-      const effName = isLead ? (this.state.form.name || '') : (a.name || '');
+      const effName = isLead ? (sameAsBooker ? (a.name || this.state.form.name || '') : (this.state.form.name || '')) : (a.name || '');
       const age = calcAge(a.dob);
       let fit = true, note = '';
       if (age != null && ageRange) {
@@ -4552,14 +4587,18 @@ class Component extends DCLogic {
       } else if (age != null) {
         note = 'Age ' + age;
       }
+      const showNameInput = !isLead || sameAsBooker;
+      const showLeadDiv = isLead && !sameAsBooker;
       archerRows.push({
         label: isLead ? 'Archer 1 \u2014 you' : ('Archer ' + (i + 1)),
         isLead: isLead, isExtra: !isLead,
+        showNameInput: showNameInput, showLeadDiv: showLeadDiv,
         leadName: effName,
-        name: a.name, dob: a.dob, age: age, note: note, hasNote: !!note, fit: fit,
+        name: sameAsBooker && isLead ? (a.name || this.state.form.name || '') : a.name,
+        dob: a.dob, age: age, note: note, hasNote: !!note, fit: fit,
         noteColor: (age == null) ? '#8a9579' : (fit ? '#9aff9a' : '#f0b48a'),
         setName: setArcher(i, 'name'), setDob: setArcher(i, 'dob'),
-        nameBorder: (this.state.formError && !isLead && !(a.name || '').trim()) ? '#e8674a' : 'rgba(244,239,228,0.18)',
+        nameBorder: (this.state.formError && showNameInput && !(effName || '').trim()) ? '#e8674a' : 'rgba(244,239,228,0.18)',
         dobBorder: (this.state.formError && !a.dob) ? '#e8674a' : 'rgba(244,239,228,0.18)',
         effName: effName,
       });
@@ -5520,7 +5559,15 @@ class Component extends DCLogic {
       canInc: party < cap, canDec: party > 1, isGroup: party > 1,
       isOpenRange: this.programByName(this.state.form.program).offerDiscounts,
       discountRows: this.discountRows(),
-      programOpts: this.programList().map(function (p) { return { name: p.name }; }),
+      programOpts: this.programsFittingArchers().map(function (p) { return { name: p.name }; }),
+      toggleSameAsBooker: () => this.setState(function (s) {
+        var on = !s.sameAsBooker; var ar = (s.archers || []).slice();
+        if (on) ar[0] = Object.assign({}, ar[0] || { dob: '', sel: {}, proof: {}, addons: {} }, { name: (s.form && s.form.name) || '' });
+        return { sameAsBooker: on, archers: ar };
+      }),
+      sameAsBookerOn: !!this.state.sameAsBooker,
+      sameAsBookerBox: this.state.sameAsBooker ? '#7fb43f' : 'transparent',
+      sameAsBookerCheck: this.state.sameAsBooker ? '✓' : '',
       archerRows, showArcherDetails, ageRangeLabel, programGated: !!ageRange, ageMismatch,
       archerProgramLabel: ageRange ? (this.state.form.program + ' \u00B7 ages ' + ageRangeLabel) : (this.state.form.program + ' \u00B7 all ages welcome'),
       slotDate: this.state.slotDate, onPickDate, minDate: todayStr, prettyDate: effPrettyDate,
