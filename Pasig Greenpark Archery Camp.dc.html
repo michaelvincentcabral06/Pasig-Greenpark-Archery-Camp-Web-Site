@@ -3447,13 +3447,23 @@ class Component extends DCLogic {
   }
   defaultPrograms() {
     return [
-      { name: 'Little Archers (6–10)', price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, minAge: 6,  maxAge: 10,  blurb: '' },
-      { name: 'Youth Squad (11–17)',   price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, minAge: 11, maxAge: 17,  blurb: '' },
-      { name: 'Adult Beginners (18+)',      price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, minAge: 18, maxAge: null, blurb: '' },
-      { name: 'Open Range',                 price: 400, needsCoach: false, multiDay: true,  offerDiscounts: true,  minAge: null, maxAge: null, blurb: '' },
-      { name: 'Private Coaching',           price: 1200, needsCoach: true, multiDay: false, offerDiscounts: false, minAge: null, maxAge: null, blurb: '' },
-      { name: 'Group & Corporate',          price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, minAge: null, maxAge: null, blurb: '' }
+      { name: 'Little Archers (6–10)', price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, minAge: 6,  maxAge: 10,  blurb: '', addons: [] },
+      { name: 'Youth Squad (11–17)',   price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, minAge: 11, maxAge: 17,  blurb: '', addons: [] },
+      { name: 'Adult Beginners (18+)',      price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, minAge: 18, maxAge: null, blurb: '', addons: [] },
+      { name: 'Open Range',                 price: 400, needsCoach: false, multiDay: true,  offerDiscounts: true,  minAge: null, maxAge: null, blurb: '', addons: [] },
+      { name: 'Private Coaching',           price: 1200, needsCoach: true, multiDay: false, offerDiscounts: false, minAge: null, maxAge: null, blurb: '', addons: [] },
+      { name: 'Group & Corporate',          price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, minAge: null, maxAge: null, blurb: '', addons: [] }
     ];
+  }
+  normalizeAddons(list) {
+    var src = (list && list.length) ? list : [];
+    var seen = {};
+    return src.map((a, i) => {
+      var id = a.id ? String(a.id) : this.slugify_(a.name);
+      while (seen[id]) { id = id + '-' + i; }
+      seen[id] = true;
+      return { id: id, name: a.name || 'Add-on', price: Number(a.price) || 0, scope: (a.scope === 'perBooking' ? 'perBooking' : 'perArcher') };
+    });
   }
   normalizePrograms(progs) {
     var list = (progs && progs.length) ? progs : this.defaultPrograms();
@@ -3462,15 +3472,16 @@ class Component extends DCLogic {
       needsCoach: !!p.needsCoach, multiDay: !!p.multiDay, offerDiscounts: !!p.offerDiscounts,
       minAge: (p.minAge == null || p.minAge === '') ? null : (parseInt(p.minAge, 10) || null),
       maxAge: (p.maxAge == null || p.maxAge === '') ? null : (parseInt(p.maxAge, 10) || null),
-      blurb: p.blurb || ''
+      blurb: p.blurb || '', addons: this.normalizeAddons(p.addons)
     }));
   }
   programList() { var c = this.state.content || {}; return this.normalizePrograms(c.programs); }
   programByName(name) {
     var list = this.programList();
     for (var i = 0; i < list.length; i++) { if (list[i].name === name) return list[i]; }
-    return { name: name || '', price: 600, needsCoach: true, multiDay: false, offerDiscounts: false, minAge: null, maxAge: null, blurb: '' };
+    return { name: name || '', price: 600, needsCoach: true, multiDay: false, offerDiscounts: false, minAge: null, maxAge: null, blurb: '', addons: [] };
   }
+  programAddons(name) { return this.programByName(name).addons || []; }
   defaultDiscounts() {
     return [
       { id: 'pasig', name: 'Pasig City resident',      amount: 100, proofRequired: true, proofLabel: 'Pasig City address or ID number' },
