@@ -1080,6 +1080,9 @@
                       <sc-if value="{{ d.proofShown }}" hint-placeholder-val="{{ false }}">
                       <input value="{{ d.proof }}" onInput="{{ d.setProof }}" placeholder="{{ d.proofLabel }}" style="width:100%;background:#1b3325;border:1px solid {{ d.proofBorder }};border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#f4efe4;outline:none;box-sizing:border-box;" />
                       </sc-if>
+                      <sc-if value="{{ d.qtyShown }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;align-items:center;gap:8px;padding-left:2px;"><span style="font-size:11.5px;color:#9aa890;font-family:'Spline Sans Mono',monospace;">Quantity</span><input value="{{ d.qty }}" onInput="{{ d.setQty }}" type="number" min="1" step="1" style="width:72px;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:8px 10px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#f4efe4;outline:none;" /></div>
+                      </sc-if>
                     </div>
                   </sc-for>
                 </div>
@@ -1088,11 +1091,16 @@
                 <div style="display:flex;flex-direction:column;gap:8px;">
                   <label style="font-size:12px;font-weight:600;color:#9aa890;letter-spacing:0.03em;">Add-ons</label>
                   <sc-for list="{{ ax.addonRows }}" as="ad">
+                    <div style="display:flex;flex-direction:column;gap:6px;">
                     <button onClick="{{ ad.toggle }}" style="display:flex;align-items:center;gap:10px;text-align:left;width:100%;background:#244232;border:1.5px solid {{ ad.border }};border-radius:9px;padding:9px 12px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
                       <span style="width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid {{ ad.border }};background:{{ ad.box }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">{{ ad.check }}</span>
                       <span style="flex:1;font-size:13.5px;color:#f4efe4;">{{ ad.name }}</span>
                       <span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#a6c96a;">{{ ad.priceLabel }}</span>
                     </button>
+                      <sc-if value="{{ ad.qtyShown }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;align-items:center;gap:8px;padding-left:2px;"><span style="font-size:11.5px;color:#9aa890;font-family:'Spline Sans Mono',monospace;">Quantity</span><input value="{{ ad.qty }}" onInput="{{ ad.setQty }}" type="number" min="1" step="1" style="width:72px;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:8px 10px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#f4efe4;outline:none;" /></div>
+                      </sc-if>
+                    </div>
                   </sc-for>
                 </div>
                 </sc-if>
@@ -1103,11 +1111,16 @@
               <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px;">
                 <label style="font-size:12px;font-weight:600;color:#9aa890;letter-spacing:0.03em;">Booking add-ons</label>
                 <sc-for list="{{ perBookingAddonRows }}" as="pa">
+                  <div style="display:flex;flex-direction:column;gap:6px;">
                   <button onClick="{{ pa.toggle }}" style="display:flex;align-items:center;gap:10px;text-align:left;width:100%;background:#244232;border:1.5px solid {{ pa.border }};border-radius:9px;padding:9px 12px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
                     <span style="width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid {{ pa.border }};background:{{ pa.box }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">{{ pa.check }}</span>
                     <span style="flex:1;font-size:13.5px;color:#f4efe4;">{{ pa.name }}</span>
                     <span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#a6c96a;">{{ pa.priceLabel }}</span>
                   </button>
+                    <sc-if value="{{ pa.qtyShown }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;align-items:center;gap:8px;padding-left:2px;"><span style="font-size:11.5px;color:#9aa890;font-family:'Spline Sans Mono',monospace;">Quantity</span><input value="{{ pa.qty }}" onInput="{{ pa.setQty }}" type="number" min="1" step="1" style="width:72px;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:8px 10px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#f4efe4;outline:none;" /></div>
+                    </sc-if>
+                  </div>
                 </sc-for>
               </div>
               </sc-if>
@@ -1490,6 +1503,9 @@
                       <sc-if value="{{ d.proofShown }}" hint-placeholder-val="{{ false }}">
                       <input value="{{ d.proof }}" onInput="{{ d.setProof }}" placeholder="{{ d.proofLabel }}" style="width:100%;background:#1b3325;border:1px solid {{ d.proofBorder }};border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#f4efe4;outline:none;box-sizing:border-box;" />
                       </sc-if>
+                      <sc-if value="{{ d.qtyShown }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;align-items:center;gap:8px;padding-left:2px;"><span style="font-size:11.5px;color:#9aa890;font-family:'Spline Sans Mono',monospace;">Quantity</span><input value="{{ d.qty }}" onInput="{{ d.setQty }}" type="number" min="1" step="1" style="width:72px;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:8px 10px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#f4efe4;outline:none;" /></div>
+                      </sc-if>
                     </div>
                   </sc-for>
                 </div>
@@ -1498,11 +1514,16 @@
                 <div style="display:flex;flex-direction:column;gap:8px;">
                   <label style="font-size:12px;font-weight:600;color:#9aa890;letter-spacing:0.03em;">Add-ons</label>
                   <sc-for list="{{ ax.addonRows }}" as="ad">
+                    <div style="display:flex;flex-direction:column;gap:6px;">
                     <button onClick="{{ ad.toggle }}" style="display:flex;align-items:center;gap:10px;text-align:left;width:100%;background:#244232;border:1.5px solid {{ ad.border }};border-radius:9px;padding:9px 12px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
                       <span style="width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid {{ ad.border }};background:{{ ad.box }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">{{ ad.check }}</span>
                       <span style="flex:1;font-size:13.5px;color:#f4efe4;">{{ ad.name }}</span>
                       <span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#a6c96a;">{{ ad.priceLabel }}</span>
                     </button>
+                      <sc-if value="{{ ad.qtyShown }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;align-items:center;gap:8px;padding-left:2px;"><span style="font-size:11.5px;color:#9aa890;font-family:'Spline Sans Mono',monospace;">Quantity</span><input value="{{ ad.qty }}" onInput="{{ ad.setQty }}" type="number" min="1" step="1" style="width:72px;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:8px 10px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#f4efe4;outline:none;" /></div>
+                      </sc-if>
+                    </div>
                   </sc-for>
                 </div>
                 </sc-if>
@@ -1513,11 +1534,16 @@
               <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px;">
                 <label style="font-size:12px;font-weight:600;color:#9aa890;letter-spacing:0.03em;">Booking add-ons</label>
                 <sc-for list="{{ perBookingAddonRows }}" as="pa">
+                  <div style="display:flex;flex-direction:column;gap:6px;">
                   <button onClick="{{ pa.toggle }}" style="display:flex;align-items:center;gap:10px;text-align:left;width:100%;background:#244232;border:1.5px solid {{ pa.border }};border-radius:9px;padding:9px 12px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
                     <span style="width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid {{ pa.border }};background:{{ pa.box }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">{{ pa.check }}</span>
                     <span style="flex:1;font-size:13.5px;color:#f4efe4;">{{ pa.name }}</span>
                     <span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#a6c96a;">{{ pa.priceLabel }}</span>
                   </button>
+                    <sc-if value="{{ pa.qtyShown }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;align-items:center;gap:8px;padding-left:2px;"><span style="font-size:11.5px;color:#9aa890;font-family:'Spline Sans Mono',monospace;">Quantity</span><input value="{{ pa.qty }}" onInput="{{ pa.setQty }}" type="number" min="1" step="1" style="width:72px;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:8px 10px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#f4efe4;outline:none;" /></div>
+                    </sc-if>
+                  </div>
                 </sc-for>
               </div>
               </sc-if>
@@ -2402,6 +2428,7 @@
                           <input value="{{ ad.price }}" onInput="{{ ad.setPrice }}" type="number" min="0" style="width:84px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:8px 10px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;font-weight:700;color:#1b2a1f;outline:none;" />
                           <button onClick="{{ ad.toggleScope }}" style="background:{{ ad.scopeBg }};color:{{ ad.scopeFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:11.5px;font-weight:700;padding:7px 12px;border-radius:999px;white-space:nowrap;">{{ ad.scopeLabel }}</button>
                           <button onClick="{{ ad.toggleBucket }}" style="background:{{ ad.bucketBg }};color:{{ ad.bucketFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:11.5px;font-weight:700;padding:7px 12px;border-radius:999px;white-space:nowrap;">{{ ad.bucketLabel }}</button>
+                          <button onClick="{{ ad.toggleRate }}" style="background:{{ ad.rateBg }};color:{{ ad.rateFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:11.5px;font-weight:700;padding:7px 12px;border-radius:999px;white-space:nowrap;">{{ ad.rateLabel }}</button>
                           <button onClick="{{ ad.remove }}" style="background:none;border:1px solid rgba(180,81,47,0.4);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:11.5px;font-weight:700;color:#b4512f;padding:7px 11px;border-radius:999px;">Remove</button>
                         </div>
                       </sc-for>
@@ -2425,6 +2452,7 @@
                   <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
                     <label style="font-size:11.5px;font-weight:600;color:#56664f;">Amount (&#8369;)<input value="{{ dc.amount }}" onInput="{{ dc.setAmount }}" type="number" min="0" style="display:block;margin-top:4px;width:100px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
                     <button onClick="{{ dc.toggleProof }}" style="background:{{ dc.proofBg }};color:{{ dc.proofFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:8px 14px;border-radius:999px;">Proof required</button>
+                    <button onClick="{{ dc.toggleRate }}" style="background:{{ dc.rateBg }};color:{{ dc.rateFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:8px 14px;border-radius:999px;white-space:nowrap;">{{ dc.rateLabel }}</button>
                   </div>
                   <sc-if value="{{ dc.proofRequired }}" hint-placeholder-val="{{ true }}">
                     <label style="font-size:11.5px;font-weight:600;color:#56664f;">Proof label (placeholder)<input value="{{ dc.proofLabel }}" onInput="{{ dc.setProofLabel }}" style="display:block;margin-top:4px;width:100%;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#1b2a1f;outline:none;" /></label>
@@ -2732,8 +2760,9 @@ class Component extends DCLogic {
     multiTimes: {},
     multiLoading: {},
     calMonth: '',
-    archers: [{ name: '', dob: '', sel: {}, proof: {}, addons: {} }],
+    archers: [{ name: '', dob: '', sel: {}, proof: {}, addons: {}, addonQty: {}, concQty: {} }],
     perBookingAddons: {},
+    perBookingAddonQty: {},
     slots: [],
     slotsLoading: false,
     bookingStatus: '',
@@ -3459,43 +3488,66 @@ class Component extends DCLogic {
     if (program != null && !this.programByName(program).groupDiscount) return 0;
     return this.tierPctFor(party);
   }
-  // Per-archer helpers (per slot).
-  archerConcessionPerSlot(archer) {
+  // Rate-type multiplier (sub-project C): per-hour → #slots, per-day → #days, per-unit → quantity.
+  rateMult_(rateType, qty, hours, days) {
+    if (rateType === 'perDay') return Math.max(0, days || 0);
+    if (rateType === 'perUnit') return Math.max(1, parseInt(qty, 10) || 1);
+    return Math.max(0, hours || 0);
+  }
+  // Short suffix shown next to a price/discount so the booker sees how it scales.
+  rateNote_(rateType) { return rateType === 'perDay' ? ' /day' : (rateType === 'perUnit' ? ' /unit' : ' /hr'); }
+  // Distinct days + slot (hour) counts for the current selection.
+  bookingDayHourCounts() {
+    if ((this.state.selectedDates || []).length) {
+      var mt = this.state.multiTimes || {};
+      var dates = (this.state.selectedDates || []).filter(function (d) { return (mt[d] || []).length > 0; });
+      var hours = dates.reduce(function (s, d) { return s + (mt[d] || []).length; }, 0);
+      return { hours: hours, days: dates.length };
+    }
+    var t = (this.state.slotTimes || []).length;
+    return { hours: t, days: t > 0 ? 1 : 0 };
+  }
+  // Per-archer / per-booking TOTALS over the whole booking (rate-type aware).
+  archerConcessionTotal(archer, hours, days) {
     if (!this.programByName(this.state.form.program).offerDiscounts) return 0;
-    var sel = (archer && archer.sel) || {};
-    return this.discountList().reduce(function (s, d) { return s + (sel[d.id] ? d.amount : 0); }, 0);
+    var sel = (archer && archer.sel) || {}, q = (archer && archer.concQty) || {}, self = this;
+    return this.discountList().reduce(function (s, d) { return s + (sel[d.id] ? d.amount * self.rateMult_(d.rateType, q[d.id], hours, days) : 0); }, 0);
   }
-  archerAddonPerSlot(archer) {
-    var sel = (archer && archer.addons) || {};
+  archerAddonTotal(archer, hours, days) {
+    var sel = (archer && archer.addons) || {}, q = (archer && archer.addonQty) || {}, self = this;
     var per = this.programAddons(this.state.form.program).filter(function (a) { return a.scope === 'perArcher'; });
-    return per.reduce(function (s, a) { return s + (sel[a.id] ? a.price : 0); }, 0);
+    return per.reduce(function (s, a) { return s + (sel[a.id] ? a.price * self.rateMult_(a.rateType, q[a.id], hours, days) : 0); }, 0);
   }
-  perBookingAddonPerSlot() {
-    var sel = this.state.perBookingAddons || {};
+  perBookingAddonTotal(hours, days) {
+    var sel = this.state.perBookingAddons || {}, q = this.state.perBookingAddonQty || {}, self = this;
     var pb = this.programAddons(this.state.form.program).filter(function (a) { return a.scope === 'perBooking'; });
-    return pb.reduce(function (s, a) { return s + (sel[a.id] ? a.price : 0); }, 0);
+    return pb.reduce(function (s, a) { return s + (sel[a.id] ? a.price * self.rateMult_(a.rateType, q[a.id], hours, days) : 0); }, 0);
   }
-  // Final price = Σ archers (rate×(1−groupPct) − concessions + perArcher addons) × slots + perBooking addons × slots.
-  priceFor(program, party, sessions) {
-    party = Math.max(1, party); sessions = Math.max(0, sessions);
+  // Final price = Σ archers max(0, base×hours − concessions + perArcher add-ons) + perBooking add-ons,
+  // where concessions/add-ons each scale by their own rate type (per hour/day/unit).
+  priceFor(program, party, hours, days) {
+    party = Math.max(1, party); hours = Math.max(0, hours || 0); days = Math.max(0, days || 0);
     var rate = this.rateFor(program), pct = this.discountFor(party, program);
     var archers = this.state.archers || [];
-    var per = 0;
+    var total = 0;
     for (var i = 0; i < party; i++) {
       var a = archers[i] || {};
-      per += Math.round(rate * (1 - pct)) - this.archerConcessionPerSlot(a) + this.archerAddonPerSlot(a);
+      var base = Math.round(rate * (1 - pct)) * hours;
+      total += Math.max(0, base - this.archerConcessionTotal(a, hours, days) + this.archerAddonTotal(a, hours, days));
     }
-    per += this.perBookingAddonPerSlot();
-    return Math.max(0, Math.round(per * sessions));
+    total += this.perBookingAddonTotal(hours, days);
+    return Math.max(0, Math.round(total));
   }
-  buildConcession(sel, proof) {
-    sel = sel || {}; proof = proof || {};
+  buildConcession(sel, proof, qtys, hours, days) {
+    sel = sel || {}; proof = proof || {}; qtys = qtys || {};
+    var hasMult = (hours !== undefined && hours !== null), self = this;
     var items = this.discountList().filter(d => sel[d.id]).map(d => ({
-      id: d.id, name: d.name, amount: d.amount,
+      id: d.id, name: d.name, amount: d.amount, rateType: d.rateType,
+      qty: hasMult ? self.rateMult_(d.rateType, qtys[d.id], hours, days) : 1,
       proof: d.proofRequired ? String(proof[d.id] || '').trim() : ''
     }));
     if (!items.length) return null;
-    return { items: items, total: items.reduce((s, it) => s + it.amount, 0) };
+    return { items: items, total: items.reduce((s, it) => s + it.amount * (it.qty || 1), 0) };
   }
   toggleArcherConc_(i, id) {
     this.setState(function (s) {
@@ -3540,6 +3592,16 @@ class Component extends DCLogic {
       return { perBookingAddons: pb };
     });
   }
+  qtyClamp_(v) { var n = parseInt(v, 10); return (isNaN(n) || n < 1) ? 1 : n; }
+  setArcherAddonQty_(i, id, v) {
+    this.setState(s => { const ar = (s.archers || []).slice(); const a = Object.assign({ dob: '', sel: {}, proof: {}, addons: {} }, ar[i] || {}); a.addonQty = Object.assign({}, a.addonQty || {}); a.addonQty[id] = this.qtyClamp_(v); ar[i] = a; return { archers: ar }; });
+  }
+  setArcherConcQty_(i, id, v) {
+    this.setState(s => { const ar = (s.archers || []).slice(); const a = Object.assign({ dob: '', sel: {}, proof: {}, addons: {} }, ar[i] || {}); a.concQty = Object.assign({}, a.concQty || {}); a.concQty[id] = this.qtyClamp_(v); ar[i] = a; return { archers: ar }; });
+  }
+  setBookingAddonQty_(id, v) {
+    this.setState(s => { const q = Object.assign({}, s.perBookingAddonQty || {}); q[id] = this.qtyClamp_(v); return { perBookingAddonQty: q }; });
+  }
   archerExtraRows() {
     var party = Math.max(1, this.state.party || 1);
     var archers = this.state.archers || [];
@@ -3554,27 +3616,34 @@ class Component extends DCLogic {
       (function (idx) {
         var a = archers[idx] || { dob: '', sel: {}, proof: {}, addons: {} };
         var sel = a.sel || {}, proof = a.proof || {}, addons = a.addons || {};
+        var qtyA = a.addonQty || {}, qtyC = a.concQty || {};
         var concRows = dList.map(function (d) {
           var on = !!sel[d.id];
           var missing = err && d.proofRequired && on && !String(proof[d.id] || '').trim();
+          var isUnit = d.rateType === 'perUnit';
           return {
-            id: d.id, name: d.name, amountLabel: '−₱' + d.amount,
+            id: d.id, name: d.name, amountLabel: '−₱' + d.amount + self.rateNote_(d.rateType),
             checked: on, box: on ? '#7fb43f' : 'transparent',
             border: on ? '#7fb43f' : 'rgba(244,239,228,0.18)', check: on ? '✓' : '',
             proofRequired: d.proofRequired, proofShown: d.proofRequired && on,
             proof: String(proof[d.id] || ''), proofLabel: d.proofLabel,
             proofBorder: missing ? '#e8674a' : 'rgba(244,239,228,0.18)',
+            qtyShown: isUnit && on, qty: self.qtyClamp_(qtyC[d.id]),
             toggle: (function (ii, did) { return function () { self.toggleArcherConc_(ii, did); }; })(idx, d.id),
-            setProof: (function (ii, did) { return function (e) { self.setArcherProof_(ii, did, e.target.value); }; })(idx, d.id)
+            setProof: (function (ii, did) { return function (e) { self.setArcherProof_(ii, did, e.target.value); }; })(idx, d.id),
+            setQty: (function (ii, did) { return function (e) { self.setArcherConcQty_(ii, did, e.target.value); }; })(idx, d.id)
           };
         });
         var addonRows = aList.map(function (ad) {
           var on = !!addons[ad.id];
+          var isUnit = ad.rateType === 'perUnit';
           return {
-            id: ad.id, name: ad.name, priceLabel: '+₱' + ad.price,
+            id: ad.id, name: ad.name, priceLabel: '+₱' + ad.price + self.rateNote_(ad.rateType),
             checked: on, box: on ? '#7fb43f' : 'transparent',
             border: on ? '#7fb43f' : 'rgba(244,239,228,0.18)', check: on ? '✓' : '',
-            toggle: (function (ii, aid) { return function () { self.toggleArcherAddon_(ii, aid); }; })(idx, ad.id)
+            qtyShown: isUnit && on, qty: self.qtyClamp_(qtyA[ad.id]),
+            toggle: (function (ii, aid) { return function () { self.toggleArcherAddon_(ii, aid); }; })(idx, ad.id),
+            setQty: (function (ii, aid) { return function (e) { self.setArcherAddonQty_(ii, aid, e.target.value); }; })(idx, ad.id)
           };
         });
         rows.push({
@@ -3593,14 +3662,18 @@ class Component extends DCLogic {
     var program = this.state.form.program;
     var pb = this.programAddons(program).filter(function (a) { return a.scope === 'perBooking'; });
     var sel = this.state.perBookingAddons || {};
+    var qty = this.state.perBookingAddonQty || {};
     var self = this;
     return pb.map(function (ad) {
       var on = !!sel[ad.id];
+      var isUnit = ad.rateType === 'perUnit';
       return {
-        id: ad.id, name: ad.name, priceLabel: '+₱' + ad.price,
+        id: ad.id, name: ad.name, priceLabel: '+₱' + ad.price + self.rateNote_(ad.rateType),
         checked: on, box: on ? '#7fb43f' : 'transparent',
         border: on ? '#7fb43f' : 'rgba(244,239,228,0.18)', check: on ? '✓' : '',
-        toggle: (function (aid) { return function () { self.toggleBookingAddon_(aid); }; })(ad.id)
+        qtyShown: isUnit && on, qty: self.qtyClamp_(qty[ad.id]),
+        toggle: (function (aid) { return function () { self.toggleBookingAddon_(aid); }; })(ad.id),
+        setQty: (function (aid) { return function (e) { self.setBookingAddonQty_(aid, e.target.value); }; })(ad.id)
       };
     });
   }
@@ -3616,7 +3689,7 @@ class Component extends DCLogic {
     const times = (this.state.slotTimes || []).slice();
     const party = Math.max(1, this.state.party || 1);
     const email = (form.email || '').trim();
-    const amount = this.priceFor(form.program, party, times.length);
+    const amount = this.priceFor(form.program, party, times.length, times.length > 0 ? 1 : 0);
     const openRange = true; // Foundation #2: every program is multi-day
 
     // ----- MULTI-DATE (multi-day programs): book every chosen (date, time) pair -----
@@ -3626,17 +3699,18 @@ class Component extends DCLogic {
       const pairs = [];
       selDatesB.forEach(d => (mt[d] || []).forEach(t => pairs.push({ date: d, time: t })));
       if (!pairs.length) { this.setState({ formError: true }); return; }
-      const mAmount = this.priceFor(form.program, party, pairs.length);
       // Build per-archer line items for multi-date path
       const mSlots = pairs.length;
+      const mDays = selDatesB.filter(d => (mt[d] || []).length > 0).length;
+      const mAmount = this.priceFor(form.program, party, mSlots, mDays);
       const mRate = this.rateFor(form.program), mPct = this.discountFor(party, form.program);
       const mArcherItems = (this.state.archers || []).slice(0, party).map((a) => ({
         name: (a.name || '').trim(), dob: a.dob || '',
-        concession: this.programByName(form.program).offerDiscounts ? this.buildConcession(a.sel, a.proof) : null,
-        addons: this.programAddons(form.program).filter(x => x.scope === 'perArcher' && (a.addons || {})[x.id]).map(x => ({ id: x.id, name: x.name, price: x.price })),
-        amount: Math.max(0, Math.round((Math.round(mRate * (1 - mPct)) - this.archerConcessionPerSlot(a) + this.archerAddonPerSlot(a)) * mSlots))
+        concession: this.programByName(form.program).offerDiscounts ? this.buildConcession(a.sel, a.proof, a.concQty, mSlots, mDays) : null,
+        addons: this.programAddons(form.program).filter(x => x.scope === 'perArcher' && (a.addons || {})[x.id]).map(x => ({ id: x.id, name: x.name, price: x.price, qty: this.rateMult_(x.rateType, (a.addonQty || {})[x.id], mSlots, mDays), rateType: x.rateType })),
+        amount: Math.max(0, Math.round((Math.round(mRate * (1 - mPct)) * mSlots) - this.archerConcessionTotal(a, mSlots, mDays) + this.archerAddonTotal(a, mSlots, mDays)))
       }));
-      const mPerBookingAddons = this.programAddons(form.program).filter(x => x.scope === 'perBooking' && (this.state.perBookingAddons || {})[x.id]).map(x => ({ id: x.id, name: x.name, price: x.price }));
+      const mPerBookingAddons = this.programAddons(form.program).filter(x => x.scope === 'perBooking' && (this.state.perBookingAddons || {})[x.id]).map(x => ({ id: x.id, name: x.name, price: x.price, qty: this.rateMult_(x.rateType, (this.state.perBookingAddonQty || {})[x.id], mSlots, mDays), rateType: x.rateType }));
       if (!ep) {
         const ms = this.state.multiSlots || {};
         const bad = pairs.filter(p => { const s = (ms[p.date] || []).find(x => x.time === p.time); return !s || s.left < party; });
@@ -3677,16 +3751,17 @@ class Component extends DCLogic {
       return;
     }
 
-    // Build per-archer line items for single-date path
+    // Build per-archer line items for single-date path (one calendar day)
     const sSlots = times.length;
+    const sDays = sSlots > 0 ? 1 : 0;
     const sRate = this.rateFor(form.program), sPct = this.discountFor(party, form.program);
     const archerItems = (this.state.archers || []).slice(0, party).map((a) => ({
       name: (a.name || '').trim(), dob: a.dob || '',
-      concession: this.programByName(form.program).offerDiscounts ? this.buildConcession(a.sel, a.proof) : null,
-      addons: this.programAddons(form.program).filter(x => x.scope === 'perArcher' && (a.addons || {})[x.id]).map(x => ({ id: x.id, name: x.name, price: x.price })),
-      amount: Math.max(0, Math.round((Math.round(sRate * (1 - sPct)) - this.archerConcessionPerSlot(a) + this.archerAddonPerSlot(a)) * sSlots))
+      concession: this.programByName(form.program).offerDiscounts ? this.buildConcession(a.sel, a.proof, a.concQty, sSlots, sDays) : null,
+      addons: this.programAddons(form.program).filter(x => x.scope === 'perArcher' && (a.addons || {})[x.id]).map(x => ({ id: x.id, name: x.name, price: x.price, qty: this.rateMult_(x.rateType, (a.addonQty || {})[x.id], sSlots, sDays), rateType: x.rateType })),
+      amount: Math.max(0, Math.round((Math.round(sRate * (1 - sPct)) * sSlots) - this.archerConcessionTotal(a, sSlots, sDays) + this.archerAddonTotal(a, sSlots, sDays)))
     }));
-    const perBookingAddons = this.programAddons(form.program).filter(x => x.scope === 'perBooking' && (this.state.perBookingAddons || {})[x.id]).map(x => ({ id: x.id, name: x.name, price: x.price }));
+    const perBookingAddons = this.programAddons(form.program).filter(x => x.scope === 'perBooking' && (this.state.perBookingAddons || {})[x.id]).map(x => ({ id: x.id, name: x.name, price: x.price, qty: this.rateMult_(x.rateType, (this.state.perBookingAddonQty || {})[x.id], sSlots, sDays), rateType: x.rateType }));
 
     if (!ep) {
       // demo mode — no real calendar write / email
@@ -3804,7 +3879,7 @@ class Component extends DCLogic {
       var id = a.id ? String(a.id) : this.slugify_(a.name);
       while (seen[id]) { id = id + '-' + i; }
       seen[id] = true;
-      return { id: id, name: a.name || 'Add-on', price: Number(a.price) || 0, scope: (a.scope === 'perBooking' ? 'perBooking' : 'perArcher'), bucket: ((a.bucket === 'coach' || a.bucket === 'range') ? a.bucket : 'equip') };
+      return { id: id, name: a.name || 'Add-on', price: Number(a.price) || 0, scope: (a.scope === 'perBooking' ? 'perBooking' : 'perArcher'), bucket: ((a.bucket === 'coach' || a.bucket === 'range') ? a.bucket : 'equip'), rateType: ((a.rateType === 'perDay' || a.rateType === 'perUnit') ? a.rateType : 'perHour') };
     });
   }
   normalizePrograms(progs) {
@@ -3878,7 +3953,7 @@ class Component extends DCLogic {
       var id = d.id ? String(d.id) : this.slugify_(d.name);
       while (seen[id]) { id = id + '-' + i; }
       seen[id] = true;
-      return { id: id, name: d.name || 'Discount', amount: Number(d.amount) || 0, proofRequired: !!d.proofRequired, proofLabel: d.proofLabel || '' };
+      return { id: id, name: d.name || 'Discount', amount: Number(d.amount) || 0, proofRequired: !!d.proofRequired, proofLabel: d.proofLabel || '', rateType: ((d.rateType === 'perDay' || d.rateType === 'perUnit') ? d.rateType : 'perHour') };
     });
   }
   discountList() { var c = this.state.content || {}; return this.normalizeDiscounts(c.discounts); }
@@ -4240,23 +4315,25 @@ class Component extends DCLogic {
       .catch(() => this.setState({ editSlots: this.buildSampleSlots(dateStr), editLoading: false }));
   }
   concToSel_(c) {
-    var sel = {}, proof = {};
+    var sel = {}, proof = {}, qty = {};
     if (c && c.items && c.items.length) {
-      c.items.forEach(it => { if (it && it.id) { sel[it.id] = true; proof[it.id] = it.proof || ''; } });
+      c.items.forEach(it => { if (it && it.id) { sel[it.id] = true; proof[it.id] = it.proof || ''; if (it.qty) qty[it.id] = it.qty; } });
     } else if (c) {
       if (c.pasig) { sel.pasig = true; proof.pasig = c.pasigProof || ''; }
       if (c.pac)   { sel.pac = true;   proof.pac = c.wapId || ''; }
       if (c.local) { sel.local = true; proof.local = c.localProof || ''; }
     }
-    return { sel: sel, proof: proof };
+    return { sel: sel, proof: proof, qty: qty };
   }
-  // Seed {sel, proof} from a surfaced per-archer concession ({items:[{name,proof}]}),
-  // mapping discount NAMES back to ids via discountList(). Falls back to concToSel_ for the legacy shape.
+  // Seed {sel, proof, qty} from a surfaced per-archer concession ({items:[{name,proof,qty?}]}),
+  // mapping discount NAMES back to ids via discountList(). Falls back to concToSel_ for the legacy
+  // shape. NOTE: the backend lookup_ surfaces only name+proof, so per-unit qty survives only on the
+  // local/device copy; a remote reload defaults qty to 1 (per-unit concessions are an edge case).
   concItemsToSel_(concession) {
     if (concession && concession.items && concession.items.length) {
-      const sel = {}, proof = {}, dl = this.discountList();
-      concession.items.forEach(it => { const d = dl.find(x => x.name === (it && it.name)); if (d) { sel[d.id] = true; proof[d.id] = (it.proof || ''); } });
-      return { sel: sel, proof: proof };
+      const sel = {}, proof = {}, qty = {}, dl = this.discountList();
+      concession.items.forEach(it => { const d = dl.find(x => x.name === (it && it.name)); if (d) { sel[d.id] = true; proof[d.id] = (it.proof || ''); if (it.qty) qty[d.id] = it.qty; } });
+      return { sel: sel, proof: proof, qty: qty };
     }
     return this.concToSel_(concession || {});
   }
@@ -4266,7 +4343,7 @@ class Component extends DCLogic {
       return;
     }
     const archersSrc = (entry.archers && entry.archers.length) ? entry.archers : [{ concession: entry.concession }];
-    const editArchers = archersSrc.map(a => { const s = this.concItemsToSel_((a && a.concession) || {}); return { sel: s.sel, proof: s.proof }; });
+    const editArchers = archersSrc.map(a => { const s = this.concItemsToSel_((a && a.concession) || {}); return { sel: s.sel, proof: s.proof, concQty: s.qty || {} }; });
     this.setState({
       editTs: entry.ts, editDate: entry.date || '', editTime: entry.time || '', editParty: Math.max(1, entry.party || archersSrc.length || 1),
       editArchers: editArchers, editFormError: false, editSlots: [], editLoading: false,
@@ -4280,9 +4357,11 @@ class Component extends DCLogic {
     const party = Math.max(1, editArchers.length || (entry && entry.party) || 1);
     const base = this.rateFor(program) * (1 - this.discountFor(party, program));
     const dl = open ? this.discountList() : [];
+    const self = this;
+    // The edit panel acts on a single slot → hours=1, days=1 (per-unit uses the stored qty).
     return editArchers.map(a => {
-      const sel = a.sel || {};
-      const conc = dl.reduce((s, d) => s + (sel[d.id] ? d.amount : 0), 0);
+      const sel = a.sel || {}, q = a.concQty || {};
+      const conc = dl.reduce((s, d) => s + (sel[d.id] ? d.amount * self.rateMult_(d.rateType, q[d.id], 1, 1) : 0), 0);
       return Math.max(0, Math.round(base - conc));
     });
   }
@@ -4326,14 +4405,14 @@ class Component extends DCLogic {
       if (missing) { this.setState({ editFormError: true }); return; }
     }
     const amounts = this.editArcherAmounts(entry);
-    const archers = editArchers.map((a, i) => ({ concession: open ? this.buildConcession(a.sel, a.proof) : null, amount: amounts[i] }));
+    const archers = editArchers.map((a, i) => ({ concession: open ? this.buildConcession(a.sel, a.proof, a.concQty, 1, 1) : null, amount: amounts[i] }));
     const amount = amounts.reduce((s, n) => s + n, 0);
     const slotChanged = (date !== entry.date) || (time !== entry.time);
     const party = Math.max(1, this.state.editParty || 1);
     const ep = this.endpoint();
     this.setState({ editBusy: true });
     const applyLocal = (newEventId, ref) => {
-      const updated = { ...entry, date: date, time: time, party: party, amount: amount, archers: editArchers.map((a, i) => ({ name: (entry.archers && entry.archers[i] && entry.archers[i].name) || '', concession: (open ? this.buildConcession(a.sel, a.proof) : null), amount: amounts[i] })), ref: ref || entry.ref, eventId: newEventId != null ? newEventId : entry.eventId, ts: entry.ts };
+      const updated = { ...entry, date: date, time: time, party: party, amount: amount, archers: editArchers.map((a, i) => ({ name: (entry.archers && entry.archers[i] && entry.archers[i].name) || '', concession: (open ? this.buildConcession(a.sel, a.proof, a.concQty, 1, 1) : null), amount: amounts[i] })), ref: ref || entry.ref, eventId: newEventId != null ? newEventId : entry.eventId, ts: entry.ts };
       // Match the existing row by its STABLE identity (eventId/ref). A reschedule changes the
       // slot and the calendar-derived timestamp, so matching on ts alone misses it and a stale
       // old-date row would linger as a duplicate.
@@ -4830,7 +4909,7 @@ class Component extends DCLogic {
         bookingSms: sms,
       });
     };
-    const resetForm = () => this.setState({ submitted: false, formError: false, form: { name: '', phone: '', email: '', program: 'Adult Beginners (18+)', date: '' }, slotDate: '', slotTimes: [], party: 1, sameAsBooker: false, archers: [{ name: '', dob: '', sel: {}, proof: {}, addons: {} }], perBookingAddons: {}, selectedDates: [], multiSlots: {}, multiTimes: {}, multiLoading: {}, calMonth: '', slots: [], bookingStatus: '', bookingAlts: [] });
+    const resetForm = () => this.setState({ submitted: false, formError: false, form: { name: '', phone: '', email: '', program: 'Adult Beginners (18+)', date: '' }, slotDate: '', slotTimes: [], party: 1, sameAsBooker: false, archers: [{ name: '', dob: '', sel: {}, proof: {}, addons: {}, addonQty: {}, concQty: {} }], perBookingAddons: {}, perBookingAddonQty: {}, selectedDates: [], multiSlots: {}, multiTimes: {}, multiLoading: {}, calMonth: '', slots: [], bookingStatus: '', bookingAlts: [] });
 
     // ---------- BOOKING ENGINE (view) ----------
     const cap = this.capacity();
@@ -5039,19 +5118,19 @@ class Component extends DCLogic {
     const billableSessions = effSessions;
     const costSubtotal = rrate * party * billableSessions;
     const discountRate = this.discountFor(party, this.state.form.program);
-    const costTotal = this.priceFor(this.state.form.program || '', party, effSessions);
+    const costTotal = this.priceFor(this.state.form.program || '', party, effSessions, dayCount);
     const groupDiscountAmount = Math.round(costSubtotal * discountRate);
     const archersList = this.state.archers || [];
-    const eligPer = archersList.slice(0, party).reduce((s, a) => s + this.archerConcessionPerSlot(a), 0);
-    const eligDiscountAmount = eligPer * billableSessions;
+    const eligTotal = archersList.slice(0, party).reduce((s, a) => s + this.archerConcessionTotal(a, slotCount, dayCount), 0);
+    const eligDiscountAmount = eligTotal;
     const discountAmount = costSubtotal - costTotal;
     const hasGroupDiscount = discountRate > 0 && slotCount > 0;
-    const hasEligDiscount = eligPer > 0 && slotCount > 0;
+    const hasEligDiscount = eligTotal > 0 && slotCount > 0;
     const hasDiscount = hasGroupDiscount || hasEligDiscount;
     const eligSelUnion = {};
     archersList.slice(0, party).forEach(a => { const s = (a && a.sel) || {}; Object.keys(s).forEach(id => { if (s[id]) eligSelUnion[id] = true; }); });
     const eligParts = this.discountList().filter(d => eligSelUnion[d.id]).map(d => d.name);
-    const eligDiscountLabel = eligParts.join(' + ') + ' (\u2212\u20B1' + (party > 0 ? Math.round(eligPer / party) : 0) + ' each)';
+    const eligDiscountLabel = eligParts.join(' + ') + ' (\u2212\u20B1' + (party > 0 ? Math.round(eligTotal / party) : 0) + ' each)';
     const eligDiscountAmountLabel = '\u2212' + peso(eligDiscountAmount);
     const discountPctLabel = Math.round(discountRate * 100) + '% group discount';
     const acrossDays = (multiDateMode && dayCount > 1) ? (' across ' + dayCount + ' days') : '';
@@ -5088,6 +5167,9 @@ class Component extends DCLogic {
     const nextBucket = (b) => (b === 'equip' ? 'coach' : (b === 'coach' ? 'range' : 'equip'));
     const toggleAddonBucket = (pi, ai) => () => { writeAddons(pi, progAddons(pi).map((a, j) => j === ai ? { ...a, bucket: nextBucket(a.bucket || 'equip') } : a)); };
     const bucketLabelOf = (b) => 'Goes to: ' + (b === 'coach' ? 'Coach' : (b === 'range' ? 'Range' : 'Equipment'));
+    const nextRate = (r) => (r === 'perHour' ? 'perDay' : (r === 'perDay' ? 'perUnit' : 'perHour'));
+    const rateLabelOf = (r) => 'Rate: ' + (r === 'perDay' ? 'Per day' : (r === 'perUnit' ? 'Per unit' : 'Per hour'));
+    const toggleAddonRate = (pi, ai) => () => { writeAddons(pi, progAddons(pi).map((a, j) => j === ai ? { ...a, rateType: nextRate(a.rateType || 'perHour') } : a)); };
     const removeAddon = (pi, ai) => () => writeAddons(pi, progAddons(pi).filter((_, j) => j !== ai));
     const addAddon = (pi) => () => writeAddons(pi, this.normalizeAddons(progAddons(pi).concat([{ name: 'New add-on', price: 0, scope: 'perArcher' }])));
     const programEdits = (cm.programs || this.defaultPrograms()).map((p, i) => ({
@@ -5111,19 +5193,24 @@ class Component extends DCLogic {
         toggleScope: toggleAddonScope(i, ai), remove: removeAddon(i, ai),
         bucketLabel: bucketLabelOf(a.bucket),
         bucketBg: '#fffdf6', bucketFg: '#244232',
-        toggleBucket: toggleAddonBucket(i, ai)
+        toggleBucket: toggleAddonBucket(i, ai),
+        rateLabel: rateLabelOf(a.rateType),
+        rateBg: '#fffdf6', rateFg: '#244232',
+        toggleRate: toggleAddonRate(i, ai)
       })),
     }));
     const setDiscField = (i, key) => (e) => { const v = e.target.value; const ds = this.discountList().map((d, idx) => idx === i ? { ...d, [key]: v } : d); saveCM({ discounts: ds }); };
     const setDiscNum   = (i, key) => (e) => { const v = (e.target.value === '' ? 0 : (Number(e.target.value) || 0)); const ds = this.discountList().map((d, idx) => idx === i ? { ...d, [key]: v } : d); saveCM({ discounts: ds }); };
     const toggleDiscProof = (i) => () => { const ds = this.discountList().map((d, idx) => idx === i ? { ...d, proofRequired: !d.proofRequired } : d); saveCM({ discounts: ds }); };
+    const toggleDiscRate = (i) => () => { const ds = this.discountList().map((d, idx) => idx === i ? { ...d, rateType: nextRate(d.rateType || 'perHour') } : d); saveCM({ discounts: ds }); };
     const removeDiscount = (i) => () => saveCM({ discounts: this.discountList().filter((_, idx) => idx !== i) });
     const addDiscount = () => { const ds = this.normalizeDiscounts(this.discountList().concat([{ name: 'New discount', amount: 100, proofRequired: true, proofLabel: 'Proof / ID number' }])); saveCM({ discounts: ds }); };
     const discountEdits = this.discountList().map((d, i) => ({
       name: d.name, amount: d.amount, proofLabel: d.proofLabel, proofRequired: !!d.proofRequired,
       proofBg: d.proofRequired ? '#244232' : '#fffdf6', proofFg: d.proofRequired ? '#f4efe4' : '#244232',
       setName: setDiscField(i, 'name'), setAmount: setDiscNum(i, 'amount'), setProofLabel: setDiscField(i, 'proofLabel'),
-      toggleProof: toggleDiscProof(i), remove: removeDiscount(i)
+      toggleProof: toggleDiscProof(i), remove: removeDiscount(i),
+      rateLabel: rateLabelOf(d.rateType), rateBg: '#fffdf6', rateFg: '#244232', toggleRate: toggleDiscRate(i)
     }));
     const setTierNum = (i, key) => (e) => { const v = (e.target.value === '' ? 0 : (Number(e.target.value) || 0)); const ts = this.groupTiers().map((t, idx) => idx === i ? { ...t, [key]: v } : t); saveCM({ groupTiers: ts }); };
     const removeTier = (i) => () => saveCM({ groupTiers: this.groupTiers().filter((_, idx) => idx !== i) });
