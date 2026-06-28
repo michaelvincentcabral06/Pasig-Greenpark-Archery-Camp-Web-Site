@@ -4303,7 +4303,7 @@ class Component extends DCLogic {
         const on = !!sel[d.id];
         const missing = err && d.proofRequired && on && !String(proof[d.id] || '').trim();
         return {
-          id: d.id, name: d.name, amountLabel: '-₱' + d.amount,
+          id: d.id, name: d.name, amountLabel: '−₱' + d.amount,
           box: on ? '#7fb43f' : 'transparent', border: on ? '#7fb43f' : 'rgba(244,239,228,0.18)', check: on ? '✓' : '',
           proofShown: d.proofRequired && on, proof: String(proof[d.id] || ''), proofLabel: d.proofLabel,
           proofBorder: missing ? '#e8674a' : 'rgba(244,239,228,0.18)',
@@ -4337,7 +4337,7 @@ class Component extends DCLogic {
     const ep = this.endpoint();
     this.setState({ editBusy: true });
     const applyLocal = (newEventId, ref) => {
-      const updated = { ...entry, date: date, time: time, party: party, amount: amount, archers: editArchers.map((a, i) => ({ name: (entry.archers && entry.archers[i] && entry.archers[i].name) || '', concession: (open ? this.buildConcession(a.sel, a.proof) : null) })), ref: ref || entry.ref, eventId: newEventId != null ? newEventId : entry.eventId, ts: entry.ts };
+      const updated = { ...entry, date: date, time: time, party: party, amount: amount, archers: editArchers.map((a, i) => ({ name: (entry.archers && entry.archers[i] && entry.archers[i].name) || '', concession: (open ? this.buildConcession(a.sel, a.proof) : null), amount: amounts[i] })), ref: ref || entry.ref, eventId: newEventId != null ? newEventId : entry.eventId, ts: entry.ts };
       // Match the existing row by its STABLE identity (eventId/ref). A reschedule changes the
       // slot and the calendar-derived timestamp, so matching on ts alone misses it and a stale
       // old-date row would linger as a duplicate.
