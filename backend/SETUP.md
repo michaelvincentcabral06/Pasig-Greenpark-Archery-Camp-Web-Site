@@ -484,3 +484,21 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 - [ ] Book a **per-unit** add-on with quantity 4 → line reads `(₱price ×4)`; bucket = price×4.
 - [ ] For any of the above, the Earnings dashboard `Σ` of all slot Amounts equals the booking total shown to the customer (per-booking add-ons no longer dropped).
 - [ ] A booking with **no add-ons** is unchanged (`baseAmount === amount`, even split across slots).
+
+## db-v33 deploy & verify
+
+**What changed:** client-payment tracking for the coach-payments dashboard. New `setPaid_` action stores a Not-Paid EXCEPTION as a Script Property `unpaid:<ref>|<date>|<time>` (absent = paid, the default). `listBookings_` now emits `paid` per slot-group (reads the `unpaid:*` properties once). Additive/back-compatible — existing bookings default to paid.
+
+### Deploy steps
+
+1. Open the Apps Script project in your browser.
+2. Paste the entire contents of `backend/Code.gs` (overwriting the old code), then click **Save** (💾).
+3. Click **Deploy → Manage deployments → edit (✏️) → Version: New version → Deploy.** (Edit the EXISTING deployment so the same `/exec` URL updates — do NOT create a new deployment.)
+
+### Verification checklist
+
+- [ ] Open `…/exec?action=version` — confirm `"version":"db-v33"`, `"clientPaid":true`, and all prior flags (`addonRateTypes:true`, `passExpiryEmail:true`, `perArcherEdit:true`, …) still present.
+- [ ] In the admin Coach Payments section, mark a session **Not-Paid** → it drops out of earnings + that coach's pay and appears under **Owed by clients**; the figure is exact (the session's full client amount).
+- [ ] Reload the admin (or another device) → the Not-Paid state persists (stored server-side).
+- [ ] Mark it **Paid** again → it returns to earnings/coach pay and leaves Owed.
+- [ ] A booking never touched stays **Paid** (counts as today) — no jarring reset of existing totals.

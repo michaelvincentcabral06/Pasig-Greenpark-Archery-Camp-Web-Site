@@ -855,7 +855,7 @@ function doGet(e) {
     if (action === 'content') return getContent_();
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v32', auth: true, addonRateTypes: true, passExpiryEmail: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true, multiCoach: true, acctBreakdown: true, perArcherEdit: true });
+      return json_({ version: 'db-v33', auth: true, clientPaid: true, addonRateTypes: true, passExpiryEmail: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true, multiCoach: true, acctBreakdown: true, perArcherEdit: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -1001,6 +1001,7 @@ function doPost(e) {
     if (body.action === 'removePlan')        return assertAdmin_(body) ? removePlan_(body)        : unauthorized_();
     if (body.action === 'setSplit')          return assertAdmin_(body) ? setSplit_(body)          : unauthorized_();
     if (body.action === 'setBookingStatus')  return assertAdmin_(body) ? setBookingStatus_(body)  : unauthorized_();
+    if (body.action === 'setPaid')           return assertAdmin_(body) ? setPaid_(body)           : unauthorized_();
     if (body.action === 'approveSession')    return assertAdmin_(body) ? approveSession_(body)    : unauthorized_();
     if (body.action === 'setBookingCoach')   return assertAdmin_(body) ? setBookingCoach_(body)   : unauthorized_();
     if (body.action === 'logAction')         return assertAdmin_(body) ? logAction_(body)         : unauthorized_();
@@ -1182,6 +1183,9 @@ function listBookings_() {
   try {
     var programsCfg = [];
     try { var rawC = PropertiesService.getScriptProperties().getProperty('CONTENT'); if (rawC) { var cc = JSON.parse(rawC); programsCfg = cc.programs || []; } } catch (eC) {}
+    // Client-payment exceptions (db-v33): an "unpaid:<ref>|<date>|<time>" property = NOT paid.
+    var unpaidProps = {};
+    try { var allP = PropertiesService.getScriptProperties().getProperties(); for (var pk in allP) { if (pk.indexOf('unpaid:') === 0) unpaidProps[pk] = 1; } } catch (eU) {}
     // 1) Read the sheet (status, amount, cancelled records) and index by event id.
     var sheetRows = [], sheetByEvent = {};
     try {
@@ -1253,7 +1257,8 @@ function listBookings_() {
             addonBuckets: { coach: 0, equip: 0, range: 0 },
             __addonTotal: 0,
             coach: field(d, 'Coach') || (srow ? srow.coach : ''),
-            eventId: id
+            eventId: id,
+            paid: !unpaidProps[paidKey_(ref || (srow ? srow.ref : ''), dateStr, timeLbl)]
           };
         }
         byKey[key].archers += seats;
@@ -1274,6 +1279,7 @@ function listBookings_() {
       var stl = String(rec.status).toLowerCase();
       if (isPlan(rec.program) && stl !== 'approved' && stl !== 'cancelled') return;
       rec.baseAmount = rec.amount; rec.addonBuckets = { coach: 0, equip: 0, range: 0 };
+      rec.paid = !unpaidProps[paidKey_(rec.ref, rec.date, rec.time)];
       out.push(rec);
     });
 
@@ -1532,6 +1538,17 @@ function setBookingStatus_(body) {
       if (match) { sh.getRange(r + 1, stCol + 1).setValue(status); n++; if (body.eventId) break; }
     }
     return json_({ ok: true, updated: n });
+  } catch (e) { return json_({ ok: false, error: String(e) }); }
+}
+// Client-payment status (db-v33). Stored as a Script Property EXCEPTION keyed by the slot-group
+// (ref|date|time): present = NOT paid; absent = paid (the default). Covers all per-archer rows at once.
+function paidKey_(ref, date, time) { return 'unpaid:' + (ref || '') + '|' + (date || '') + '|' + (time || ''); }
+function setPaid_(body) {
+  try {
+    var key = paidKey_(body.ref || '', body.date || '', body.time || '');
+    var props = PropertiesService.getScriptProperties();
+    if (body.paid === false) props.setProperty(key, '1'); else props.deleteProperty(key);
+    return json_({ ok: true, paid: body.paid !== false });
   } catch (e) { return json_({ ok: false, error: String(e) }); }
 }
 function removePlan_(body) {

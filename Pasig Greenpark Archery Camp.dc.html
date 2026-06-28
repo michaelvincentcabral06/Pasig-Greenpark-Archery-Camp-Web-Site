@@ -1933,22 +1933,46 @@
             <span style="background:#fffdf6;border:1px solid rgba(36,66,50,0.16);color:#244232;border-radius:999px;padding:7px 15px;font-size:13px;font-weight:700;">👤 {{ coachCount }} coaches</span>
           </div>
 
+          <!-- OWED BY CLIENTS -->
+          <div style="background:#fff8ec;border:1px solid rgba(202,168,74,0.5);border-radius:12px;padding:15px 18px;margin:18px 0;display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+            <div style="font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:#8a6a1f;">Owed by clients · unpaid sessions</div>
+            <div style="font-size:23px;font-weight:800;color:#8a6a1f;">{{ owedLabel }}</div>
+          </div>
+
           <!-- PER-COACH PAYMENTS (fees defined per program/pass in the Pricing tab) -->
           <h3 style="font-size:17px;font-weight:800;color:#1b2a1f;margin:28px 0 4px;">Coach payments</h3>
-          <p style="font-size:13px;color:#56664f;margin:0 0 14px;">Each coach earns the Coach Fee set on each program/pass (Pricing tab), split equally when a session has more than one coach.</p>
+          <p style="font-size:13px;color:#56664f;margin:0 0 12px;">Each coach earns the Coach Fee set per program/pass; only client-paid sessions count. Tap a coach to see their sessions and mark each Paid / Not paid.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+            <sc-for list="{{ coachPayPeriodBtns }}" as="pb" hint-placeholder-count="4">
+              <button onClick="{{ pb.set }}" style="background:{{ pb.bg }};color:{{ pb.fg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12.5px;font-weight:700;padding:7px 14px;border-radius:999px;">{{ pb.label }}</button>
+            </sc-for>
+          </div>
           <div style="display:flex;flex-direction:column;gap:10px;">
             <sc-for list="{{ coachPayRows }}" as="cp" hint-placeholder-count="0">
-              <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-                <span style="width:42px;height:42px;border-radius:50%;flex:none;background:#244232;color:#f4efe4;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;">{{ cp.initials }}</span>
-                <div style="flex:1;min-width:150px;">
-                  <div style="font-size:16px;font-weight:800;color:#1b2a1f;">{{ cp.name }}</div>
-                  <div style="font-size:12.5px;color:#8a9579;">{{ cp.role }}</div>
+              <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:14px 16px;">
+                <button onClick="{{ cp.toggleOpen }}" style="display:flex;align-items:center;gap:14px;width:100%;background:none;border:none;cursor:pointer;text-align:left;font-family:'Hanken Grotesk',sans-serif;">
+                  <span style="width:40px;height:40px;border-radius:50%;flex:none;background:#244232;color:#f4efe4;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;">{{ cp.initials }}</span>
+                  <span style="flex:1;min-width:120px;font-size:16px;font-weight:800;color:#1b2a1f;">{{ cp.name }}</span>
+                  <span style="font-size:15px;font-weight:800;color:#4d7327;font-family:'Spline Sans Mono',monospace;">{{ cp.pay }}</span>
+                </button>
+                <sc-if value="{{ cp.open }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;border-top:1px solid rgba(36,66,50,0.1);padding-top:12px;">
+                  <sc-for list="{{ cp.lines }}" as="ln" hint-placeholder-count="0">
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;opacity:{{ ln.rowOpacity }};">
+                      <div style="flex:1;min-width:150px;">
+                        <div style="font-size:13.5px;font-weight:700;color:#1b2a1f;">{{ ln.label }} · {{ ln.program }}</div>
+                        <div style="font-size:12px;color:#8a9579;">{{ ln.who }}</div>
+                      </div>
+                      <span style="font-size:13.5px;font-weight:700;color:#4d7327;font-family:'Spline Sans Mono',monospace;">{{ ln.amount }}</span>
+                      <button onClick="{{ ln.toggle }}" style="background:{{ ln.paidBg }};color:{{ ln.paidFg }};border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:7px 13px;border-radius:999px;white-space:nowrap;">{{ ln.paidLabel }}</button>
+                    </div>
+                  </sc-for>
                 </div>
-                <div style="font-size:15px;font-weight:800;color:#4d7327;font-family:'Spline Sans Mono',monospace;">{{ cp.pay }}</div>
+                </sc-if>
               </div>
             </sc-for>
           </div>
-          <sc-if value="{{ hasUnassignedPay }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#8a9579;margin-top:10px;">Unassigned-coach share (bookings with no coach yet, at the default split): <strong>{{ coachUnassignedLabel }}</strong></div></sc-if>
+          <sc-if value="{{ hasUnassignedPay }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#8a9579;margin-top:10px;">Unassigned-coach share (bookings with no coach yet): <strong>{{ coachUnassignedLabel }}</strong></div></sc-if>
 
           <!-- UPCOMING SCHEDULE -->
           <h3 style="font-size:16px;font-weight:800;color:#1b2a1f;margin:28px 0 4px;">Upcoming schedule</h3>
@@ -2794,6 +2818,8 @@ class Component extends DCLogic {
     dashUpRange: 'all',
     dashUpSearch: '',
     dashUpPage: 0,
+    coachPayPeriod: 'all',
+    coachPayOpen: '',
     bkFilter: 'all',
     bkCoach: 'all',
     bkSearch: '',
@@ -2901,7 +2927,7 @@ class Component extends DCLogic {
     const coachPay = {}; coaches.forEach(c => { coachPay[c.id] = 0; });
     let cApproved = 0, cPending = 0, cCancelled = 0;
     let earnWeek = 0, earnMonth = 0, earnYear = 0, earnTotal = 0;
-    let coachTotal = 0, equipTotal = 0, rangeTotal = 0, coachUnassigned = 0;
+    let coachTotal = 0, equipTotal = 0, rangeTotal = 0, coachUnassigned = 0, owedTotal = 0;
     (items || []).forEach(b => {
       const st = String(b.status || 'booked').toLowerCase();
       if (st === 'cancelled') { cCancelled++; return; }
@@ -2928,6 +2954,8 @@ class Component extends DCLogic {
         rangeBase = Math.min(n * fees.range, rem); rem -= rangeBase;
         recognized = amt; // gross revenue = what the client paid (base + add-ons + margin)
       }
+      // Client hasn't paid yet (E): exclude from earnings + coach pay; track what they owe.
+      if (b.paid === false) { owedTotal += recognized; return; }
       if (!recognized && !coachBase && !equipBase && !rangeBase) return;
       earnTotal += recognized;
       if (ds.slice(0, 4) === periodYear) earnYear += recognized;
@@ -2947,7 +2975,53 @@ class Component extends DCLogic {
     return { counts: { approved: cApproved, pending: cPending, cancelled: cCancelled },
       earnWeek: earnWeek, earnMonth: earnMonth, earnYear: earnYear, earnTotal: earnTotal,
       coachTotal: coachTotal, equipTotal: equipTotal, rangeTotal: rangeTotal,
-      coachUnassigned: coachUnassigned, coachPay: coachPay };
+      coachUnassigned: coachUnassigned, coachPay: coachPay, owedTotal: owedTotal };
+  }
+  // E: per-coach payment breakdown for a period, grouped by session/plan. Each line carries that
+  // coach's share of the coach fee + the client-paid status. Only PAID lines add to the coach's total.
+  coachPayBreakdown(items, todayStr, period) {
+    const coaches = this.coaches() || [];
+    const known = {}; coaches.forEach(c => { known[c.id] = true; });
+    const fmtYmd = (d) => { const y = d.getFullYear(), m = ('0' + (d.getMonth() + 1)).slice(-2), da = ('0' + d.getDate()).slice(-2); return y + '-' + m + '-' + da; };
+    const tp = String(todayStr || '').split('-');
+    const pYear = tp[0] || '', pMonth = (tp[0] || '') + '-' + (tp[1] || '');
+    const dThis = new Date((todayStr || '1970-01-01') + 'T00:00:00');
+    const dowMon = (dThis.getDay() + 6) % 7;
+    const ws = new Date(dThis); ws.setDate(dThis.getDate() - dowMon);
+    const we = new Date(ws); we.setDate(ws.getDate() + 6);
+    const wsS = fmtYmd(ws), weS = fmtYmd(we);
+    const inPeriod = (ds) => {
+      if (!period || period === 'all') return true;
+      if (period === 'week') return ds >= wsS && ds <= weS;
+      if (period === 'month') return ds.slice(0, 7) === pMonth;
+      if (period === 'year') return ds.slice(0, 4) === pYear;
+      return true;
+    };
+    const byCoach = {}; coaches.forEach(c => { byCoach[c.id] = { id: c.id, name: c.name, total: 0, lines: [] }; });
+    (items || []).forEach(b => {
+      if (String(b.status || 'booked').toLowerCase() === 'cancelled') return;
+      const ds = b.date || ''; if (!inPeriod(ds)) return;
+      const ids = this.coachIdsFromNames(b.coach).filter(id => known[id]);
+      if (!ids.length) return;
+      const isPlan = /\(plan\)\s*$/i.test(b.program || '');
+      const n = Math.max(1, Number(b.archers) || 1);
+      const fees = this.feeFor(b.program);
+      const ab = b.addonBuckets || { coach: 0, equip: 0, range: 0 };
+      let coachAmt;
+      if (isPlan) { coachAmt = n * fees.coach + (Number(ab.coach) || 0); }
+      else {
+        const amt = Number(b.amount) || 0;
+        const base = (b.baseAmount != null ? Number(b.baseAmount) : amt) || 0;
+        coachAmt = Math.min(n * fees.coach, base) + (Number(ab.coach) || 0);
+      }
+      const each = coachAmt / ids.length;
+      const paid = b.paid !== false;
+      ids.forEach(id => {
+        byCoach[id].lines.push({ ref: b.ref || '', date: b.date || '', time: b.time || '', program: b.program || '', client: b.name || '', amount: each, paid: paid, booking: b });
+        if (paid) byCoach[id].total += each;
+      });
+    });
+    return coaches.map(c => byCoach[c.id]);
   }
   coachInitials(name) {
     const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
@@ -4151,6 +4225,14 @@ class Component extends DCLogic {
       });
     }).catch(() => {});
   }
+  // E: toggle a session's client-payment status (per slot-group), then refresh the dashboard data.
+  setPaidFor(b, paid) {
+    if (!b) return;
+    this.adminPost({ action: 'setPaid', ref: b.ref || '', date: b.date || '', time: b.time || '', paid: paid })
+      .then(() => this.loadAllBookings()).catch(() => {});
+  }
+  setCoachPayPeriod(p) { this.setState({ coachPayPeriod: p }); }
+  toggleCoachPayOpen(id) { this.setState(s => ({ coachPayOpen: s.coachPayOpen === id ? '' : id })); }
   // ---------- ADMIN: BOOKINGS TAB (database-backed) ----------
   // Mark a booking Approved (status only — bookings still confirm instantly).
   approveBooking(b) {
@@ -5692,10 +5774,31 @@ class Component extends DCLogic {
     const coachTotal = _acct.coachTotal, equipTotal = _acct.equipTotal, rangeTotal = _acct.rangeTotal;
     const coachUnassigned = _acct.coachUnassigned;
     const coachPay = _acct.coachPay;
-    const coachPayRows = dashCoaches.map(c => ({
-      id: c.id, name: c.name, role: c.role || '',
-      initials: this.coachInitials(c.name),
-      pay: pesoRound(coachPay[c.id] || 0),
+    const owedLabel = pesoRound(_acct.owedTotal || 0);
+    const coachPayPeriod = this.state.coachPayPeriod || 'all';
+    const coachPayOpen = this.state.coachPayOpen || '';
+    const coachPayPeriodBtns = [['week', 'This week'], ['month', 'This month'], ['year', 'This year'], ['all', 'All time']].map(pk => ({
+      label: pk[1], active: coachPayPeriod === pk[0],
+      bg: coachPayPeriod === pk[0] ? '#244232' : '#fffdf6', fg: coachPayPeriod === pk[0] ? '#f4efe4' : '#244232',
+      set: () => this.setCoachPayPeriod(pk[0]),
+    }));
+    const coachPayRows = this.coachPayBreakdown(dashBookings, todayStr, coachPayPeriod).map(c => ({
+      id: c.id, name: c.name, initials: this.coachInitials(c.name),
+      pay: pesoRound(c.total),
+      open: coachPayOpen === c.id, toggleOpen: () => this.toggleCoachPayOpen(c.id),
+      hasLines: c.lines.length > 0, lineCount: c.lines.length,
+      lines: c.lines.slice().sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)).map(ln => {
+        let dl = ln.date; try { dl = new Date(ln.date + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }); } catch (e) {}
+        return {
+          label: dl + ' · ' + ln.time, who: ln.client || '',
+          program: String(ln.program || '').replace(/\s*\(plan\)\s*$/i, ''),
+          amount: pesoRound(ln.amount),
+          paid: ln.paid, paidLabel: ln.paid ? '✓ Paid' : 'Not paid',
+          paidBg: ln.paid ? '#e6efd6' : '#f3e2e0', paidFg: ln.paid ? '#4d7327' : '#b4512f',
+          rowOpacity: ln.paid ? '1' : '0.5',
+          toggle: () => this.setPaidFor(ln.booking, !ln.paid),
+        };
+      }),
     }));
     const dashUpCoach = this.state.dashUpCoach || 'all';
     const dashUpRange = this.state.dashUpRange || 'all';
@@ -6216,7 +6319,7 @@ class Component extends DCLogic {
       coachTotalLabel: pesoRound(coachTotal), equipTotalLabel: pesoRound(equipTotal), rangeTotalLabel: pesoRound(rangeTotal),
       coachUnassignedLabel: pesoRound(coachUnassigned), hasUnassignedPay: coachUnassigned > 0,
       coachCount: dashCoaches.length,
-      coachPayRows: coachPayRows,
+      coachPayRows: coachPayRows, coachPayPeriodBtns: coachPayPeriodBtns, owedLabel: owedLabel,
       splitCoachPct: splitCoachPct, splitEquipPct: splitEquipPct, splitRangePct: splitRangePct,
       nextUpcomingLabel: nextUpcomingLabel, hasNextUpcoming: hasNextUpcoming,
       upcoming: upcoming,
