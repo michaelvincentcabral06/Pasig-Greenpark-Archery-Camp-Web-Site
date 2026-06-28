@@ -2395,6 +2395,7 @@
                           <input value="{{ ad.name }}" onInput="{{ ad.setName }}" placeholder="Add-on name" style="flex:1;min-width:120px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:8px 10px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#1b2a1f;outline:none;" />
                           <input value="{{ ad.price }}" onInput="{{ ad.setPrice }}" type="number" min="0" style="width:84px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:8px 10px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;font-weight:700;color:#1b2a1f;outline:none;" />
                           <button onClick="{{ ad.toggleScope }}" style="background:{{ ad.scopeBg }};color:{{ ad.scopeFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:11.5px;font-weight:700;padding:7px 12px;border-radius:999px;white-space:nowrap;">{{ ad.scopeLabel }}</button>
+                          <button onClick="{{ ad.toggleBucket }}" style="background:{{ ad.bucketBg }};color:{{ ad.bucketFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:11.5px;font-weight:700;padding:7px 12px;border-radius:999px;white-space:nowrap;">{{ ad.bucketLabel }}</button>
                           <button onClick="{{ ad.remove }}" style="background:none;border:1px solid rgba(180,81,47,0.4);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:11.5px;font-weight:700;color:#b4512f;padding:7px 11px;border-radius:999px;">Remove</button>
                         </div>
                       </sc-for>
@@ -2836,6 +2837,64 @@ class Component extends DCLogic {
       if (c && out.indexOf(c.id) === -1) out.push(c.id);
     });
     return out;
+  }
+  // #7: allocate booking/pass revenue into coach / equipment / range buckets.
+  // Base fee splits by each assigned coach's own %; the base is divided equally among the
+  // booking's coaches; add-ons go 100% to their tagged bucket; 0 coaches -> unassigned share.
+  acctAllocate(items, todayStr) {
+    const splits = this.state.coachSplits || {};
+    const splitDef = this.state.splitDefault || { coach: 80, equip: 10, range: 10 };
+    const coaches = this.coaches() || [];
+    const known = {}; coaches.forEach(c => { known[c.id] = true; });
+    const fmtYmd = (d) => { const y = d.getFullYear(), m = ('0' + (d.getMonth() + 1)).slice(-2), da = ('0' + d.getDate()).slice(-2); return y + '-' + m + '-' + da; };
+    const tParts = String(todayStr || '').split('-');
+    const periodYear = tParts[0] || '';
+    const periodMonth = (tParts[0] || '') + '-' + (tParts[1] || '');
+    const dThis = new Date((todayStr || '1970-01-01') + 'T00:00:00');
+    const dowMon = (dThis.getDay() + 6) % 7;
+    const weekStart = new Date(dThis); weekStart.setDate(dThis.getDate() - dowMon);
+    const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
+    const weekStartStr = fmtYmd(weekStart), weekEndStr = fmtYmd(weekEnd);
+    const coachPay = {}; coaches.forEach(c => { coachPay[c.id] = 0; });
+    let cApproved = 0, cPending = 0, cCancelled = 0;
+    let earnWeek = 0, earnMonth = 0, earnYear = 0, earnTotal = 0;
+    let coachTotal = 0, equipTotal = 0, rangeTotal = 0, coachUnassigned = 0;
+    (items || []).forEach(b => {
+      const st = String(b.status || 'booked').toLowerCase();
+      if (st === 'cancelled') { cCancelled++; return; }
+      if (st === 'approved') cApproved++; else cPending++;
+      const amt = Number(b.amount) || 0; if (!amt) return;
+      const ds = b.date || '';
+      earnTotal += amt;
+      if (ds.slice(0, 4) === periodYear) earnYear += amt;
+      if (ds.slice(0, 7) === periodMonth) earnMonth += amt;
+      if (ds >= weekStartStr && ds <= weekEndStr) earnWeek += amt;
+      const base = (b.baseAmount != null ? Number(b.baseAmount) : amt) || 0;
+      const ab = b.addonBuckets || { coach: 0, equip: 0, range: 0 };
+      const ids = this.coachIdsFromNames(b.coach).filter(id => known[id]);
+      if (ids.length) {
+        const portion = base / ids.length;
+        const addonCoachEach = (Number(ab.coach) || 0) / ids.length;
+        ids.forEach(id => {
+          const sp = splits[id] || splitDef;
+          const cShare = portion * (Number(sp.coach) || 0) / 100 + addonCoachEach;
+          coachPay[id] = (coachPay[id] || 0) + cShare; coachTotal += cShare;
+          equipTotal += portion * (Number(sp.equip) || 0) / 100;
+          rangeTotal += portion * (Number(sp.range) || 0) / 100;
+        });
+      } else {
+        const cShare = base * (Number(splitDef.coach) || 0) / 100 + (Number(ab.coach) || 0);
+        coachUnassigned += cShare; coachTotal += cShare;
+        equipTotal += base * (Number(splitDef.equip) || 0) / 100;
+        rangeTotal += base * (Number(splitDef.range) || 0) / 100;
+      }
+      equipTotal += Number(ab.equip) || 0;
+      rangeTotal += Number(ab.range) || 0;
+    });
+    return { counts: { approved: cApproved, pending: cPending, cancelled: cCancelled },
+      earnWeek: earnWeek, earnMonth: earnMonth, earnYear: earnYear, earnTotal: earnTotal,
+      coachTotal: coachTotal, equipTotal: equipTotal, rangeTotal: rangeTotal,
+      coachUnassigned: coachUnassigned, coachPay: coachPay };
   }
   coachInitials(name) {
     const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
@@ -3754,7 +3813,7 @@ class Component extends DCLogic {
       var id = a.id ? String(a.id) : this.slugify_(a.name);
       while (seen[id]) { id = id + '-' + i; }
       seen[id] = true;
-      return { id: id, name: a.name || 'Add-on', price: Number(a.price) || 0, scope: (a.scope === 'perBooking' ? 'perBooking' : 'perArcher') };
+      return { id: id, name: a.name || 'Add-on', price: Number(a.price) || 0, scope: (a.scope === 'perBooking' ? 'perBooking' : 'perArcher'), bucket: ((a.bucket === 'coach' || a.bucket === 'range') ? a.bucket : 'equip') };
     });
   }
   normalizePrograms(progs) {
@@ -4995,6 +5054,9 @@ class Component extends DCLogic {
     const setAddonField = (pi, ai, key) => (e) => { const v = e.target.value; writeAddons(pi, progAddons(pi).map((a, j) => j === ai ? { ...a, [key]: v } : a)); };
     const setAddonNum   = (pi, ai) => (e) => { const v = (e.target.value === '' ? 0 : (Number(e.target.value) || 0)); writeAddons(pi, progAddons(pi).map((a, j) => j === ai ? { ...a, price: v } : a)); };
     const toggleAddonScope = (pi, ai) => () => { writeAddons(pi, progAddons(pi).map((a, j) => j === ai ? { ...a, scope: (a.scope === 'perBooking' ? 'perArcher' : 'perBooking') } : a)); };
+    const nextBucket = (b) => (b === 'equip' ? 'coach' : (b === 'coach' ? 'range' : 'equip'));
+    const toggleAddonBucket = (pi, ai) => () => { writeAddons(pi, progAddons(pi).map((a, j) => j === ai ? { ...a, bucket: nextBucket(a.bucket || 'equip') } : a)); };
+    const bucketLabelOf = (b) => 'Goes to: ' + (b === 'coach' ? 'Coach' : (b === 'range' ? 'Range' : 'Equipment'));
     const removeAddon = (pi, ai) => () => writeAddons(pi, progAddons(pi).filter((_, j) => j !== ai));
     const addAddon = (pi) => () => writeAddons(pi, this.normalizeAddons(progAddons(pi).concat([{ name: 'New add-on', price: 0, scope: 'perArcher' }])));
     const programEdits = (cm.programs || this.defaultPrograms()).map((p, i) => ({
@@ -5015,7 +5077,10 @@ class Component extends DCLogic {
         scopeBg: a.scope === 'perBooking' ? '#fffdf6' : '#244232',
         scopeFg: a.scope === 'perBooking' ? '#244232' : '#f4efe4',
         setName: setAddonField(i, ai, 'name'), setPrice: setAddonNum(i, ai),
-        toggleScope: toggleAddonScope(i, ai), remove: removeAddon(i, ai)
+        toggleScope: toggleAddonScope(i, ai), remove: removeAddon(i, ai),
+        bucketLabel: bucketLabelOf(a.bucket),
+        bucketBg: '#fffdf6', bucketFg: '#244232',
+        toggleBucket: toggleAddonBucket(i, ai)
       })),
     }));
     const setDiscField = (i, key) => (e) => { const v = e.target.value; const ds = this.discountList().map((d, idx) => idx === i ? { ...d, [key]: v } : d); saveCM({ discounts: ds }); };
@@ -5156,7 +5221,7 @@ class Component extends DCLogic {
     const sessionRows = sessFiltered.slice(sessPage * SESS_PAGE, sessPage * SESS_PAGE + SESS_PAGE).map(b => {
       const si = sessStatusInfo(b.status);
       let when = b.date; try { when = new Date(b.date + 'T00:00:00').toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' }); } catch (e) {}
-      const selIds = this.coachIdsFromNames(b.coachName);
+      const selIds = this.coachIdsFromNames(b.coach);
       const maxC = this.maxCoachesFor(b.party);
       const atCap = selIds.length >= maxC;
       const coachChips = this.coaches().map(c => {
@@ -5449,7 +5514,6 @@ class Component extends DCLogic {
 
     // ---------- ADMIN: DASHBOARD ----------
     const pesoRound = (n) => '₱' + Math.round(Number(n) || 0).toLocaleString('en-PH');
-    const fmtYmd = (d) => { const y = d.getFullYear(), m = ('0' + (d.getMonth() + 1)).slice(-2), da = ('0' + d.getDate()).slice(-2); return y + '-' + m + '-' + da; };
     const dashBookings = this.state.allBookings || [];
     const dashCoaches = this.coaches() || [];
     const splits = this.state.coachSplits || {};
@@ -5460,37 +5524,12 @@ class Component extends DCLogic {
       if (!cv || cv === 'any') return null;
       return dashCoaches.find(c => c.id.toLowerCase() === cv || (c.name || '').toLowerCase() === cv) || null;
     };
-    const splitForCoach = (coachVal) => { const c = matchCoach(coachVal); return (c && splits[c.id]) ? splits[c.id] : splitDef; };
-    // Period boundaries from Manila "today".
-    const tParts = todayStr.split('-');
-    const periodYear = tParts[0];                 // 'YYYY'
-    const periodMonth = tParts[0] + '-' + tParts[1]; // 'YYYY-MM'
-    const dThis = new Date(todayStr + 'T00:00:00');
-    const dowMon = (dThis.getDay() + 6) % 7;       // 0 = Monday
-    const weekStart = new Date(dThis); weekStart.setDate(dThis.getDate() - dowMon);
-    const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
-    const weekStartStr = fmtYmd(weekStart), weekEndStr = fmtYmd(weekEnd);
-    let cApproved = 0, cPending = 0, cCancelled = 0;
-    let earnWeek = 0, earnMonth = 0, earnYear = 0, earnTotal = 0;
-    let equipTotal = 0, rangeTotal = 0, coachTotal = 0, coachUnassigned = 0;
-    const coachPay = {}; dashCoaches.forEach(c => { coachPay[c.id] = 0; });
-    dashBookings.forEach(b => {
-      const st = String(b.status || 'booked').toLowerCase();
-      if (st === 'cancelled') { cCancelled++; return; }
-      if (st === 'approved') cApproved++; else cPending++;
-      const amt = Number(b.amount) || 0; if (!amt) return;
-      const ds = b.date || '';
-      earnTotal += amt;
-      if (ds.slice(0, 4) === periodYear) earnYear += amt;
-      if (ds.slice(0, 7) === periodMonth) earnMonth += amt;
-      if (ds >= weekStartStr && ds <= weekEndStr) earnWeek += amt;
-      const sp = splitForCoach(b.coach), c = matchCoach(b.coach);
-      const cShare = amt * (Number(sp.coach) || 0) / 100;
-      equipTotal += amt * (Number(sp.equip) || 0) / 100;
-      rangeTotal += amt * (Number(sp.range) || 0) / 100;
-      coachTotal += cShare;
-      if (c) coachPay[c.id] += cShare; else coachUnassigned += cShare;
-    });
+    const _acct = this.acctAllocate(dashBookings, todayStr);
+    const cApproved = _acct.counts.approved, cPending = _acct.counts.pending, cCancelled = _acct.counts.cancelled;
+    const earnWeek = _acct.earnWeek, earnMonth = _acct.earnMonth, earnYear = _acct.earnYear, earnTotal = _acct.earnTotal;
+    const coachTotal = _acct.coachTotal, equipTotal = _acct.equipTotal, rangeTotal = _acct.rangeTotal;
+    const coachUnassigned = _acct.coachUnassigned;
+    const coachPay = _acct.coachPay;
     const draftFor = (id) => splitDraft[id] || splits[id] || splitDef;
     const coachPayRows = dashCoaches.map(c => {
       const d = draftFor(c.id);
@@ -5514,7 +5553,7 @@ class Component extends DCLogic {
                     : (dashUpRange === '30') ? this.addDaysStr(todayStr, 30) : '';
     const upAllFiltered = dashBookings
       .filter(b => String(b.status || '').toLowerCase() !== 'cancelled' && b.date && b.date >= todayStr)
-      .filter(b => dashUpCoach === 'all' ? true : (String(b.coach || '') === dashUpCoach))
+      .filter(b => dashUpCoach === 'all' ? true : (this.coachIdsFromNames(b.coach).indexOf(dashUpCoach) !== -1))
       .filter(b => !dashUpMax ? true : (b.date <= dashUpMax))
       .filter(b => {
         if (!dashUpSearch) return true;
