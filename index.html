@@ -1662,11 +1662,25 @@
                     </div>
                   </div>
                   <sc-if value="{{ editIsOpen }}" hint-placeholder-val="{{ false }}">
-                  <div style="display:flex;flex-direction:column;gap:8px;">
-                    <label style="font-size:12.5px;font-weight:600;color:#cdd6c5;">Concessions</label>
-                    <sc-for list="{{ editDiscountRows }}" as="d" hint-placeholder-count="3">
-                      <button onClick="{{ d.toggle }}" style="display:flex;align-items:center;gap:10px;text-align:left;background:#1b3325;border:1.5px solid {{ d.border }};border-radius:9px;padding:9px 12px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;"><span style="width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid {{ d.border }};background:{{ d.box }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">{{ d.check }}</span><span style="flex:1;font-size:13.5px;color:#f4efe4;">{{ d.name }}</span><span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#7fb43f;">{{ d.amountLabel }}</span></button>
+                  <div style="display:flex;flex-direction:column;gap:12px;">
+                    <sc-for list="{{ editArcherRows }}" as="ar">
+                      <div style="background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+                        <div style="font-size:13px;font-weight:700;color:#cdd6c5;">{{ ar.name }}</div>
+                        <sc-for list="{{ ar.concRows }}" as="d">
+                          <div style="display:flex;flex-direction:column;gap:6px;">
+                            <button onClick="{{ d.toggle }}" style="display:flex;align-items:center;gap:10px;text-align:left;width:100%;background:#244232;border:1.5px solid {{ d.border }};border-radius:9px;padding:9px 12px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;">
+                              <span style="width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid {{ d.border }};background:{{ d.box }};color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">{{ d.check }}</span>
+                              <span style="flex:1;font-size:13.5px;color:#f4efe4;">{{ d.name }}</span>
+                              <span style="font-family:'Spline Sans Mono',monospace;font-size:12px;color:#7fb43f;">{{ d.amountLabel }}</span>
+                            </button>
+                            <sc-if value="{{ d.proofShown }}" hint-placeholder-val="{{ false }}">
+                            <input value="{{ d.proof }}" onInput="{{ d.setProof }}" placeholder="{{ d.proofLabel }}" style="width:100%;background:#1b3325;border:1px solid {{ d.proofBorder }};border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#f4efe4;outline:none;box-sizing:border-box;" />
+                            </sc-if>
+                          </div>
+                        </sc-for>
+                      </div>
                     </sc-for>
+                    <sc-if value="{{ editFormError }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#f0b48a;">Add proof for each selected discount before saving.</div></sc-if>
                   </div>
                   </sc-if>
                   <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px dashed rgba(127,180,63,0.3);padding-top:12px;">
@@ -2784,8 +2798,8 @@ class Component extends DCLogic {
     editDate: '',
     editTime: '',
     editParty: 1,
-    editSel: {},
-    editProof: {},
+    editArchers: [],
+    editFormError: false,
     editSlots: [],
     editLoading: false,
     editBusy: false,
@@ -3506,6 +3520,12 @@ class Component extends DCLogic {
       ar[i] = a;
       return { archers: ar, formError: false };
     });
+  }
+  toggleEditArcherConc_(i, id) {
+    this.setState(s => { const ar = (s.editArchers || []).slice(); const a = { sel: { ...((ar[i] && ar[i].sel) || {}) }, proof: { ...((ar[i] && ar[i].proof) || {}) } }; a.sel[id] = !a.sel[id]; ar[i] = a; return { editArchers: ar, editFormError: false }; });
+  }
+  setEditArcherProof_(i, id, v) {
+    this.setState(s => { const ar = (s.editArchers || []).slice(); const a = { sel: { ...((ar[i] && ar[i].sel) || {}) }, proof: { ...((ar[i] && ar[i].proof) || {}) } }; a.proof[id] = v; ar[i] = a; return { editArchers: ar, editFormError: false }; });
   }
   toggleArcherAddon_(i, id) {
     this.setState(function (s) {
@@ -4234,56 +4254,90 @@ class Component extends DCLogic {
     }
     return { sel: sel, proof: proof };
   }
+  // Seed {sel, proof} from a surfaced per-archer concession ({items:[{name,proof}]}),
+  // mapping discount NAMES back to ids via discountList(). Falls back to concToSel_ for the legacy shape.
+  concItemsToSel_(concession) {
+    if (concession && concession.items && concession.items.length) {
+      const sel = {}, proof = {}, dl = this.discountList();
+      concession.items.forEach(it => { const d = dl.find(x => x.name === (it && it.name)); if (d) { sel[d.id] = true; proof[d.id] = (it.proof || ''); } });
+      return { sel: sel, proof: proof };
+    }
+    return this.concToSel_(concession || {});
+  }
   startEdit(entry) {
     if (!this.sessionEditableByCustomer(entry.date, entry.time, null)) {
       if (typeof alert !== 'undefined') alert('This session has already taken place — please contact us to change it.');
       return;
     }
-    const c = entry.concession || {};
-    const seed = this.concToSel_(c);
+    const archersSrc = (entry.archers && entry.archers.length) ? entry.archers : [{ concession: entry.concession }];
+    const editArchers = archersSrc.map(a => { const s = this.concItemsToSel_((a && a.concession) || {}); return { sel: s.sel, proof: s.proof }; });
     this.setState({
-      editTs: entry.ts, editDate: entry.date || '', editTime: entry.time || '', editParty: Math.max(1, entry.party || 1),
-      editSel: seed.sel, editProof: seed.proof, editSlots: [], editLoading: false,
+      editTs: entry.ts, editDate: entry.date || '', editTime: entry.time || '', editParty: Math.max(1, entry.party || archersSrc.length || 1),
+      editArchers: editArchers, editFormError: false, editSlots: [], editLoading: false,
     });
     if (entry.date) this.loadEditSlots(entry.date, entry.program);
   }
-  editAmount(entry) {
-    const program = entry.program || '';
-    const party = Math.max(1, this.state.editParty || 1);
-    const rate = this.rateFor(program);
+  editArcherAmounts(entry) {
+    const program = (entry && entry.program) || '';
     const open = this.programByName(program).offerDiscounts;
-    var sel = this.state.editSel || {};
-    const elig = open ? this.discountList().reduce((s, d) => s + (sel[d.id] ? d.amount : 0), 0) : 0;
-    const gross = rate * party * (1 - this.discountFor(party, program)); // single session (1 day)
-    return Math.max(0, Math.round(gross - elig * party));
-  }
-  editDiscountRows() {
-    var sel = this.state.editSel || {};
-    return this.discountList().map(d => {
-      var on = !!sel[d.id];
-      return {
-        id: d.id, name: d.name, amountLabel: '−₱' + d.amount,
-        box: on ? '#7fb43f' : 'transparent',
-        border: on ? '#7fb43f' : 'rgba(244,239,228,0.2)', check: on ? '✓' : '',
-        toggle: () => this.toggleEditSel_(d.id)
-      };
+    const editArchers = this.state.editArchers || [];
+    const party = Math.max(1, editArchers.length || (entry && entry.party) || 1);
+    const base = this.rateFor(program) * (1 - this.discountFor(party, program));
+    const dl = open ? this.discountList() : [];
+    return editArchers.map(a => {
+      const sel = a.sel || {};
+      const conc = dl.reduce((s, d) => s + (sel[d.id] ? d.amount : 0), 0);
+      return Math.max(0, Math.round(base - conc));
     });
   }
-  toggleEditSel_(id) { this.setState(s => ({ editSel: { ...(s.editSel || {}), [id]: !((s.editSel || {})[id]) } })); }
+  editAmount(entry) { return this.editArcherAmounts(entry).reduce((s, n) => s + n, 0); }
+  editArcherRows(entry) {
+    const program = (entry && entry.program) || '';
+    const dList = this.programByName(program).offerDiscounts ? this.discountList() : [];
+    const editArchers = this.state.editArchers || [];
+    const err = this.state.editFormError;
+    const self = this;
+    return editArchers.map((a, idx) => {
+      const sel = a.sel || {}, proof = a.proof || {};
+      const concRows = dList.map(d => {
+        const on = !!sel[d.id];
+        const missing = err && d.proofRequired && on && !String(proof[d.id] || '').trim();
+        return {
+          id: d.id, name: d.name, amountLabel: '-₱' + d.amount,
+          box: on ? '#7fb43f' : 'transparent', border: on ? '#7fb43f' : 'rgba(244,239,228,0.18)', check: on ? '✓' : '',
+          proofShown: d.proofRequired && on, proof: String(proof[d.id] || ''), proofLabel: d.proofLabel,
+          proofBorder: missing ? '#e8674a' : 'rgba(244,239,228,0.18)',
+          toggle: () => self.toggleEditArcherConc_(idx, d.id),
+          setProof: (e) => self.setEditArcherProof_(idx, d.id, e.target.value),
+        };
+      });
+      return { name: 'Archer ' + (idx + 1), hasConcRows: concRows.length > 0, concRows: concRows };
+    });
+  }
   saveEdit(entry) {
     if (!this.sessionEditableByCustomer(entry.date, entry.time, null)) {
       if (typeof alert !== 'undefined') alert('This session has already taken place — please contact us to change it.');
       return;
     }
-    const date = this.state.editDate, time = this.state.editTime, party = Math.max(1, this.state.editParty || 1);
+    const date = this.state.editDate, time = this.state.editTime;
     if (!date || !time) { return; }
     const program = entry.program || '';
-    const concession = this.programByName(program).offerDiscounts ? this.buildConcession(this.state.editSel, this.state.editProof) : null;
-    const amount = this.editAmount(entry);
+    const open = this.programByName(program).offerDiscounts;
+    const editArchers = this.state.editArchers || [];
+    if (open) {
+      const dl = this.discountList();
+      const missing = editArchers.some(a => dl.some(d => d.proofRequired && (a.sel || {})[d.id] && !String((a.proof || {})[d.id] || '').trim()));
+      if (missing) { this.setState({ editFormError: true }); return; }
+    }
+    const amounts = this.editArcherAmounts(entry);
+    const archers = editArchers.map((a, i) => ({ concession: open ? this.buildConcession(a.sel, a.proof) : null, amount: amounts[i] }));
+    const amount = amounts.reduce((s, n) => s + n, 0);
+    const slotChanged = (date !== entry.date) || (time !== entry.time);
+    const party = Math.max(1, this.state.editParty || 1);
     const ep = this.endpoint();
     this.setState({ editBusy: true });
     const applyLocal = (newEventId, ref) => {
-      const updated = { ...entry, date: date, time: time, party: party, amount: amount, concession: concession, ref: ref || entry.ref, eventId: newEventId != null ? newEventId : entry.eventId, ts: entry.ts };
+      const updated = { ...entry, date: date, time: time, party: party, amount: amount, archers: editArchers.map((a, i) => ({ name: (entry.archers && entry.archers[i] && entry.archers[i].name) || '', concession: (open ? this.buildConcession(a.sel, a.proof) : null) })), ref: ref || entry.ref, eventId: newEventId != null ? newEventId : entry.eventId, ts: entry.ts };
       // Match the existing row by its STABLE identity (eventId/ref). A reschedule changes the
       // slot and the calendar-derived timestamp, so matching on ts alone misses it and a stale
       // old-date row would linger as a duplicate.
@@ -4299,7 +4353,7 @@ class Component extends DCLogic {
     if (!ep) { applyLocal(entry.eventId, entry.ref); return; }
     fetch(ep, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'reschedule', eventId: entry.eventId || '', ref: entry.ref || '', date: entry.date || '', time: entry.time || '', newDate: date, newTime: time, name: entry.name || '', email: entry.email || '' })
+      body: JSON.stringify({ action: 'reschedule', eventId: entry.eventId || '', ref: entry.ref || '', date: entry.date || '', time: entry.time || '', newDate: date, newTime: time, name: entry.name || '', email: entry.email || '', archers: archers, notify: slotChanged })
     }).then(function (r) { return r.json(); }).then(function (res) {
       if (res && res.ok) { applyLocal((res.eventId || entry.eventId), (res.ref || entry.ref)); } // backend reschedule_ logs to Activity + emails the customer server-side
       else { applyLocal(entry.eventId, entry.ref); }   // backend lacks reschedule → no-op move; keep one entry
@@ -5950,7 +6004,8 @@ class Component extends DCLogic {
       editingEntry: editingEntry, editIsOpen: editIsOpen,
       editDate: this.state.editDate, editTime: this.state.editTime,
       editParty: editPartyN, editPartyLabel: editPartyN + (editPartyN === 1 ? ' archer' : ' archers'),
-      editDiscountRows: this.editDiscountRows(),
+      editArcherRows: editingEntry ? this.editArcherRows(editingEntry) : [],
+      editFormError: this.state.editFormError,
       editSlotView: editSlotView, editLoading: this.state.editLoading, editBusy: this.state.editBusy, editNotBusy: !this.state.editBusy,
       editHasSlots: (this.state.editSlots || []).length > 0,
       editAmountLabel: editingEntry ? ('\u20B1' + Number(this.editAmount(editingEntry)).toLocaleString('en-PH')) : '',
