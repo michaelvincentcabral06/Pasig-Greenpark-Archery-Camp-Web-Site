@@ -1653,14 +1653,6 @@
                     </div>
                   </div>
                   </sc-if>
-                  <div>
-                    <label style="display:block;font-size:12.5px;font-weight:600;color:#cdd6c5;margin-bottom:6px;">Archers</label>
-                    <div style="display:flex;align-items:center;justify-content:space-between;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:6px 9px;max-width:180px;">
-                      <button onClick="{{ editDec }}" aria-label="Fewer" style="width:44px;height:44px;border-radius:7px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:20px;font-weight:700;">−</button>
-                      <span style="font-size:15px;font-weight:800;color:#f4efe4;">{{ editPartyLabel }}</span>
-                      <button onClick="{{ editInc }}" aria-label="More" style="width:44px;height:44px;border-radius:7px;border:none;background:rgba(244,239,228,0.1);color:#f4efe4;cursor:pointer;font-size:20px;font-weight:700;">+</button>
-                    </div>
-                  </div>
                   <sc-if value="{{ editIsOpen }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;flex-direction:column;gap:12px;">
                     <sc-for list="{{ editArcherRows }}" as="ar">
@@ -6003,7 +5995,7 @@ class Component extends DCLogic {
       acctPassPrev: () => this.setState(s => ({ acctPassPage: Math.max(0, (s.acctPassPage || 0) - 1) })), acctPassNext: () => this.setState(s => ({ acctPassPage: (s.acctPassPage || 0) + 1 })),
       editingEntry: editingEntry, editIsOpen: editIsOpen,
       editDate: this.state.editDate, editTime: this.state.editTime,
-      editParty: editPartyN, editPartyLabel: editPartyN + (editPartyN === 1 ? ' archer' : ' archers'),
+
       editArcherRows: editingEntry ? this.editArcherRows(editingEntry) : [],
       editFormError: this.state.editFormError,
       editSlotView: editSlotView, editLoading: this.state.editLoading, editBusy: this.state.editBusy, editNotBusy: !this.state.editBusy,
@@ -6011,8 +6003,7 @@ class Component extends DCLogic {
       editAmountLabel: editingEntry ? ('\u20B1' + Number(this.editAmount(editingEntry)).toLocaleString('en-PH')) : '',
       editCanSave: !!(this.state.editDate && this.state.editTime),
       pickEditDate: (e) => { const v = e.target.value; this.setState({ editDate: v, editTime: '' }); this.loadEditSlots(v); },
-      editInc: () => this.setState(s => ({ editParty: Math.min(this.capacity(), (s.editParty || 1) + 1) })),
-      editDec: () => this.setState(s => ({ editParty: Math.max(1, (s.editParty || 1) - 1) })),
+
       saveEditNow: () => { if (editingEntry) this.saveEdit(editingEntry); },
       cancelEdit: () => this.setState({ editTs: null }),
       acctMinDate: todayStr,
