@@ -465,3 +465,22 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 - [ ] Confirm a daily trigger for `notifyExpiredPasses_` now appears under **Triggers**.
 - [ ] (Optional, with a test pass) Create a pass whose validity date is already in the past with at least one unused session → run `notifyExpiredPasses_` → the holder receives ONE "Pass expired" email noting the unused count; running it again sends NO second email (the `expiryNotified` flag dedupes).
 - [ ] A fully-used or not-yet-expired pass receives NO email.
+
+## db-v32 deploy & verify
+
+**What changed:** add-ons & concessions now carry a rate type (per hour / per day / per unit) chosen by admin; per-unit items take a booker quantity. The frontend sends each add-on with a `qty` (the resolved multiplier). `addonLine_`/`bookingAddonLine_` now write `Name (₱price ×qty)`; `book_`/`bookMulti_` split each archer's BASE evenly across slots and place the whole add-on portion (and per-booking add-ons) on the first event so per-day/per-unit charges stay correct and `Σ event Amounts = booking total`. This also fixes a pre-existing bug where per-booking add-ons were recorded in the description but missing from any event `Amount` (under-counting earnings). Read path (`addonBreakdown_`) is unchanged and back-compatible (legacy events with no `×n`, line repeated per slot, still sum correctly).
+
+### Deploy steps
+
+1. Open the Apps Script project in your browser.
+2. Paste the entire contents of `backend/Code.gs` (overwriting the old code), then click **Save** (💾).
+3. Click **Deploy → Manage deployments → edit (✏️) → Version: New version → Deploy.** (Edit the EXISTING deployment so the same `/exec` URL updates — do NOT create a new deployment.)
+
+### Verification checklist
+
+- [ ] Open `…/exec?action=version` — confirm `"version":"db-v32"`, `"addonRateTypes":true`, and all prior flags (`passExpiryEmail:true`, `perArcherEdit:true`, …) still present.
+- [ ] Book a **per-hour** add-on across 3 hours over 2 days → the add-on line reads `(₱price ×3)` and the Earnings dashboard charges price×3 (unchanged from before).
+- [ ] Book a **per-day** add-on for the same booking → line reads `(₱price ×2)` and the add-on bucket gets price×2 (not ×3).
+- [ ] Book a **per-unit** add-on with quantity 4 → line reads `(₱price ×4)`; bucket = price×4.
+- [ ] For any of the above, the Earnings dashboard `Σ` of all slot Amounts equals the booking total shown to the customer (per-booking add-ons no longer dropped).
+- [ ] A booking with **no add-ons** is unchanged (`baseAmount === amount`, even split across slots).

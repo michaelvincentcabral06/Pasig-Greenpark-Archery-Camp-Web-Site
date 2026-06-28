@@ -855,7 +855,7 @@ function doGet(e) {
     if (action === 'content') return getContent_();
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v31', auth: true, passExpiryEmail: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true, multiCoach: true, acctBreakdown: true, perArcherEdit: true });
+      return json_({ version: 'db-v32', auth: true, addonRateTypes: true, passExpiryEmail: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true, multiCoach: true, acctBreakdown: true, perArcherEdit: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -935,18 +935,29 @@ function concLineOf_(c) {
   return p.length ? ('\nConcession: ' + p.join(',')) : '';
 }
 function concLine_(body) { return concLineOf_(body.concession); }
-// Per-archer add-ons line from [{name, price}]. e.g. "\nAdd-ons: Bow rental (₱150)"
+// Total peso value of an add-ons array, each scaled by its own qty (rate-type multiplier).
+function addonsTotal_(addons) {
+  if (!addons || !addons.length) return 0;
+  var t = 0;
+  for (var i = 0; i < addons.length; i++) { t += (Number(addons[i].price) || 0) * Math.max(1, parseInt(addons[i].qty, 10) || 1); }
+  return t;
+}
+// One add-ons line from [{name, price, qty}]. qty is the rate-type multiplier (#hours/#days/#units).
+// e.g. "\nAdd-ons: Bow rental (₱150 ×3)" or "\nAdd-ons: Bow rental (₱150)" when qty is 1.
+function addonsLineParts_(addons) {
+  return addons.map(function (a) {
+    var q = Math.max(1, parseInt(a.qty, 10) || 1);
+    return (a.name || '') + ' (₱' + (Number(a.price) || 0) + (q > 1 ? ' ×' + q : '') + ')';
+  });
+}
 function addonLine_(addons) {
   if (!addons || !addons.length) return '';
-  var parts = addons.map(function (a) { return (a.name || '') + ' (₱' + (Number(a.price) || 0) + ')'; });
-  return '\nAdd-ons: ' + parts.join(', ');
+  return '\nAdd-ons: ' + addonsLineParts_(addons).join(', ');
 }
-// Per-booking add-ons line (recorded once on the booking), priced × slots. e.g. "\nBooking add-ons: Target face (₱50 ×2)"
-function bookingAddonLine_(addons, slots) {
+// Per-booking add-ons line (recorded once on the booking). qty = rate-type multiplier.
+function bookingAddonLine_(addons) {
   if (!addons || !addons.length) return '';
-  slots = Math.max(1, slots || 1);
-  var parts = addons.map(function (a) { return (a.name || '') + ' (₱' + (Number(a.price) || 0) + ' ×' + slots + ')'; });
-  return '\nBooking add-ons: ' + parts.join(', ');
+  return '\nBooking add-ons: ' + addonsLineParts_(addons).join(', ');
 }
 
 // Coach line written into the calendar event (coach-led programs only).
@@ -1648,12 +1659,18 @@ function book_(body) {
   var archersBook = archerListFor_(body, party);
   var srcArchersBook = (body.archers && body.archers.length) ? body.archers : [];
   var perArcherBook = srcArchersBook.some(function (a) { return a && a.amount != null; });
-  // Per-archer slot shares: each archer's total split evenly across their requested slots.
-  var archerSlotSharesBook = [];
+  // Per-archer shares (sub-project C): split the BASE (amount − add-ons) evenly across the
+  // archer's slots, then put the whole add-on portion on the archer's FIRST slot. This keeps
+  // every slot's Amount ≥ its add-on line (so the accounting baseAmount clamp never loses value)
+  // and Σ event Amounts = booking total exactly, even for per-day/per-unit add-ons.
+  var archerBaseSharesBook = [], archerAddonPortionBook = [];
   for (var bi = 0; bi < party; bi++) {
     var bsrc = srcArchersBook[bi] || {};
-    archerSlotSharesBook.push(perArcherBook ? splitAmount_(Number(bsrc.amount) || 0, requested.length) : null);
+    var apB = perArcherBook ? addonsTotal_(bsrc.addons) : 0;
+    archerAddonPortionBook.push(apB);
+    archerBaseSharesBook.push(perArcherBook ? splitAmount_((Number(bsrc.amount) || 0) - apB, requested.length) : null);
   }
+  var pbPortionBook = addonsTotal_(body.perBookingAddons);
   var fallbackSharesBook = perArcherBook ? null : splitAmount_(amount, party * requested.length);
   var fbIdxBook = 0, slotIdxBook = 0, firstEventBook = true;
   requested.forEach(function (label) {
@@ -1664,7 +1681,13 @@ function book_(body) {
     for (var bk = 0; bk < party; bk++) {
       var ar = archersBook[bk];
       var bsrc2 = srcArchersBook[bk] || {};
-      var per = perArcherBook ? archerSlotSharesBook[bk][slotIdxBook] : fallbackSharesBook[fbIdxBook++];
+      var per;
+      if (perArcherBook) {
+        per = archerBaseSharesBook[bk][slotIdxBook] + (slotIdxBook === 0 ? archerAddonPortionBook[bk] : 0);
+        if (firstEventBook) per += pbPortionBook; // per-booking add-ons land (once) on the first event
+      } else {
+        per = fallbackSharesBook[fbIdxBook++];
+      }
       var concObjBook = perArcherBook ? bsrc2.concession : body.concession;
       var addonsArrBook = perArcherBook ? bsrc2.addons : null;
       var title = ar.name + ' — ' + (body.program || 'Session') + coachTitle_(body);
@@ -1679,8 +1702,8 @@ function book_(body) {
           + '\nProgram: ' + (body.program || '')
           + '\nAmount: ' + per
           + concLineOf_(concObjBook)
-          + addonLine_(addonsArrBook)
-          + (firstEventBook ? bookingAddonLine_(body.perBookingAddons, requested.length) : '')
+          + (slotIdxBook === 0 ? addonLine_(addonsArrBook) : '')
+          + (firstEventBook ? bookingAddonLine_(body.perBookingAddons) : '')
           + coachLine_(body)
       });
       if (slotEventId === null) slotEventId = ev.getId();
@@ -1756,12 +1779,17 @@ function bookMulti_(body) {
   var archers = archerListFor_(body, party);
   var srcArchers = (body.archers && body.archers.length) ? body.archers : [];
   var perArcher = srcArchers.some(function (a) { return a && a.amount != null; });
-  // Per-archer slot shares: each archer's total split evenly across their pairCount slots (remainder on last).
-  var archerSlotShares = [];
+  // Per-archer shares (sub-project C): split the BASE (amount − add-ons) evenly across the archer's
+  // slots, put the whole add-on portion on the archer's FIRST slot (so per-day/per-unit add-ons stay
+  // correct and the accounting baseAmount clamp never loses value). See book_ for the rationale.
+  var archerBaseShares = [], archerAddonPortion = [];
   for (var ai = 0; ai < party; ai++) {
     var src = srcArchers[ai] || {};
-    archerSlotShares.push(perArcher ? splitAmount_(Number(src.amount) || 0, pairCount) : null);
+    var apM = perArcher ? addonsTotal_(src.addons) : 0;
+    archerAddonPortion.push(apM);
+    archerBaseShares.push(perArcher ? splitAmount_((Number(src.amount) || 0) - apM, pairCount) : null);
   }
+  var pbPortion = addonsTotal_(body.perBookingAddons);
   var fallbackShares = perArcher ? null : splitAmount_(amount, party * pairCount);
   var fbIdx = 0, slotIdx = 0, firstEvent = true;
   var bookedPairs = [];
@@ -1778,7 +1806,13 @@ function bookMulti_(body) {
       for (var k = 0; k < party; k++) {
         var ar = archers[k];
         var src2 = srcArchers[k] || {};
-        var per = perArcher ? archerSlotShares[k][slotIdx] : fallbackShares[fbIdx++];
+        var per;
+        if (perArcher) {
+          per = archerBaseShares[k][slotIdx] + (slotIdx === 0 ? archerAddonPortion[k] : 0);
+          if (firstEvent) per += pbPortion; // per-booking add-ons land (once) on the first event
+        } else {
+          per = fallbackShares[fbIdx++];
+        }
         var concObj = perArcher ? src2.concession : body.concession;
         var addonsArr = perArcher ? src2.addons : null;
         var title = ar.name + ' — ' + (body.program || 'Session');
@@ -1793,8 +1827,8 @@ function bookMulti_(body) {
             + '\nProgram: ' + (body.program || '')
             + '\nAmount: ' + per
             + concLineOf_(concObj)
-            + addonLine_(addonsArr)
-            + (firstEvent ? bookingAddonLine_(body.perBookingAddons, pairCount) : '')
+            + (slotIdx === 0 ? addonLine_(addonsArr) : '')
+            + (firstEvent ? bookingAddonLine_(body.perBookingAddons) : '')
         });
         if (slotEventId === null) slotEventId = ev.getId();
         dbRecordBooking_({ ref: ref, date: d.date, time: label, program: body.program, name: body.name, email: body.email, phone: body.phone, party: 1, amount: per, coach: (body.coachName || body.coach || ''), concession: concSummary_({ concession: concObj }), roster: ar.name + (ar.dob ? (' (b. ' + ar.dob + ')') : ''), eventId: ev.getId() });
