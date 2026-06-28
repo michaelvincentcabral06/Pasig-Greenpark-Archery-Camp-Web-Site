@@ -456,14 +456,14 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 1. Open the Apps Script project in your browser.
 2. Paste the entire contents of `backend/Code.gs` (overwriting the old code), then click **Save** (💾).
 3. Click **Deploy → Manage deployments → edit (✏️) → Version: New version → Deploy.** (Edit the EXISTING deployment so the same `/exec` URL updates — do NOT create a new deployment.)
-4. **One-time trigger install (REQUIRED for the expiry email to fire):** in the Apps Script editor, open **Triggers** (⏰ clock icon, left rail) → **Add Trigger** → choose function **`notifyExpiredPasses_`**, event source **Time-driven**, type **Day timer** (pick any hour, e.g. 6–7am) → **Save**. Authorize if prompted. You only do this once; it persists across redeploys.
+4. **One-time trigger install (REQUIRED for the expiry email to fire):** in the Apps Script editor, open **Triggers** (⏰ clock icon, left rail) → **Add Trigger** → choose function **`notifyExpiredPasses`** (NO trailing underscore — the `_` version is hidden from the picker; see db-v34), event source **Time-driven**, type **Day timer** (pick any hour, e.g. 6–7am) → **Save**. Authorize if prompted. You only do this once; it persists across redeploys.
 
 ### Verification checklist
 
 - [ ] Open `…/exec?action=version` in a browser — confirm `"version":"db-v31"`, `"passExpiryEmail":true`, and all prior flags (`perArcherEdit:true`, `acctBreakdown:true`, etc.) still present.
-- [ ] In the Apps Script editor, select `notifyExpiredPasses_` and click **Run** once — it should complete without error; check the execution log for `sent N expiry email(s)`.
-- [ ] Confirm a daily trigger for `notifyExpiredPasses_` now appears under **Triggers**.
-- [ ] (Optional, with a test pass) Create a pass whose validity date is already in the past with at least one unused session → run `notifyExpiredPasses_` → the holder receives ONE "Pass expired" email noting the unused count; running it again sends NO second email (the `expiryNotified` flag dedupes).
+- [ ] In the Apps Script editor, select **`notifyExpiredPasses`** (no underscore) and click **Run** once — it should complete without error; check the execution log for `sent N expiry email(s)`.
+- [ ] Confirm a daily trigger for `notifyExpiredPasses` now appears under **Triggers**.
+- [ ] (Optional, with a test pass) Create a pass whose validity date is already in the past with at least one unused session → run `notifyExpiredPasses` → the holder receives ONE "Pass expired" email noting the unused count; running it again sends NO second email (the `expiryNotified` flag dedupes).
 - [ ] A fully-used or not-yet-expired pass receives NO email.
 
 ## db-v32 deploy & verify
@@ -502,3 +502,18 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 - [ ] Reload the admin (or another device) → the Not-Paid state persists (stored server-side).
 - [ ] Mark it **Paid** again → it returns to earnings/coach pay and leaves Owed.
 - [ ] A booking never touched stays **Paid** (counts as today) — no jarring reset of existing totals.
+
+## db-v34 deploy & verify
+
+**What changed:** added a PUBLIC wrapper `notifyExpiredPasses()` (no trailing underscore) that just calls `notifyExpiredPasses_()`. Apps Script hides `_`-suffixed functions from the editor's **Run** dropdown AND the **Triggers** function picker, so the db-v31 instruction to run/trigger `notifyExpiredPasses_` was not selectable. Use the no-underscore name now. No behavior change. (Bug found during live verification.)
+
+### Deploy steps
+
+1. Open the Apps Script project → paste `backend/Code.gs` → **Save**.
+2. **Deploy → Manage deployments → edit (✏️) → New version → Deploy** (edit existing deployment).
+
+### Verification checklist
+
+- [ ] `…/exec?action=version` → `"version":"db-v34"`, `"expiryRunnable":true`, prior flags intact.
+- [ ] Editor function dropdown now lists **`notifyExpiredPasses`** (no underscore) → selectable.
+- [ ] If you previously added a daily trigger and couldn't pick the function, add it now on **`notifyExpiredPasses`**.
