@@ -1136,7 +1136,7 @@
               <div style="font-size:13.5px;line-height:1.5;color:#f0b48a;background:rgba(240,180,138,0.08);border:1px solid rgba(240,180,138,0.2);border-radius:10px;padding:12px 14px;">You already have a session booked at that date and time. To bring more people, increase the archer count instead of booking again.</div>
             </sc-if>
             <sc-if value="{{ formError }}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:13.5px;color:#f0b48a;">Please complete your name, mobile number, a valid email, every archer's name &amp; birthdate, and pick an available time.</div>
+              <div style="font-size:13.5px;color:#f0b48a;">Please complete your name, mobile number, a valid email, every archer's name &amp; birthdate, attach proof for any selected discount, and pick an available time.</div>
             </sc-if>
             <sc-if value="{{ statusSessionMismatch }}" hint-placeholder-val="{{ false }}"><div style="font-size:13.5px;color:#f0b48a;">{{ bookHint }}</div></sc-if>
             <div data-test="card-quote" style="background:#1b3325;border:1px solid rgba(244,239,228,0.14);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:16px;">
@@ -1546,7 +1546,7 @@
               <div style="font-size:13.5px;line-height:1.5;color:#f0b48a;background:rgba(240,180,138,0.08);border:1px solid rgba(240,180,138,0.2);border-radius:10px;padding:12px 14px;">You already have a session booked at that date and time. To bring more people, increase the archer count instead of booking again.</div>
             </sc-if>
             <sc-if value="{{ formError }}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:13.5px;color:#f0b48a;">Please complete your name, mobile number, a valid email, every archer's name &amp; birthdate, and pick an available time.</div>
+              <div style="font-size:13.5px;color:#f0b48a;">Please complete your name, mobile number, a valid email, every archer's name &amp; birthdate, attach proof for any selected discount, and pick an available time.</div>
             </sc-if>
             <sc-if value="{{ slotChosen }}" hint-placeholder-val="{{ false }}">
               <div style="font-size:13px;color:#cdd6c5;background:rgba(127,180,63,0.12);border:1px solid rgba(127,180,63,0.3);border-radius:8px;padding:9px 12px;">Selected: <span style="font-weight:700;color:#f4efe4;">{{ chosenLabel }}</span></div>
@@ -3444,12 +3444,6 @@ class Component extends DCLogic {
 
   // per-archer session price, used for the receipt total
   rateFor(program) { return this.programByName(program).price; }
-  // Flat per-archer concessions (programs with offerDiscounts), summed from the discount list.
-  eligPerArcher() {
-    if (!this.programByName(this.state.form.program).offerDiscounts) return 0;
-    var sel = this.state.eligSel || {};
-    return this.discountList().reduce((sum, d) => sum + (sel[d.id] ? d.amount : 0), 0);
-  }
   // Group discount from config tiers; returns 0 if program has groupDiscount:false.
   discountFor(party, program) {
     if (program != null && !this.programByName(program).groupDiscount) return 0;
@@ -3493,25 +3487,6 @@ class Component extends DCLogic {
     if (!items.length) return null;
     return { items: items, total: items.reduce((s, it) => s + it.amount, 0) };
   }
-  discountRows() {
-    if (!this.programByName(this.state.form.program).offerDiscounts) return [];
-    var sel = this.state.eligSel || {}, proof = this.state.eligProof || {}, err = this.state.formError;
-    return this.discountList().map(d => {
-      var on = !!sel[d.id];
-      var missing = err && d.proofRequired && on && !String(proof[d.id] || '').trim();
-      return {
-        id: d.id, name: d.name, amountLabel: '−₱' + d.amount,
-        checked: on, box: on ? '#7fb43f' : 'transparent',
-        border: on ? '#7fb43f' : 'rgba(244,239,228,0.18)', check: on ? '✓' : '',
-        toggle: () => this.toggleElig_(d.id),
-        proofRequired: d.proofRequired, proofShown: d.proofRequired && on,
-        proof: String(proof[d.id] || ''), setProof: (e) => this.setEligProof_(d.id, e.target.value),
-        proofLabel: d.proofLabel, proofBorder: missing ? '#e8674a' : 'rgba(244,239,228,0.18)'
-      };
-    });
-  }
-  toggleElig_(id) { this.setState(s => ({ eligSel: { ...(s.eligSel || {}), [id]: !((s.eligSel || {})[id]) }, formError: false })); }
-  setEligProof_(id, v) { this.setState(s => ({ eligProof: { ...(s.eligProof || {}), [id]: v }, formError: false })); }
   toggleArcherConc_(i, id) {
     this.setState(function (s) {
       var ar = (s.archers || []).slice();
@@ -5018,8 +4993,9 @@ class Component extends DCLogic {
     const hasGroupDiscount = discountRate > 0 && slotCount > 0;
     const hasEligDiscount = eligPer > 0 && slotCount > 0;
     const hasDiscount = hasGroupDiscount || hasEligDiscount;
-    const sel = this.state.eligSel || {};
-    const eligParts = this.discountList().filter(d => sel[d.id]).map(d => d.name);
+    const eligSelUnion = {};
+    archersList.slice(0, party).forEach(a => { const s = (a && a.sel) || {}; Object.keys(s).forEach(id => { if (s[id]) eligSelUnion[id] = true; }); });
+    const eligParts = this.discountList().filter(d => eligSelUnion[d.id]).map(d => d.name);
     const eligDiscountLabel = eligParts.join(' + ') + ' (\u2212\u20B1' + (party > 0 ? Math.round(eligPer / party) : 0) + ' each)';
     const eligDiscountAmountLabel = '\u2212' + peso(eligDiscountAmount);
     const discountPctLabel = Math.round(discountRate * 100) + '% group discount';
@@ -5519,11 +5495,6 @@ class Component extends DCLogic {
     const splits = this.state.coachSplits || {};
     const splitDef = this.state.splitDefault || { coach: 80, equip: 10, range: 10 };
     const splitDraft = this.state.splitDraft || {};
-    const matchCoach = (coachVal) => {
-      const cv = String(coachVal || '').trim().toLowerCase();
-      if (!cv || cv === 'any') return null;
-      return dashCoaches.find(c => c.id.toLowerCase() === cv || (c.name || '').toLowerCase() === cv) || null;
-    };
     const _acct = this.acctAllocate(dashBookings, todayStr);
     const cApproved = _acct.counts.approved, cPending = _acct.counts.pending, cCancelled = _acct.counts.cancelled;
     const earnWeek = _acct.earnWeek, earnMonth = _acct.earnMonth, earnYear = _acct.earnYear, earnTotal = _acct.earnTotal;
@@ -5568,11 +5539,10 @@ class Component extends DCLogic {
     const upcoming = upAllFiltered
       .slice(upPage * UP_PAGE, upPage * UP_PAGE + UP_PAGE)
       .map(b => {
-        const c = matchCoach(b.coach);
         return {
           date: fmtSessionDate(b.date), time: b.time || '',
           who: b.name || 'Guest', program: b.program || '',
-          coach: c ? c.name : 'Any coach',
+          coach: b.coach || 'Any coach',
           amount: b.amount ? pesoRound(b.amount) : '',
           status: String(b.status || 'booked').toLowerCase(),
         };
@@ -5613,9 +5583,9 @@ class Component extends DCLogic {
       const st = String(b.status || 'booked').toLowerCase();
       if (bkFilter !== 'all' && st !== bkFilter) return false;
       if (bkCoach !== 'all') {
-        const c = matchCoach(b.coach);
-        if (bkCoach === 'unassigned') { if (c) return false; }
-        else if (!c || c.id !== bkCoach) return false;
+        const ids = this.coachIdsFromNames(b.coach);
+        if (bkCoach === 'unassigned') { if (ids.length) return false; }
+        else if (ids.indexOf(bkCoach) === -1) return false;
       }
       if (bkSearch) {
         const hay = ((b.name || '') + ' ' + (b.email || '') + ' ' + (b.ref || '') + ' ' + (b.phone || '') + ' ' + (b.program || '')).toLowerCase();
@@ -5628,14 +5598,13 @@ class Component extends DCLogic {
     const bkPage = Math.min(Math.max(0, this.state.bkPage || 0), bkPageCount - 1);
     const dbBookingRows = bkFiltered.slice(bkPage * BK_PAGE, bkPage * BK_PAGE + BK_PAGE).map(b => {
       const si = bkStatusInfo(b.status);
-      const c = matchCoach(b.coach);
       const st = String(b.status || 'booked').toLowerCase();
       return {
         name: b.name || 'Guest', program: b.program || '',
         statusLabel: si.label, statusBg: si.bg, statusFg: si.fg,
         slotInfo: fmtSessionDate(b.date) + (b.time ? ' · ' + b.time : '') + ((b.archers || 1) > 1 ? ' · group of ' + b.archers : ''),
         amountLabel: pesoRound(b.amount || 0),
-        coachLabel: c ? c.name : 'No coach yet',
+        coachLabel: b.coach || 'No coach yet',
         archersLabel: (b.archers || 1) + ((b.archers || 1) === 1 ? ' archer' : ' archers'),
         phone: b.phone || '', hasPhone: !!(b.phone && String(b.phone).trim()),
         email: b.email || '', hasEmail: !!(b.email && String(b.email).trim()),
@@ -5723,7 +5692,7 @@ class Component extends DCLogic {
     (this.state.allBookings || []).forEach(b => {
       if (String(b.status || '').toLowerCase() === 'cancelled') return;
       if (!b.date || b.date < todayStr) return;
-      const c = matchCoach(b.coach); if (c) coachUpcomingCount[c.id]++;
+      this.coachIdsFromNames(b.coach).forEach(id => { if (coachUpcomingCount[id] != null) coachUpcomingCount[id]++; });
     });
     const coachEditId = this.state.coachEditId || '';
     const adminCoachCards = dashCoaches.map(c => ({
@@ -5858,7 +5827,6 @@ class Component extends DCLogic {
       slotCount: slotCount,
       canInc: party < cap, canDec: party > 1, isGroup: party > 1,
       isOpenRange: this.programByName(this.state.form.program).offerDiscounts,
-      discountRows: this.discountRows(),
       archerExtraRows: this.archerExtraRows(),
       perBookingAddonRows: this.perBookingAddonRows(),
       hasPerBookingAddons: this.perBookingAddonRows().length > 0,
