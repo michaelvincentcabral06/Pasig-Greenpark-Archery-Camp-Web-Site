@@ -4899,7 +4899,7 @@ class Component extends DCLogic {
     for (let i = 0; i < party; i++) {
       const a = archersState[i] || { name: '', dob: '' };
       const isLead = i === 0;
-      const effName = isLead ? (sameAsBooker ? (a.name || this.state.form.name || '') : (this.state.form.name || '')) : (a.name || '');
+      const effName = isLead ? (sameAsBooker ? (this.state.form.name || '') : (a.name || '')) : (a.name || '');
       const age = calcAge(a.dob);
       let fit = true, note = '';
       if (age != null && ageRange) {
@@ -4908,14 +4908,14 @@ class Component extends DCLogic {
       } else if (age != null) {
         note = 'Age ' + age;
       }
-      const showNameInput = !isLead || sameAsBooker;
-      const showLeadDiv = isLead && !sameAsBooker;
+      const showNameInput = !isLead || !sameAsBooker;
+      const showLeadDiv = isLead && sameAsBooker;
       archerRows.push({
-        label: isLead ? 'Archer 1 \u2014 you' : ('Archer ' + (i + 1)),
+        label: isLead ? (sameAsBooker ? 'Archer 1 \u2014 you' : 'Archer 1') : ('Archer ' + (i + 1)),
         isLead: isLead, isExtra: !isLead,
         showNameInput: showNameInput, showLeadDiv: showLeadDiv,
-        leadName: effName,
-        name: sameAsBooker && isLead ? (a.name || this.state.form.name || '') : a.name,
+        leadName: this.state.form.name || '',
+        name: a.name,
         dob: a.dob, age: age, note: note, hasNote: !!note, fit: fit,
         noteColor: (age == null) ? '#8a9579' : (fit ? '#9aff9a' : '#f0b48a'),
         setName: setArcher(i, 'name'), setDob: setArcher(i, 'dob'),
