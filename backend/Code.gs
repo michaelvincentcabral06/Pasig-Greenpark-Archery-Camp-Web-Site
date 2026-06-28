@@ -776,6 +776,16 @@ function doGet(e) {
   }
 }
 
+// Parse one stored "Concession:" value into [{name, proof}]. Handles the items shape
+// ("Name (proof), Name2 (proof2)") and the legacy boolean shape ("Pasig,Greenpark/RHS,PAC").
+function parseConcItems_(concStr) {
+  if (!concStr) return [];
+  return concStr.split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s; }).map(function (part) {
+    var m = /^(.*?)\s*\(([^)]*)\)\s*$/.exec(part);
+    return m ? { name: m[1].trim(), proof: m[2].trim() } : { name: part, proof: '' };
+  });
+}
+
 // Find a customer's sessions by email (+ optional booking reference) for the My Bookings page.
 // Scans calendar events in a window and reads the structured description we write at booking time.
 // db-v14: accepts email OR ref (ref-only resolves the email via the Bookings sheet);
@@ -813,10 +823,11 @@ function lookup_(email, ref) {
         date: dateStr, time: timeLbl, party: 0, amount: 0,
         coachName: field(d, 'Coach'), ref: ref,
         eventId: ev.getId(), concession: (conc ? { label: conc, pasig: /Pasig/i.test(conc), local: /Greenpark|RHS/i.test(conc), pac: /PAC/i.test(conc) } : null),
-        ts: st.getTime(), __remote: true };
+        ts: st.getTime(), archers: [], __remote: true };
     }
     groups[key].party += seats;
     groups[key].amount += amt;
+    groups[key].archers.push({ name: field(d, 'Name'), concession: { items: parseConcItems_(field(d, 'Concession')) } });
   });
   for (var k in groups) out.push(groups[k]);
   return json_({ bookings: out, name: name, emails: group, primary: email });
