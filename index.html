@@ -3444,12 +3444,6 @@ class Component extends DCLogic {
 
   // per-archer session price, used for the receipt total
   rateFor(program) { return this.programByName(program).price; }
-  // Flat per-archer concessions (programs with offerDiscounts), summed from the discount list.
-  eligPerArcher() {
-    if (!this.programByName(this.state.form.program).offerDiscounts) return 0;
-    var sel = this.state.eligSel || {};
-    return this.discountList().reduce((sum, d) => sum + (sel[d.id] ? d.amount : 0), 0);
-  }
   // Group discount from config tiers; returns 0 if program has groupDiscount:false.
   discountFor(party, program) {
     if (program != null && !this.programByName(program).groupDiscount) return 0;
@@ -3493,25 +3487,6 @@ class Component extends DCLogic {
     if (!items.length) return null;
     return { items: items, total: items.reduce((s, it) => s + it.amount, 0) };
   }
-  discountRows() {
-    if (!this.programByName(this.state.form.program).offerDiscounts) return [];
-    var sel = this.state.eligSel || {}, proof = this.state.eligProof || {}, err = this.state.formError;
-    return this.discountList().map(d => {
-      var on = !!sel[d.id];
-      var missing = err && d.proofRequired && on && !String(proof[d.id] || '').trim();
-      return {
-        id: d.id, name: d.name, amountLabel: '−₱' + d.amount,
-        checked: on, box: on ? '#7fb43f' : 'transparent',
-        border: on ? '#7fb43f' : 'rgba(244,239,228,0.18)', check: on ? '✓' : '',
-        toggle: () => this.toggleElig_(d.id),
-        proofRequired: d.proofRequired, proofShown: d.proofRequired && on,
-        proof: String(proof[d.id] || ''), setProof: (e) => this.setEligProof_(d.id, e.target.value),
-        proofLabel: d.proofLabel, proofBorder: missing ? '#e8674a' : 'rgba(244,239,228,0.18)'
-      };
-    });
-  }
-  toggleElig_(id) { this.setState(s => ({ eligSel: { ...(s.eligSel || {}), [id]: !((s.eligSel || {})[id]) }, formError: false })); }
-  setEligProof_(id, v) { this.setState(s => ({ eligProof: { ...(s.eligProof || {}), [id]: v }, formError: false })); }
   toggleArcherConc_(i, id) {
     this.setState(function (s) {
       var ar = (s.archers || []).slice();
@@ -5018,8 +4993,9 @@ class Component extends DCLogic {
     const hasGroupDiscount = discountRate > 0 && slotCount > 0;
     const hasEligDiscount = eligPer > 0 && slotCount > 0;
     const hasDiscount = hasGroupDiscount || hasEligDiscount;
-    const sel = this.state.eligSel || {};
-    const eligParts = this.discountList().filter(d => sel[d.id]).map(d => d.name);
+    const eligSelUnion = {};
+    archersList.slice(0, party).forEach(a => { const s = (a && a.sel) || {}; Object.keys(s).forEach(id => { if (s[id]) eligSelUnion[id] = true; }); });
+    const eligParts = this.discountList().filter(d => eligSelUnion[d.id]).map(d => d.name);
     const eligDiscountLabel = eligParts.join(' + ') + ' (\u2212\u20B1' + (party > 0 ? Math.round(eligPer / party) : 0) + ' each)';
     const eligDiscountAmountLabel = '\u2212' + peso(eligDiscountAmount);
     const discountPctLabel = Math.round(discountRate * 100) + '% group discount';
@@ -5851,7 +5827,6 @@ class Component extends DCLogic {
       slotCount: slotCount,
       canInc: party < cap, canDec: party > 1, isGroup: party > 1,
       isOpenRange: this.programByName(this.state.form.program).offerDiscounts,
-      discountRows: this.discountRows(),
       archerExtraRows: this.archerExtraRows(),
       perBookingAddonRows: this.perBookingAddonRows(),
       hasPerBookingAddons: this.perBookingAddonRows().length > 0,
