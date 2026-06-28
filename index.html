@@ -1933,9 +1933,9 @@
             <span style="background:#fffdf6;border:1px solid rgba(36,66,50,0.16);color:#244232;border-radius:999px;padding:7px 15px;font-size:13px;font-weight:700;">👤 {{ coachCount }} coaches</span>
           </div>
 
-          <!-- PER-COACH PAYMENTS + SPLIT EDITOR -->
-          <h3 style="font-size:17px;font-weight:800;color:#1b2a1f;margin:28px 0 4px;">Coach payments &amp; split</h3>
-          <p style="font-size:13px;color:#56664f;margin:0 0 14px;">Each coach earns a share of every booking they take. Adjust the split per coach — coach % + equipment % + range % should total 100%.</p>
+          <!-- PER-COACH PAYMENTS (fees defined per program/pass in the Pricing tab) -->
+          <h3 style="font-size:17px;font-weight:800;color:#1b2a1f;margin:28px 0 4px;">Coach payments</h3>
+          <p style="font-size:13px;color:#56664f;margin:0 0 14px;">Each coach earns the Coach Fee set on each program/pass (Pricing tab), split equally when a session has more than one coach.</p>
           <div style="display:flex;flex-direction:column;gap:10px;">
             <sc-for list="{{ coachPayRows }}" as="cp" hint-placeholder-count="0">
               <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
@@ -1943,15 +1943,8 @@
                 <div style="flex:1;min-width:150px;">
                   <div style="font-size:16px;font-weight:800;color:#1b2a1f;">{{ cp.name }}</div>
                   <div style="font-size:12.5px;color:#8a9579;">{{ cp.role }}</div>
-                  <div style="font-size:13px;font-weight:700;color:#4d7327;margin-top:4px;">Earned: {{ cp.pay }}</div>
                 </div>
-                <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;">
-                  <label style="font-size:11px;color:#56664f;font-family:'Spline Sans Mono',monospace;">Coach %<br><input type="number" min="0" max="100" value="{{ cp.coachPct }}" onInput="{{ cp.setCoachPct }}" style="width:64px;margin-top:3px;padding:7px 9px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:14px;"></label>
-                  <label style="font-size:11px;color:#56664f;font-family:'Spline Sans Mono',monospace;">Equip %<br><input type="number" min="0" max="100" value="{{ cp.equipPct }}" onInput="{{ cp.setEquipPct }}" style="width:64px;margin-top:3px;padding:7px 9px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:14px;"></label>
-                  <label style="font-size:11px;color:#56664f;font-family:'Spline Sans Mono',monospace;">Range %<br><input type="number" min="0" max="100" value="{{ cp.rangePct }}" onInput="{{ cp.setRangePct }}" style="width:64px;margin-top:3px;padding:7px 9px;border:1px solid rgba(36,66,50,0.2);border-radius:8px;font-size:14px;"></label>
-                  <button onClick="{{ cp.saveSplit }}" style="background:#244232;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;">Save</button>
-                </div>
-                <sc-if value="{{ cp.sumBad }}" hint-placeholder-val="{{ false }}"><div style="width:100%;font-size:12px;color:#b4512f;font-family:'Spline Sans Mono',monospace;">⚠ Totals {{ cp.sumLabel }} — should be 100% before saving.</div></sc-if>
+                <div style="font-size:15px;font-weight:800;color:#4d7327;font-family:'Spline Sans Mono',monospace;">{{ cp.pay }}</div>
               </div>
             </sc-for>
           </div>
@@ -2384,6 +2377,13 @@
                   <label style="flex:1;font-size:11.5px;font-weight:600;color:#56664f;">Max sessions<input value="{{ p.sessions }}" onInput="{{ p.setSessions }}" type="number" min="1" style="display:block;margin-top:4px;width:100%;box-sizing:border-box;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
                   <label style="flex:1;font-size:11.5px;font-weight:600;color:#56664f;">Valid for (days)<input value="{{ p.validDays }}" onInput="{{ p.setValidDays }}" type="number" min="1" style="display:block;margin-top:4px;width:100%;box-sizing:border-box;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
                 </div>
+                <div style="font-size:11.5px;font-weight:700;color:#56664f;">Fees per session</div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                  <label style="font-size:11.5px;font-weight:600;color:#56664f;">Coach (₱)<input value="{{ p.coachFee }}" onInput="{{ p.setCoachFee }}" type="number" min="0" style="display:block;margin-top:4px;width:84px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
+                  <label style="font-size:11.5px;font-weight:600;color:#56664f;">Range (₱)<input value="{{ p.rangeFee }}" onInput="{{ p.setRangeFee }}" type="number" min="0" style="display:block;margin-top:4px;width:84px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
+                  <label style="font-size:11.5px;font-weight:600;color:#56664f;">Equip (₱)<input value="{{ p.equipFee }}" onInput="{{ p.setEquipFee }}" type="number" min="0" style="display:block;margin-top:4px;width:84px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
+                  <span style="font-size:11.5px;font-weight:700;font-family:'Spline Sans Mono',monospace;color:{{ p.marginColor }};align-self:flex-end;padding-bottom:9px;">{{ p.marginLabel }}</span>
+                </div>
                 <div style="font-size:11.5px;font-weight:700;color:#56664f;">Features</div>
                 <div style="display:flex;flex-direction:column;gap:6px;">
                   <sc-for list="{{ p.featureRows }}" as="f" hint-placeholder-count="3">
@@ -2412,6 +2412,12 @@
                     <label style="font-size:11.5px;font-weight:600;color:#56664f;">Price (₱)<input value="{{ pg.price }}" onInput="{{ pg.setPrice }}" type="number" min="0" style="display:block;margin-top:4px;width:100px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
                     <label style="font-size:11.5px;font-weight:600;color:#56664f;">Min age<input value="{{ pg.minAge }}" onInput="{{ pg.setMinAge }}" type="number" min="0" placeholder="—" style="display:block;margin-top:4px;width:70px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
                     <label style="font-size:11.5px;font-weight:600;color:#56664f;">Max age<input value="{{ pg.maxAge }}" onInput="{{ pg.setMaxAge }}" type="number" min="0" placeholder="—" style="display:block;margin-top:4px;width:70px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
+                  </div>
+                  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <label style="font-size:11.5px;font-weight:600;color:#56664f;">Coach fee (₱)<input value="{{ pg.coachFee }}" onInput="{{ pg.setCoachFee }}" type="number" min="0" style="display:block;margin-top:4px;width:90px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
+                    <label style="font-size:11.5px;font-weight:600;color:#56664f;">Range fee (₱)<input value="{{ pg.rangeFee }}" onInput="{{ pg.setRangeFee }}" type="number" min="0" style="display:block;margin-top:4px;width:90px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
+                    <label style="font-size:11.5px;font-weight:600;color:#56664f;">Equip fee (₱)<input value="{{ pg.equipFee }}" onInput="{{ pg.setEquipFee }}" type="number" min="0" style="display:block;margin-top:4px;width:90px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1b2a1f;outline:none;" /></label>
+                    <span style="font-size:11.5px;font-weight:700;font-family:'Spline Sans Mono',monospace;color:{{ pg.marginColor }};align-self:flex-end;padding-bottom:9px;">{{ pg.marginLabel }}</span>
                   </div>
                   <div style="display:flex;gap:8px;flex-wrap:wrap;">
                     <button onClick="{{ pg.toggleCoach }}" style="background:{{ pg.coachBg }};color:{{ pg.coachFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;">Needs a coach</button>
@@ -2881,8 +2887,6 @@ class Component extends DCLogic {
   // reducer consumes only those. Unscheduled capacity that lapses at expiry never enters `items`,
   // so it can never contribute to earnings or "owed". No write-down logic is needed here.
   acctAllocate(items, todayStr) {
-    const splits = this.state.coachSplits || {};
-    const splitDef = this.state.splitDefault || { coach: 80, equip: 10, range: 10 };
     const coaches = this.coaches() || [];
     const known = {}; coaches.forEach(c => { known[c.id] = true; });
     const fmtYmd = (d) => { const y = d.getFullYear(), m = ('0' + (d.getMonth() + 1)).slice(-2), da = ('0' + d.getDate()).slice(-2); return y + '-' + m + '-' + da; };
@@ -2902,33 +2906,43 @@ class Component extends DCLogic {
       const st = String(b.status || 'booked').toLowerCase();
       if (st === 'cancelled') { cCancelled++; return; }
       if (st === 'approved') cApproved++; else cPending++;
-      const amt = Number(b.amount) || 0; if (!amt) return;
       const ds = b.date || '';
-      earnTotal += amt;
-      if (ds.slice(0, 4) === periodYear) earnYear += amt;
-      if (ds.slice(0, 7) === periodMonth) earnMonth += amt;
-      if (ds >= weekStartStr && ds <= weekEndStr) earnWeek += amt;
-      const base = (b.baseAmount != null ? Number(b.baseAmount) : amt) || 0;
+      const isPlan = /\(plan\)\s*$/i.test(b.program || '');
+      const n = Math.max(1, Number(b.archers) || 1);
+      const fees = this.feeFor(b.program);
       const ab = b.addonBuckets || { coach: 0, equip: 0, range: 0 };
+      let coachBase, equipBase, rangeBase, recognized;
+      if (isPlan) {
+        // Prepaid pass session: recognize the per-session Coach/Range/Equip fees in full on delivery
+        // (the calendar event itself carries amount 0). Unused/expired sessions never appear (B #3).
+        coachBase = n * fees.coach; equipBase = n * fees.equip; rangeBase = n * fees.range;
+        recognized = coachBase + equipBase + rangeBase;
+      } else {
+        const amt = Number(b.amount) || 0;
+        const base = (b.baseAmount != null ? Number(b.baseAmount) : amt) || 0;
+        // Priority fill of what the client actually paid (after discounts): coach is paid first
+        // (protected), then equip, then range; any remainder is business margin (untracked).
+        let rem = base;
+        coachBase = Math.min(n * fees.coach, rem); rem -= coachBase;
+        equipBase = Math.min(n * fees.equip, rem); rem -= equipBase;
+        rangeBase = Math.min(n * fees.range, rem); rem -= rangeBase;
+        recognized = amt; // gross revenue = what the client paid (base + add-ons + margin)
+      }
+      if (!recognized && !coachBase && !equipBase && !rangeBase) return;
+      earnTotal += recognized;
+      if (ds.slice(0, 4) === periodYear) earnYear += recognized;
+      if (ds.slice(0, 7) === periodMonth) earnMonth += recognized;
+      if (ds >= weekStartStr && ds <= weekEndStr) earnWeek += recognized;
+      const coachAmt = coachBase + (Number(ab.coach) || 0);
       const ids = this.coachIdsFromNames(b.coach).filter(id => known[id]);
       if (ids.length) {
-        const portion = base / ids.length;
-        const addonCoachEach = (Number(ab.coach) || 0) / ids.length;
-        ids.forEach(id => {
-          const sp = splits[id] || splitDef;
-          const cShare = portion * (Number(sp.coach) || 0) / 100 + addonCoachEach;
-          coachPay[id] = (coachPay[id] || 0) + cShare; coachTotal += cShare;
-          equipTotal += portion * (Number(sp.equip) || 0) / 100;
-          rangeTotal += portion * (Number(sp.range) || 0) / 100;
-        });
+        const coachEach = coachAmt / ids.length;
+        ids.forEach(id => { coachPay[id] = (coachPay[id] || 0) + coachEach; coachTotal += coachEach; });
       } else {
-        const cShare = base * (Number(splitDef.coach) || 0) / 100 + (Number(ab.coach) || 0);
-        coachUnassigned += cShare; coachTotal += cShare;
-        equipTotal += base * (Number(splitDef.equip) || 0) / 100;
-        rangeTotal += base * (Number(splitDef.range) || 0) / 100;
+        coachUnassigned += coachAmt; coachTotal += coachAmt;
       }
-      equipTotal += Number(ab.equip) || 0;
-      rangeTotal += Number(ab.range) || 0;
+      equipTotal += equipBase + (Number(ab.equip) || 0);
+      rangeTotal += rangeBase + (Number(ab.range) || 0);
     });
     return { counts: { approved: cApproved, pending: cPending, cancelled: cCancelled },
       earnWeek: earnWeek, earnMonth: earnMonth, earnYear: earnYear, earnTotal: earnTotal,
@@ -3862,6 +3876,40 @@ class Component extends DCLogic {
     const pk = pkgs.find(p => p.name === name);
     return pk ? (pk.price || '') : '';
   }
+  // ----- COACH FEE SETUP (sub-project D): explicit Coach/Range/Equip peso fees per program & pass -----
+  parsePeso_(v) {
+    if (typeof v === 'number') return v || 0;
+    return Math.round(parseFloat(String(v == null ? '' : v).replace(/[^0-9.]/g, '')) || 0);
+  }
+  // Migration default when an item has no explicit fees: the old 80/10/10 split of its price.
+  feeDefaults_(price) {
+    var p = this.parsePeso_(price);
+    return { coach: Math.round(p * 0.8), equip: Math.round(p * 0.1), range: Math.round(p * 0.1) };
+  }
+  // Resolve {coachFee, rangeFee, equipFee} for an item, applying the 80/10/10 default only when
+  // NONE of the three are set (so a deliberately-zero fee is honoured once any fee is entered).
+  normalizeFees_(o, price) {
+    o = o || {};
+    var has = (o.coachFee != null && o.coachFee !== '') || (o.rangeFee != null && o.rangeFee !== '') || (o.equipFee != null && o.equipFee !== '');
+    var d = this.feeDefaults_(price);
+    return {
+      coachFee: has ? (Number(o.coachFee) || 0) : d.coach,
+      rangeFee: has ? (Number(o.rangeFee) || 0) : d.range,
+      equipFee: has ? (Number(o.equipFee) || 0) : d.equip
+    };
+  }
+  // Per-archer-per-session fees for a booking's program string. Strips a "(plan)" suffix and matches
+  // a pass first (per-session fees), else a program. Returns { coach, range, equip, price, isPass }.
+  feeFor(programString) {
+    var nm = String(programString || '').replace(/\s*\(plan\)\s*$/i, '').trim();
+    var pkg = this.mergedPackages().filter(function (p) { return p.name === nm; })[0];
+    if (pkg) {
+      return { coach: Number(pkg.coachFee) || 0, range: Number(pkg.rangeFee) || 0, equip: Number(pkg.equipFee) || 0, price: pkg.perSessionPrice != null ? pkg.perSessionPrice : this.parsePeso_(pkg.price), isPass: true };
+    }
+    var prog = this.programByName(nm);
+    var pf = this.normalizeFees_(prog, prog.price);
+    return { coach: pf.coachFee, range: pf.rangeFee, equip: pf.equipFee, price: this.parsePeso_(prog.price), isPass: false };
+  }
   defaultPrograms() {
     return [
       { name: 'Little Archers (6–10)', price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: 6,  maxAge: 10,  blurb: '', addons: [] },
@@ -3890,7 +3938,8 @@ class Component extends DCLogic {
       groupDiscount: (p.groupDiscount === undefined ? true : !!p.groupDiscount),
       minAge: (p.minAge == null || p.minAge === '') ? null : (parseInt(p.minAge, 10) || null),
       maxAge: (p.maxAge == null || p.maxAge === '') ? null : (parseInt(p.maxAge, 10) || null),
-      blurb: p.blurb || '', addons: this.normalizeAddons(p.addons)
+      blurb: p.blurb || '', addons: this.normalizeAddons(p.addons),
+      ...this.normalizeFees_(p, p.price)
     }));
   }
   programList() { var c = this.state.content || {}; return this.normalizePrograms(c.programs); }
@@ -3975,6 +4024,11 @@ class Component extends DCLogic {
       const out = { ...p };
       if (out.sessions == null || out.sessions === '') out.sessions = (d.sessions != null ? d.sessions : 1);
       if (out.validDays == null || out.validDays === '') out.validDays = (d.validDays != null ? d.validDays : 30);
+      // Per-session fees: a pass's price covers `sessions`, so default fees off the per-session price.
+      const sess = (out.sessions != null && out.sessions !== '') ? (parseInt(out.sessions, 10) || 1) : 1;
+      out.perSessionPrice = sess > 0 ? Math.round(this.parsePeso_(out.price) / sess) : this.parsePeso_(out.price);
+      const f = this.normalizeFees_(out, out.perSessionPrice);
+      out.coachFee = f.coachFee; out.rangeFee = f.rangeFee; out.equipFee = f.equipFee;
       return out;
     });
   }
@@ -4096,22 +4150,6 @@ class Component extends DCLogic {
         splitDraft: JSON.parse(JSON.stringify(res.splits)),
       });
     }).catch(() => {});
-  }
-  // Admin edits one number in a coach's split (kept in a draft until "Save").
-  setSplitField(coachId, field, value) {
-    const v = Math.max(0, Math.min(100, parseInt(value, 10) || 0));
-    this.setState(s => {
-      const draft = JSON.parse(JSON.stringify(s.splitDraft || {}));
-      draft[coachId] = draft[coachId] || { ...(s.splitDefault || { coach: 80, equip: 10, range: 10 }) };
-      draft[coachId][field] = v;
-      return { splitDraft: draft };
-    });
-  }
-  // Save a coach's split to the backend, then re-pull settings to confirm.
-  saveCoachSplit(coachId) {
-    const d = (this.state.splitDraft || {})[coachId] || this.state.splitDefault;
-    this.adminPost({ action: 'setSplit', coach: coachId, coachPct: d.coach, equipPct: d.equip, rangePct: d.range })
-      .then(() => { this.loadSettings(); if (typeof alert !== 'undefined') alert('Saved split for this coach.'); }).catch(() => {});
   }
   // ---------- ADMIN: BOOKINGS TAB (database-backed) ----------
   // Mark a booking Approved (status only — bookings still confirm instantly).
@@ -5149,6 +5187,7 @@ class Component extends DCLogic {
     const saveCM = (patch) => this.persistContent({ ...cm, ...patch });
     const updatePackage = (i, key) => (e) => { const v = e.target.value; const ps = cm.packages.map((p, idx) => idx === i ? { ...p, [key]: v } : p); saveCM({ packages: ps }); };
     const setPkgNum = (i, key) => (e) => { const v = Math.max(1, parseInt(e.target.value, 10) || 1); const ps = cm.packages.map((p, idx) => idx === i ? { ...p, [key]: v } : p); saveCM({ packages: ps }); };
+    const setPkgFeeNum = (i, key) => (e) => { const v = (e.target.value === '' ? 0 : (Number(e.target.value) || 0)); const ps = cm.packages.map((p, idx) => idx === i ? { ...p, [key]: v } : p); saveCM({ packages: ps }); };
     const setFeature = (i, fi) => (e) => { const v = e.target.value; const ps = cm.packages.map((p, idx) => idx === i ? { ...p, features: (p.features || []).map((f, k) => k === fi ? v : f) } : p); saveCM({ packages: ps }); };
     const addFeature = (i) => () => { const ps = cm.packages.map((p, idx) => idx === i ? { ...p, features: (p.features || []).concat(['New feature']) } : p); saveCM({ packages: ps }); };
     const removeFeature = (i, fi) => () => { const ps = cm.packages.map((p, idx) => idx === i ? { ...p, features: (p.features || []).filter((_, k) => k !== fi) } : p); saveCM({ packages: ps }); };
@@ -5172,13 +5211,19 @@ class Component extends DCLogic {
     const toggleAddonRate = (pi, ai) => () => { writeAddons(pi, progAddons(pi).map((a, j) => j === ai ? { ...a, rateType: nextRate(a.rateType || 'perHour') } : a)); };
     const removeAddon = (pi, ai) => () => writeAddons(pi, progAddons(pi).filter((_, j) => j !== ai));
     const addAddon = (pi) => () => writeAddons(pi, this.normalizeAddons(progAddons(pi).concat([{ name: 'New add-on', price: 0, scope: 'perArcher' }])));
-    const programEdits = (cm.programs || this.defaultPrograms()).map((p, i) => ({
+    const programEdits = (cm.programs || this.defaultPrograms()).map((p, i) => {
+      const pf = this.normalizeFees_(p, p.price);
+      const pMargin = this.parsePeso_(p.price) - (pf.coachFee + pf.rangeFee + pf.equipFee);
+      return {
       name: p.name, price: p.price, blurb: p.blurb || '',
       minAge: (p.minAge == null ? '' : p.minAge), maxAge: (p.maxAge == null ? '' : p.maxAge),
       needsCoach: !!p.needsCoach, multiDay: !!p.multiDay, offerDiscounts: !!p.offerDiscounts,
       coachBg: p.needsCoach ? '#244232' : '#fffdf6', coachFg: p.needsCoach ? '#f4efe4' : '#244232',
       discBg: p.offerDiscounts ? '#244232' : '#fffdf6', discFg: p.offerDiscounts ? '#f4efe4' : '#244232',
       groupBg: p.groupDiscount ? '#244232' : '#fffdf6', groupFg: p.groupDiscount ? '#f4efe4' : '#244232',
+      coachFee: pf.coachFee, rangeFee: pf.rangeFee, equipFee: pf.equipFee,
+      setCoachFee: setProgNum(i, 'coachFee'), setRangeFee: setProgNum(i, 'rangeFee'), setEquipFee: setProgNum(i, 'equipFee'),
+      marginLabel: 'Margin: ₱' + pMargin.toLocaleString('en-PH'), marginColor: pMargin < 0 ? '#b4512f' : '#8a9579',
       setName: setProgField(i, 'name'), setPrice: setProgNum(i, 'price'),
       setMinAge: setProgNum(i, 'minAge'), setMaxAge: setProgNum(i, 'maxAge'), setBlurb: setProgField(i, 'blurb'),
       toggleCoach: toggleProg(i, 'needsCoach'), toggleDisc: toggleProg(i, 'offerDiscounts'), toggleGroup: toggleProg(i, 'groupDiscount'),
@@ -5198,7 +5243,8 @@ class Component extends DCLogic {
         rateBg: '#fffdf6', rateFg: '#244232',
         toggleRate: toggleAddonRate(i, ai)
       })),
-    }));
+      };
+    });
     const setDiscField = (i, key) => (e) => { const v = e.target.value; const ds = this.discountList().map((d, idx) => idx === i ? { ...d, [key]: v } : d); saveCM({ discounts: ds }); };
     const setDiscNum   = (i, key) => (e) => { const v = (e.target.value === '' ? 0 : (Number(e.target.value) || 0)); const ds = this.discountList().map((d, idx) => idx === i ? { ...d, [key]: v } : d); saveCM({ discounts: ds }); };
     const toggleDiscProof = (i) => () => { const ds = this.discountList().map((d, idx) => idx === i ? { ...d, proofRequired: !d.proofRequired } : d); saveCM({ discounts: ds }); };
@@ -5219,14 +5265,20 @@ class Component extends DCLogic {
       minParty: t.minParty, pct: t.pct,
       setMinParty: setTierNum(i, 'minParty'), setPct: setTierNum(i, 'pct'), remove: removeTier(i)
     }));
-    const pkgEdits = cm.packages.map((p, i) => ({
+    const pkgEdits = cm.packages.map((p, i) => {
+      const kMargin = (p.perSessionPrice || 0) - ((Number(p.coachFee) || 0) + (Number(p.rangeFee) || 0) + (Number(p.equipFee) || 0));
+      return {
       name: p.name, price: p.price, unit: p.unit, desc: p.desc,
       sessions: (p.sessions != null ? p.sessions : ''), validDays: (p.validDays != null ? p.validDays : ''),
+      coachFee: (p.coachFee != null ? p.coachFee : 0), rangeFee: (p.rangeFee != null ? p.rangeFee : 0), equipFee: (p.equipFee != null ? p.equipFee : 0),
+      setCoachFee: setPkgFeeNum(i, 'coachFee'), setRangeFee: setPkgFeeNum(i, 'rangeFee'), setEquipFee: setPkgFeeNum(i, 'equipFee'),
+      marginLabel: 'Margin/session: ₱' + kMargin.toLocaleString('en-PH'), marginColor: kMargin < 0 ? '#b4512f' : '#8a9579',
       setName: updatePackage(i, 'name'), setPrice: updatePackage(i, 'price'), setUnit: updatePackage(i, 'unit'), setDesc: updatePackage(i, 'desc'),
       setSessions: setPkgNum(i, 'sessions'), setValidDays: setPkgNum(i, 'validDays'),
       featureRows: (p.features || []).map((f, fi) => ({ value: f, set: setFeature(i, fi), remove: removeFeature(i, fi) })),
       addFeature: addFeature(i), removePass: removePass(i),
-    }));
+      };
+    });
     const setTestimonial = (i, key) => (e) => { const v = e.target.value; const ts = cm.testimonials.map((t, idx) => idx === i ? { ...t, [key]: v } : t); saveCM({ testimonials: ts }); };
     const setTestimonialRating = (i) => (e) => { const v = Math.max(1, Math.min(5, parseInt(e.target.value, 10) || 5)); const ts = cm.testimonials.map((t, idx) => idx === i ? { ...t, rating: v } : t); saveCM({ testimonials: ts }); };
     const removeTestimonial = (i) => () => saveCM({ testimonials: cm.testimonials.filter((_, idx) => idx !== i) });
@@ -5634,31 +5686,17 @@ class Component extends DCLogic {
     const pesoRound = (n) => '₱' + Math.round(Number(n) || 0).toLocaleString('en-PH');
     const dashBookings = this.state.allBookings || [];
     const dashCoaches = this.coaches() || [];
-    const splits = this.state.coachSplits || {};
-    const splitDef = this.state.splitDefault || { coach: 80, equip: 10, range: 10 };
-    const splitDraft = this.state.splitDraft || {};
     const _acct = this.acctAllocate(dashBookings, todayStr);
     const cApproved = _acct.counts.approved, cPending = _acct.counts.pending, cCancelled = _acct.counts.cancelled;
     const earnWeek = _acct.earnWeek, earnMonth = _acct.earnMonth, earnYear = _acct.earnYear, earnTotal = _acct.earnTotal;
     const coachTotal = _acct.coachTotal, equipTotal = _acct.equipTotal, rangeTotal = _acct.rangeTotal;
     const coachUnassigned = _acct.coachUnassigned;
     const coachPay = _acct.coachPay;
-    const draftFor = (id) => splitDraft[id] || splits[id] || splitDef;
-    const coachPayRows = dashCoaches.map(c => {
-      const d = draftFor(c.id);
-      const sum = (Number(d.coach) || 0) + (Number(d.equip) || 0) + (Number(d.range) || 0);
-      return {
-        id: c.id, name: c.name, role: c.role || '',
-        initials: this.coachInitials(c.name),
-        pay: pesoRound(coachPay[c.id] || 0),
-        coachPct: d.coach, equipPct: d.equip, rangePct: d.range,
-        setCoachPct: (e) => this.setSplitField(c.id, 'coach', e.target.value),
-        setEquipPct: (e) => this.setSplitField(c.id, 'equip', e.target.value),
-        setRangePct: (e) => this.setSplitField(c.id, 'range', e.target.value),
-        saveSplit: () => this.saveCoachSplit(c.id),
-        sumOk: sum === 100, sumBad: sum !== 100, sumLabel: sum + '%',
-      };
-    });
+    const coachPayRows = dashCoaches.map(c => ({
+      id: c.id, name: c.name, role: c.role || '',
+      initials: this.coachInitials(c.name),
+      pay: pesoRound(coachPay[c.id] || 0),
+    }));
     const dashUpCoach = this.state.dashUpCoach || 'all';
     const dashUpRange = this.state.dashUpRange || 'all';
     const dashUpSearch = (this.state.dashUpSearch || '').trim().toLowerCase();
