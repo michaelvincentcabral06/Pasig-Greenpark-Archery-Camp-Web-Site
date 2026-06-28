@@ -426,3 +426,23 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 - [ ] Book a session with an **equipment add-on** (e.g. bow rental) → in the admin Earnings dashboard the add-on pesos appear in the **Equipment** bucket and the **Coach** share is computed on the base fee only (the coach does NOT earn a % of the add-on).
 - [ ] A booking with **no add-ons** shows `baseAmount === amount` (coach/equip/range split unchanged).
 - [ ] A booking with **2 coaches** has its coach share split between them (verified live once the frontend Plan B is also deployed; pre-frontend, confirm the payload carries the breakdown).
+
+---
+
+## db-v30 deploy & verify
+
+**What changed:** `lookup_` now surfaces a per-slot `archers:[{name,concession}]` (each archer's own concession + proof, parsed from their event); `reschedule_` now accepts `body.archers:[{concession,amount}]` and rewrites each slot event's `Concession:` line + `Amount` (calendar event + Bookings sheet row), so a customer's per-archer concession edit in My Bookings actually persists. Additive/back-compatible. Backend-only.
+
+### Deploy steps
+
+1. Open the Apps Script project in your browser.
+2. Paste the entire contents of `backend/Code.gs` (overwriting the old code), then click **Save** (💾).
+3. Click **Deploy → Manage deployments → edit (✏️) → Version: New version → Deploy.** (Edit the EXISTING deployment so the same `/exec` URL updates — do NOT create a new deployment.)
+
+### Verification checklist
+
+- [ ] Open `…/exec?action=version` in a browser — confirm `"version":"db-v30"`, `"perArcherEdit":true`, and all prior flags (`acctBreakdown:true`, `multiCoach:true`, etc.) still present.
+- [ ] In **My Bookings**, open edit on a **2-archer** booking → `lookup_` returns an `archers` array with each archer's own concession (visible in the panel once the frontend ships).
+- [ ] Change one archer's concession and Save **without** changing date/time → that archer's calendar event `Concession:` + `Amount:` update, the other archer's event is untouched, events stay at the same time, and **no reschedule email** is sent.
+- [ ] Reschedule (change date/time) on a per-archer booking → events move AND the per-archer concessions/amounts persist AND one reschedule email is sent.
+- [ ] A reschedule from an OLD frontend (no `archers` in the request) still moves the events normally.
