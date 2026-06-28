@@ -768,12 +768,22 @@ function doGet(e) {
     if (action === 'content') return getContent_();
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v29', auth: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true, multiCoach: true, acctBreakdown: true });
+      return json_({ version: 'db-v30', auth: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true, multiCoach: true, acctBreakdown: true, perArcherEdit: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
     return json_({ error: String(err) });
   }
+}
+
+// Parse one stored "Concession:" value into [{name, proof}]. Handles the items shape
+// ("Name (proof), Name2 (proof2)") and the legacy boolean shape ("Pasig,Greenpark/RHS,PAC").
+function parseConcItems_(concStr) {
+  if (!concStr) return [];
+  return concStr.split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s; }).map(function (part) {
+    var m = /^(.*?)\s*\(([^)]*)\)\s*$/.exec(part);
+    return m ? { name: m[1].trim(), proof: m[2].trim() } : { name: part, proof: '' };
+  });
 }
 
 // Find a customer's sessions by email (+ optional booking reference) for the My Bookings page.
@@ -813,10 +823,11 @@ function lookup_(email, ref) {
         date: dateStr, time: timeLbl, party: 0, amount: 0,
         coachName: field(d, 'Coach'), ref: ref,
         eventId: ev.getId(), concession: (conc ? { label: conc, pasig: /Pasig/i.test(conc), local: /Greenpark|RHS/i.test(conc), pac: /PAC/i.test(conc) } : null),
-        ts: st.getTime(), __remote: true };
+        ts: st.getTime(), archers: [], __remote: true };
     }
     groups[key].party += seats;
     groups[key].amount += amt;
+    groups[key].archers.push({ name: field(d, 'Name'), concession: { items: parseConcItems_(field(d, 'Concession')) } });
   });
   for (var k in groups) out.push(groups[k]);
   return json_({ bookings: out, name: name, emails: group, primary: email });
@@ -1728,6 +1739,20 @@ function bookMulti_(body) {
   return json_({ ok: true, ref: ref, bookedPairs: bookedPairs, eventIds: eventIds, party: party, amount: amount, emailed: emailed });
 }
 
+// Rewrite one event description's Concession + Amount lines for an edited archer.
+function applyArcherToDesc_(desc, concObj, amount) {
+  desc = desc || '';
+  var concLine = concLineOf_(concObj); // '' or '\nConcession: ...'
+  if (/\nConcession:[^\n]*/i.test(desc)) desc = desc.replace(/\nConcession:[^\n]*/i, concLine);
+  else if (concLine) desc = desc + concLine;
+  if (amount != null) {
+    var amtLine = '\nAmount: ' + (parseInt(amount, 10) || 0);
+    if (/\nAmount:[^\n]*/i.test(desc)) desc = desc.replace(/\nAmount:[^\n]*/i, amtLine);
+    else desc = desc + amtLine;
+  }
+  return desc;
+}
+
 function reschedule_(body) {
   var cal = getCalendar_();
   var ev = null;
@@ -1758,6 +1783,27 @@ function reschedule_(body) {
   var moveOk = false;
   slotEvs.forEach(function (e) { try { e.setTime(start, end); moveOk = true; } catch (x) {} });
   if (!moveOk) return json_({ ok: false, reason: 'move failed' });
+
+  // Per-archer concession/amount edit (db-v30): rewrite each slot event + its sheet row.
+  if (body.archers && body.archers.length) {
+    var esh = null, edata = null, eh = null, eEvCol = -1, eAmtCol = -1, eConcCol = -1;
+    try { esh = dbSheet_('bookings'); edata = esh.getDataRange().getValues(); eh = edata[0]; eEvCol = eh.indexOf('Event ID'); eAmtCol = eh.indexOf('Amount'); eConcCol = eh.indexOf('Concession'); } catch (eSh) {}
+    for (var ai = 0; ai < slotEvs.length; ai++) {
+      var aRow = body.archers[ai]; if (!aRow) continue;
+      var aEv = slotEvs[ai];
+      try { aEv.setDescription(applyArcherToDesc_(aEv.getDescription() || '', aRow.concession, aRow.amount)); } catch (xD) {}
+      if (esh && eEvCol >= 0) {
+        var aId = aEv.getId();
+        for (var er = 1; er < edata.length; er++) {
+          if (String(edata[er][eEvCol]) === String(aId)) {
+            if (eAmtCol >= 0 && aRow.amount != null) esh.getRange(er + 1, eAmtCol + 1).setValue(parseInt(aRow.amount, 10) || 0);
+            if (eConcCol >= 0) esh.getRange(er + 1, eConcCol + 1).setValue(concLineOf_(aRow.concession).replace(/^\nConcession:\s*/i, ''));
+            break;
+          }
+        }
+      }
+    }
+  }
 
   // Pull booking details from the event (fallbacks) so we can notify + log even if the
   // website didn't pass them — mirrors cancel_.
