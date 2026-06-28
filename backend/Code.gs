@@ -730,6 +730,93 @@ function sendPlanCancellation_(o) {
   return sendBranded_({ to: o.email, subject: subject, plainText: lines.join('\n'), title: 'Pass cancelled', accent: '#b4512f', innerHtml: innerHtml });
 }
 
+// Sent ONCE when a pass crosses its validity date with sessions still unused (db-v31).
+// Worded to match the accounting rule: forfeited/unused sessions are ₱0 value.
+function sendPassExpiry_(o) {
+  if (!o.email) return false;
+  var who = o.holder || 'there';
+  var n = o.unused || 0;
+  var sessTxt = n + ' unused session' + (n === 1 ? '' : 's');
+  var subject = BUSINESS_NAME + ' — Pass expired' + (o.ref ? ' (' + o.ref + ')' : '');
+  var lines = [
+    'Hi ' + who + ',',
+    '',
+    'Your pass has reached its validity date and has now expired:',
+    '',
+    (o.ref ? 'Reference : ' + o.ref : ''),
+    'Pass      : ' + (o.plan || ''),
+    'Expired   : ' + prettyDate_(o.expiry),
+    'Unused    : ' + sessTxt + ' (now forfeited — ₱0 value)',
+    '',
+    'These unused sessions can no longer be booked. If you have any questions, just reply or text/call ' + CONTACT_NUMBER + '.',
+    '',
+    BUSINESS_NAME
+  ].filter(function (l) { return l !== ''; });
+  var innerHtml = '<p style="color:#56664f;margin:0 0 14px;">Hi ' + escapeHtml_(who) + ', your ' + escapeHtml_(o.plan || 'pass') + (o.ref ? ' (' + escapeHtml_(o.ref) + ')' : '') + ' expired on ' + escapeHtml_(prettyDate_(o.expiry)) + '.</p>'
+    + '<p style="font-size:14px;color:#56664f;margin:0 0 6px;">It had <strong>' + escapeHtml_(sessTxt) + '</strong> remaining, which are now forfeited (₱0 value) and can no longer be booked.</p>'
+    + '<p style="font-size:13px;color:#56664f;margin:16px 0 0;">Questions? Reply here or text/call ' + escapeHtml_(CONTACT_NUMBER) + '.</p>';
+  return sendBranded_({ to: o.email, subject: subject, plainText: lines.join('\n'), title: 'Pass expired', accent: '#b4512f', innerHtml: innerHtml });
+}
+
+// Validity date of a stamped pass (mirrors the website's planExpiry). Stored `expiry` wins;
+// otherwise ts + validDays. Legacy passes (no validDays) return '' → never expire.
+function planExpiry_(plan) {
+  if (!plan) return '';
+  if (plan.expiry) return String(plan.expiry);
+  var days = (plan.validDays != null && plan.validDays !== '') ? parseInt(plan.validDays, 10) : null;
+  if (days == null || isNaN(days) || plan.ts == null) return '';
+  var d = new Date(plan.ts);
+  d.setDate(d.getDate() + days);
+  return Utilities.formatDate(d, TIMEZONE, 'yyyy-MM-dd');
+}
+
+// db-v31: install a DAILY time-driven trigger on this function (Apps Script → Triggers →
+// Add Trigger → notifyExpiredPasses_, Time-driven, Day timer). It emails the holder of every
+// pass that just crossed its validity date with sessions still unused, once each (deduped via
+// an expiryNotified flag written back onto the stored plan). Unused sessions are forfeited (₱0).
+function notifyExpiredPasses_() {
+  var props = PropertiesService.getScriptProperties();
+  var all = props.getProperties();
+  var today = Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd');
+  // Group plan copies by ts (a plan can be stored under several alias-email keys) so we email
+  // once and flag every copy.
+  var byTs = {};
+  for (var key in all) {
+    if (key.indexOf('plan:') !== 0) continue;
+    var plan; try { plan = JSON.parse(all[key]); } catch (e) { continue; }
+    if (!plan || plan.ts == null) continue;
+    var rest = key.slice('plan:'.length);
+    var cut = rest.lastIndexOf(':');
+    var keyEmail = cut >= 0 ? rest.slice(0, cut) : rest;
+    var t = String(plan.ts);
+    if (!byTs[t]) byTs[t] = { keys: [], plan: plan, email: keyEmail, notified: false };
+    byTs[t].keys.push(key);
+    if (plan.expiryNotified) byTs[t].notified = true;
+  }
+  var sent = 0;
+  for (var t in byTs) {
+    var entry = byTs[t];
+    var p = entry.plan;
+    if (entry.notified) continue;
+    if (String(p.status || '').toLowerCase() === 'cancelled') continue;
+    var exp = planExpiry_(p);
+    if (!exp || today <= exp) continue;                 // not expired (or no validity window)
+    var cap = (p.cap != null && p.cap !== '') ? parseInt(p.cap, 10) : null;
+    if (cap == null || isNaN(cap)) continue;            // can't determine unused → skip
+    var unused = Math.max(0, cap - (p.sessions || []).length);
+    if (unused <= 0) continue;                          // fully used → no email
+    var ok = false;
+    try { ok = sendPassExpiry_({ email: entry.email, holder: p.holder, plan: p.name, ref: p.ref || '', unused: unused, cap: cap, expiry: exp }); } catch (e) { ok = false; }
+    if (!ok) continue;
+    p.expiryNotified = true; p.expiryNotifiedAt = nowStr_();
+    var js = JSON.stringify(p);
+    entry.keys.forEach(function (k) { props.setProperty(k, js); });
+    sent++;
+  }
+  Logger.log('notifyExpiredPasses_: sent ' + sent + ' expiry email(s).');
+  return sent;
+}
+
 // ---------- STAFF LOGIN ----------
 function staffLogin_(body) {
   var s = adminSecret_();
@@ -768,7 +855,7 @@ function doGet(e) {
     if (action === 'content') return getContent_();
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v30', auth: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true, multiCoach: true, acctBreakdown: true, perArcherEdit: true });
+      return json_({ version: 'db-v31', auth: true, passExpiryEmail: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true, multiCoach: true, acctBreakdown: true, perArcherEdit: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {

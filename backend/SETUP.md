@@ -446,3 +446,22 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 - [ ] Change one archer's concession and Save **without** changing date/time → that archer's calendar event `Concession:` + `Amount:` update, the other archer's event is untouched, events stay at the same time, and **no reschedule email** is sent.
 - [ ] Reschedule (change date/time) on a per-archer booking → events move AND the per-archer concessions/amounts persist AND one reschedule email is sent.
 - [ ] A reschedule from an OLD frontend (no `archers` in the request) still moves the events normally.
+
+## db-v31 deploy & verify
+
+**What changed:** new `notifyExpiredPasses_()` (run by a DAILY trigger) emails the holder of every pass that just crossed its validity date with sessions still unused — once each, deduped via an `expiryNotified` flag written back onto the stored plan. New `sendPassExpiry_()` email helper + `planExpiry_()` (mirrors the website's expiry math). Unused sessions are worded as forfeited / ₱0 value. Additive/back-compatible; no read-path changes.
+
+### Deploy steps
+
+1. Open the Apps Script project in your browser.
+2. Paste the entire contents of `backend/Code.gs` (overwriting the old code), then click **Save** (💾).
+3. Click **Deploy → Manage deployments → edit (✏️) → Version: New version → Deploy.** (Edit the EXISTING deployment so the same `/exec` URL updates — do NOT create a new deployment.)
+4. **One-time trigger install (REQUIRED for the expiry email to fire):** in the Apps Script editor, open **Triggers** (⏰ clock icon, left rail) → **Add Trigger** → choose function **`notifyExpiredPasses_`**, event source **Time-driven**, type **Day timer** (pick any hour, e.g. 6–7am) → **Save**. Authorize if prompted. You only do this once; it persists across redeploys.
+
+### Verification checklist
+
+- [ ] Open `…/exec?action=version` in a browser — confirm `"version":"db-v31"`, `"passExpiryEmail":true`, and all prior flags (`perArcherEdit:true`, `acctBreakdown:true`, etc.) still present.
+- [ ] In the Apps Script editor, select `notifyExpiredPasses_` and click **Run** once — it should complete without error; check the execution log for `sent N expiry email(s)`.
+- [ ] Confirm a daily trigger for `notifyExpiredPasses_` now appears under **Triggers**.
+- [ ] (Optional, with a test pass) Create a pass whose validity date is already in the past with at least one unused session → run `notifyExpiredPasses_` → the holder receives ONE "Pass expired" email noting the unused count; running it again sends NO second email (the `expiryNotified` flag dedupes).
+- [ ] A fully-used or not-yet-expired pass receives NO email.

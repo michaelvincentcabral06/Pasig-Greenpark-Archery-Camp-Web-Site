@@ -2847,6 +2847,10 @@ class Component extends DCLogic {
   // #7: allocate booking/pass revenue into coach / equipment / range buckets.
   // Base fee splits by each assigned coach's own %; the base is divided equally among the
   // booking's coaches; add-ons go 100% to their tagged bucket; 0 coaches -> unassigned share.
+  // Expired-pass rule (sub-project B #3): forfeited/unused expired pass sessions are valued at
+  // ₱0 by construction — only SCHEDULED pass sessions become calendar events / bookings, and this
+  // reducer consumes only those. Unscheduled capacity that lapses at expiry never enters `items`,
+  // so it can never contribute to earnings or "owed". No write-down logic is needed here.
   acctAllocate(items, todayStr) {
     const splits = this.state.coachSplits || {};
     const splitDef = this.state.splitDefault || { coach: 80, equip: 10, range: 10 };
@@ -4403,10 +4407,15 @@ class Component extends DCLogic {
   }
   removeAcctPlan(ts) {
     const email = (this.state.acctEmail || '').trim();
+    const plan = this.findPlan(email, ts);
+    // Expired passes are locked: the customer can no longer remove or edit them online.
+    if (plan && this.isPlanExpired(plan)) {
+      if (typeof alert !== 'undefined') alert('This pass has expired and can no longer be changed online — please contact us.');
+      return;
+    }
     if (typeof confirm !== 'undefined' && !confirm('Remove this pass? Any sessions already scheduled on it will also be cancelled and removed from the calendar.')) return;
     // Cancel any calendar events that were created for this pass's scheduled sessions,
     // so removing the pass doesn't leave orphaned events in Google Calendar.
-    const plan = this.findPlan(email, ts);
     if (plan && Array.isArray(plan.sessions)) {
       plan.sessions.forEach(s => { if (s && s.eventId) this.cancelBooking({ eventId: s.eventId, ref: s.ref || '', date: s.date || '', time: s.time || '', email: email }, false, 'plan removed'); });
     }
@@ -5466,7 +5475,7 @@ class Component extends DCLogic {
         coachLabel: c ? ('Coach: ' + c.name) : 'Coach: to be assigned by our team',
         coachColor: c ? '#3c6b48' : '#a08a5a',
         coachDot: c ? '#7fb43f' : '#caa84a',
-        sessions: sess, hasSessions: sess.length > 0, canRemove: sess.length === 0,
+        sessions: sess, hasSessions: sess.length > 0, canRemove: sess.length === 0 && !expired,
         schedLabel: cap != null ? (sess.length + ' of ' + cap + ' scheduled') : (sess.length + ' scheduled'),
         showSchedLabel: true,
         schedKey: schedKey,
