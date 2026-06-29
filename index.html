@@ -134,36 +134,20 @@
         <button onClick="{{ goPrograms }}" style="background:none;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;color:#244232;text-decoration:underline;text-underline-offset:4px;">See all programs →</button>
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;">
+        <sc-for list="{{ homeProgramCards }}" as="hp" hint-placeholder-count="3">
         <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;" style-hover="border-color:rgba(36,66,50,0.28);transform:translateY(-3px);">
-          <div style="aspect-ratio:16/10;overflow:hidden;"><img src="assets/arrows-target-o.jpg" alt="Little Archers" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;" /></div>
+          <sc-if value="{{ hp.hasImage }}" hint-placeholder-val="{{ true }}">
+          <div style="aspect-ratio:16/10;overflow:hidden;"><img src="{{ hp.image }}" alt="{{ hp.title }}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;" /></div>
+          </sc-if>
           <div style="padding:22px;display:flex;flex-direction:column;gap:10px;flex:1;">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
-              <h3 style="font-size:20px;font-weight:800;margin:0;color:#1b2a1f;">Little Archers</h3>
-              <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#3c6b48;background:#e7ecda;padding:4px 9px;border-radius:999px;white-space:nowrap;">Ages 6–10</span>
+              <h3 style="font-size:20px;font-weight:800;margin:0;color:#1b2a1f;">{{ hp.title }}</h3>
+              <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#3c6b48;background:#e7ecda;padding:4px 9px;border-radius:999px;white-space:nowrap;">{{ hp.badge }}</span>
             </div>
-            <p style="font-size:14.5px;line-height:1.5;color:#56664f;margin:0;flex:1;">Playful first steps with the bow: safety, stance, and the joy of hitting the target.</p>
+            <p style="font-size:14.5px;line-height:1.5;color:#56664f;margin:0;flex:1;">{{ hp.homeDesc }}</p>
           </div>
         </div>
-        <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;" style-hover="border-color:rgba(36,66,50,0.28);transform:translateY(-3px);">
-          <div style="aspect-ratio:16/10;overflow:hidden;"><img src="assets/coaching-o.jpg" alt="Adult Beginners" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;" /></div>
-          <div style="padding:22px;display:flex;flex-direction:column;gap:10px;flex:1;">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
-              <h3 style="font-size:20px;font-weight:800;margin:0;color:#1b2a1f;">Adult Beginners</h3>
-              <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#3c6b48;background:#e7ecda;padding:4px 9px;border-radius:999px;white-space:nowrap;">Ages 18+</span>
-            </div>
-            <p style="font-size:14.5px;line-height:1.5;color:#56664f;margin:0;flex:1;">From never-held-a-bow to confident on the range, in a relaxed, welcoming group.</p>
-          </div>
-        </div>
-        <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;" style-hover="border-color:rgba(36,66,50,0.28);transform:translateY(-3px);">
-          <div style="aspect-ratio:16/10;overflow:hidden;"><img src="assets/range-targets-o.jpg" alt="Open Range" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;" /></div>
-          <div style="padding:22px;display:flex;flex-direction:column;gap:10px;flex:1;">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
-              <h3 style="font-size:20px;font-weight:800;margin:0;color:#1b2a1f;">Open Range</h3>
-              <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#3c6b48;background:#e7ecda;padding:4px 9px;border-radius:999px;white-space:nowrap;">All levels</span>
-            </div>
-            <p style="font-size:14.5px;line-height:1.5;color:#56664f;margin:0;flex:1;">Drop-in lane time for archers who know the ropes and just want to shoot.</p>
-          </div>
-        </div>
+        </sc-for>
       </div>
     </section>
 
@@ -394,123 +378,27 @@
 
     <section style="padding:clamp(20px,3vw,32px) clamp(20px,5vw,64px) clamp(48px,6vw,72px);max-width:1320px;margin:0 auto;width:100%;">
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:22px;">
-<!-- Little Archers -->
+        <sc-for list="{{ programCards }}" as="pc" hint-placeholder-count="6">
         <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:10px;padding:28px;display:flex;gap:22px;align-items:flex-start;" style-hover="border-color:rgba(36,66,50,0.26);">
           <div style="width:64px;height:64px;flex:none;border-radius:10px;background:#e7ecda;display:flex;align-items:center;justify-content:center;">
-            <svg width="30" height="30" viewBox="0 0 28 28" fill="none" stroke="#244232" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="6" y1="22" x2="21" y2="7"></line>
-              <polyline points="15 7 21 7 21 13"></polyline>
-              <circle cx="6" cy="22" r="1.8" fill="#7fb43f" stroke="none"></circle>
-            </svg>
+            <sc-if value="{{ pc.iconArrow }}" hint-placeholder-val="{{ true }}"><svg width="30" height="30" viewBox="0 0 28 28" fill="none" stroke="#244232" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="22" x2="21" y2="7"></line><polyline points="15 7 21 7 21 13"></polyline><circle cx="6" cy="22" r="1.8" fill="#7fb43f" stroke="none"></circle></svg></sc-if>
+            <sc-if value="{{ pc.iconYouth }}" hint-placeholder-val="{{ false }}"><svg width="30" height="30" viewBox="0 0 28 28" fill="none" stroke="#244232" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="10" r="2.6"></circle><circle cx="19" cy="10" r="2.6"></circle><circle cx="14" cy="18" r="2.6" fill="#7fb43f" stroke="none"></circle></svg></sc-if>
+            <sc-if value="{{ pc.iconBow }}" hint-placeholder-val="{{ false }}"><svg width="30" height="30" viewBox="0 0 28 28" fill="none" stroke="#244232" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 4 Q9 14 19 24"></path><line x1="19" y1="4" x2="19" y2="24"></line><line x1="9" y1="14" x2="24" y2="14"></line><polyline points="21 11 24 14 21 17"></polyline></svg></sc-if>
+            <sc-if value="{{ pc.iconTarget }}" hint-placeholder-val="{{ false }}"><svg width="30" height="30" viewBox="0 0 28 28" fill="none" stroke="#244232" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="14" r="10"></circle><circle cx="14" cy="14" r="5"></circle><circle cx="14" cy="14" r="1.6" fill="#7fb43f" stroke="none"></circle></svg></sc-if>
+            <sc-if value="{{ pc.iconCoach }}" hint-placeholder-val="{{ false }}"><svg width="30" height="30" viewBox="0 0 28 28" fill="none" stroke="#244232" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="3.2"></circle><path d="M3.5 23 Q9 15.5 14.5 23"></path><circle cx="20" cy="11" r="2.4" fill="#7fb43f" stroke="none"></circle><path d="M16 23 Q20 17.5 24 23" stroke="#7fb43f"></path></svg></sc-if>
+            <sc-if value="{{ pc.iconGroup }}" hint-placeholder-val="{{ false }}"><svg width="30" height="30" viewBox="0 0 28 28" fill="none" stroke="#244232" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="10" r="2.5"></circle><circle cx="14" cy="8.5" r="2.5" fill="#7fb43f" stroke="none"></circle><circle cx="20" cy="10" r="2.5"></circle><path d="M4 22 Q14 13 24 22"></path></svg></sc-if>
           </div>
           <div style="flex:1;min-width:0;">
-            <h3 style="font-size:22px;font-weight:800;margin:0 0 8px;color:#1b2a1f;">Little Archers</h3>
+            <h3 style="font-size:22px;font-weight:800;margin:0 0 8px;color:#1b2a1f;">{{ pc.title }}</h3>
             <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;">
-              <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#3c6b48;background:#e7ecda;padding:4px 9px;border-radius:999px;white-space:nowrap;">Ages 6–10</span>
-              <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#4d7327;background:#e6efd6;padding:4px 9px;border-radius:999px;white-space:nowrap;">45 min</span>
+              <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#3c6b48;background:#e7ecda;padding:4px 9px;border-radius:999px;white-space:nowrap;">{{ pc.badge }}</span>
+              <sc-if value="{{ pc.hasDuration }}" hint-placeholder-val="{{ true }}"><span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#4d7327;background:#e6efd6;padding:4px 9px;border-radius:999px;white-space:nowrap;">{{ pc.duration }}</span></sc-if>
             </div>
-            <p style="font-size:15px;line-height:1.55;color:#56664f;margin:0 0 14px;">Playful first steps with the bow — safety, stance, and the thrill of a target struck. Built for short attention spans and big smiles.</p>
-            <button onClick="{{ bookLittle }}" style="background:none;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#244232;padding:0;border-bottom:2px solid #7fb43f;" style-hover="color:#7fb43f;">Book this →</button>
+            <p style="font-size:15px;line-height:1.55;color:#56664f;margin:0 0 14px;">{{ pc.blurb }}</p>
+            <button onClick="{{ pc.book }}" style="background:none;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#244232;padding:0;border-bottom:2px solid #7fb43f;" style-hover="color:#7fb43f;">Book this →</button>
           </div>
         </div>
-        <!-- Youth Squad -->
-        <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:10px;padding:28px;display:flex;gap:22px;align-items:flex-start;" style-hover="border-color:rgba(36,66,50,0.26);">
-          <div style="width:64px;height:64px;flex:none;border-radius:10px;background:#e7ecda;display:flex;align-items:center;justify-content:center;">
-            <svg width="30" height="30" viewBox="0 0 28 28" fill="none" stroke="#244232" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="9" cy="10" r="2.6"></circle>
-              <circle cx="19" cy="10" r="2.6"></circle>
-              <circle cx="14" cy="18" r="2.6" fill="#7fb43f" stroke="none"></circle>
-            </svg>
-          </div>
-          <div style="flex:1;min-width:0;">
-            <h3 style="font-size:22px;font-weight:800;margin:0 0 8px;color:#1b2a1f;">Youth Squad</h3>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;">
-              <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#3c6b48;background:#e7ecda;padding:4px 9px;border-radius:999px;white-space:nowrap;">Ages 11–17</span>
-              <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#4d7327;background:#e6efd6;padding:4px 9px;border-radius:999px;white-space:nowrap;">60 min</span>
-            </div>
-            <p style="font-size:15px;line-height:1.55;color:#56664f;margin:0 0 14px;">Technique, focus, and a clear path toward competition for young archers ready to take it seriously.</p>
-            <button onClick="{{ bookYouth }}" style="background:none;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#244232;padding:0;border-bottom:2px solid #7fb43f;" style-hover="color:#7fb43f;">Book this →</button>
-          </div>
-        </div>
-        <!-- Adult Beginners -->
-        <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:10px;padding:28px;display:flex;gap:22px;align-items:flex-start;" style-hover="border-color:rgba(36,66,50,0.26);">
-          <div style="width:64px;height:64px;flex:none;border-radius:10px;background:#e7ecda;display:flex;align-items:center;justify-content:center;">
-            <svg width="30" height="30" viewBox="0 0 28 28" fill="none" stroke="#244232" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 4 Q9 14 19 24"></path>
-              <line x1="19" y1="4" x2="19" y2="24"></line>
-              <line x1="9" y1="14" x2="24" y2="14"></line>
-              <polyline points="21 11 24 14 21 17"></polyline>
-            </svg>
-          </div>
-          <div style="flex:1;min-width:0;">
-            <h3 style="font-size:22px;font-weight:800;margin:0 0 8px;color:#1b2a1f;">Adult Beginners</h3>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;">
-              <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#3c6b48;background:#e7ecda;padding:4px 9px;border-radius:999px;white-space:nowrap;">Ages 18+</span>
-              <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#4d7327;background:#e6efd6;padding:4px 9px;border-radius:999px;white-space:nowrap;">60 min</span>
-            </div>
-            <p style="font-size:15px;line-height:1.55;color:#56664f;margin:0 0 14px;">From zero to confident on the range in a relaxed, welcoming group. The most popular way to start.</p>
-            <button onClick="{{ bookAdult }}" style="background:none;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#244232;padding:0;border-bottom:2px solid #7fb43f;" style-hover="color:#7fb43f;">Book this →</button>
-          </div>
-        </div>
-        <!-- Open Range -->
-        <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:10px;padding:28px;display:flex;gap:22px;align-items:flex-start;" style-hover="border-color:rgba(36,66,50,0.26);">
-          <div style="width:64px;height:64px;flex:none;border-radius:10px;background:#e7ecda;display:flex;align-items:center;justify-content:center;">
-            <svg width="30" height="30" viewBox="0 0 28 28" fill="none" stroke="#244232" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="14" cy="14" r="10"></circle>
-              <circle cx="14" cy="14" r="5"></circle>
-              <circle cx="14" cy="14" r="1.6" fill="#7fb43f" stroke="none"></circle>
-            </svg>
-          </div>
-          <div style="flex:1;min-width:0;">
-            <h3 style="font-size:22px;font-weight:800;margin:0 0 8px;color:#1b2a1f;">Open Range</h3>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;">
-              <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#3c6b48;background:#e7ecda;padding:4px 9px;border-radius:999px;white-space:nowrap;">All levels</span>
-              <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#4d7327;background:#e6efd6;padding:4px 9px;border-radius:999px;white-space:nowrap;">90 min</span>
-            </div>
-            <p style="font-size:15px;line-height:1.55;color:#56664f;margin:0 0 14px;">Drop-in practice for archers who know the ropes and want unhurried lane time and coaching on request.</p>
-            <button onClick="{{ bookOpen }}" style="background:none;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#244232;padding:0;border-bottom:2px solid #7fb43f;" style-hover="color:#7fb43f;">Book this →</button>
-          </div>
-        </div>
-        <!-- Private Coaching -->
-        <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:10px;padding:28px;display:flex;gap:22px;align-items:flex-start;" style-hover="border-color:rgba(36,66,50,0.26);">
-          <div style="width:64px;height:64px;flex:none;border-radius:10px;background:#e7ecda;display:flex;align-items:center;justify-content:center;">
-            <svg width="30" height="30" viewBox="0 0 28 28" fill="none" stroke="#244232" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="9" cy="9" r="3.2"></circle>
-              <path d="M3.5 23 Q9 15.5 14.5 23"></path>
-              <circle cx="20" cy="11" r="2.4" fill="#7fb43f" stroke="none"></circle>
-              <path d="M16 23 Q20 17.5 24 23" stroke="#7fb43f"></path>
-            </svg>
-          </div>
-          <div style="flex:1;min-width:0;">
-            <h3 style="font-size:22px;font-weight:800;margin:0 0 8px;color:#1b2a1f;">Private Coaching</h3>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;">
-              <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#3c6b48;background:#e7ecda;padding:4px 9px;border-radius:999px;white-space:nowrap;">All ages</span>
-              <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#4d7327;background:#e6efd6;padding:4px 9px;border-radius:999px;white-space:nowrap;">60 min</span>
-            </div>
-            <p style="font-size:15px;line-height:1.55;color:#56664f;margin:0 0 14px;">One-on-one attention to break through plateaus, fix form, and chase a personal best.</p>
-            <button onClick="{{ bookPrivate }}" style="background:none;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#244232;padding:0;border-bottom:2px solid #7fb43f;" style-hover="color:#7fb43f;">Book this →</button>
-          </div>
-        </div>
-        <!-- Group & Corporate -->
-        <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:10px;padding:28px;display:flex;gap:22px;align-items:flex-start;" style-hover="border-color:rgba(36,66,50,0.26);">
-          <div style="width:64px;height:64px;flex:none;border-radius:10px;background:#e7ecda;display:flex;align-items:center;justify-content:center;">
-            <svg width="30" height="30" viewBox="0 0 28 28" fill="none" stroke="#244232" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="8" cy="10" r="2.5"></circle>
-              <circle cx="14" cy="8.5" r="2.5" fill="#7fb43f" stroke="none"></circle>
-              <circle cx="20" cy="10" r="2.5"></circle>
-              <path d="M4 22 Q14 13 24 22"></path>
-            </svg>
-          </div>
-          <div style="flex:1;min-width:0;">
-            <h3 style="font-size:22px;font-weight:800;margin:0 0 8px;color:#1b2a1f;">Group &amp; Corporate</h3>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;">
-              <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#3c6b48;background:#e7ecda;padding:4px 9px;border-radius:999px;white-space:nowrap;">Teams</span>
-              <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#4d7327;background:#e6efd6;padding:4px 9px;border-radius:999px;white-space:nowrap;">120 min</span>
-            </div>
-            <p style="font-size:15px;line-height:1.55;color:#56664f;margin:0 0 14px;">Team-building on the range — perfect for offices, birthdays, and barkadas. We handle everything.</p>
-            <button onClick="{{ bookGroup }}" style="background:none;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;color:#244232;padding:0;border-bottom:2px solid #7fb43f;" style-hover="color:#7fb43f;">Book this →</button>
-          </div>
-        </div>
+        </sc-for>
       </div>
     </section>
 
@@ -2448,7 +2336,18 @@
                     <button onClick="{{ pg.toggleDisc }}" style="background:{{ pg.discBg }};color:{{ pg.discFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;">Discounts</button>
                     <button onClick="{{ pg.toggleGroup }}" style="background:{{ pg.groupBg }};color:{{ pg.groupFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;">Group discount</button>
                   </div>
-                  <textarea value="{{ pg.blurb }}" onInput="{{ pg.setBlurb }}" rows="2" placeholder="Short description shown to customers" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#56664f;outline:none;resize:vertical;"></textarea>
+                  <textarea value="{{ pg.blurb }}" onInput="{{ pg.setBlurb }}" rows="2" placeholder="Programs-page description" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#56664f;outline:none;resize:vertical;"></textarea>
+                  <div style="border-top:1px solid rgba(36,66,50,0.12);padding-top:10px;display:flex;flex-direction:column;gap:8px;">
+                    <div style="font-size:12px;font-weight:700;color:#56664f;">Marketing card</div>
+                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                      <label style="font-size:11.5px;font-weight:600;color:#56664f;">Badge<input value="{{ pg.badge }}" onInput="{{ pg.setBadge }}" placeholder="Ages 6–10" style="display:block;margin-top:4px;width:120px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:8px 10px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#1b2a1f;outline:none;" /></label>
+                      <label style="font-size:11.5px;font-weight:600;color:#56664f;">Duration<input value="{{ pg.duration }}" onInput="{{ pg.setDuration }}" placeholder="45 min" style="display:block;margin-top:4px;width:90px;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:8px 10px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;color:#1b2a1f;outline:none;" /></label>
+                      <button onClick="{{ pg.toggleIcon }}" style="align-self:flex-end;background:#fffdf6;color:#244232;border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:9px 14px;border-radius:999px;white-space:nowrap;">{{ pg.iconLabel }}</button>
+                      <button onClick="{{ pg.toggleHome }}" style="align-self:flex-end;background:{{ pg.homeBg }};color:{{ pg.homeFg }};border:1px solid rgba(36,66,50,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;padding:9px 14px;border-radius:999px;white-space:nowrap;">Show on Home</button>
+                    </div>
+                    <input value="{{ pg.image }}" onInput="{{ pg.setImage }}" placeholder="Home photo path, e.g. assets/coaching-o.jpg" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;color:#1b2a1f;outline:none;" />
+                    <input value="{{ pg.homeDesc }}" onInput="{{ pg.setHomeDesc }}" placeholder="Home-card short description" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;color:#56664f;outline:none;" />
+                  </div>
                   <div style="border-top:1px solid rgba(36,66,50,0.12);padding-top:10px;">
                     <div style="font-size:12px;font-weight:700;color:#56664f;margin-bottom:8px;">Add-ons</div>
                     <div style="display:flex;flex-direction:column;gap:8px;">
@@ -3986,12 +3885,12 @@ class Component extends DCLogic {
   }
   defaultPrograms() {
     return [
-      { name: 'Little Archers (6–10)', price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: 6,  maxAge: 10,  blurb: '', addons: [] },
-      { name: 'Youth Squad (11–17)',   price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: 11, maxAge: 17,  blurb: '', addons: [] },
-      { name: 'Adult Beginners (18+)',      price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: 18, maxAge: null, blurb: '', addons: [] },
-      { name: 'Open Range',                 price: 400, needsCoach: false, multiDay: true,  offerDiscounts: true,  groupDiscount: true, minAge: null, maxAge: null, blurb: '', addons: [] },
-      { name: 'Private Coaching',           price: 1200, needsCoach: true, multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: null, maxAge: null, blurb: '', addons: [] },
-      { name: 'Group & Corporate',          price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: null, maxAge: null, blurb: '', addons: [] }
+      { name: 'Little Archers (6–10)', price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: 6,  maxAge: 10,  addons: [], badge: 'Ages 6–10', duration: '45 min', icon: 'arrow', image: 'assets/arrows-target-o.jpg', showOnHome: true, homeDesc: 'Playful first steps with the bow: safety, stance, and the joy of hitting the target.', blurb: 'Playful first steps with the bow — safety, stance, and the thrill of a target struck. Built for short attention spans and big smiles.' },
+      { name: 'Youth Squad (11–17)',   price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: 11, maxAge: 17,  addons: [], badge: 'Ages 11–17', duration: '60 min', icon: 'youth', image: '', showOnHome: false, homeDesc: '', blurb: 'Technique, focus, and a clear path toward competition for young archers ready to take it seriously.' },
+      { name: 'Adult Beginners (18+)',      price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: 18, maxAge: null, addons: [], badge: 'Ages 18+', duration: '60 min', icon: 'bow', image: 'assets/coaching-o.jpg', showOnHome: true, homeDesc: 'From never-held-a-bow to confident on the range, in a relaxed, welcoming group.', blurb: 'From zero to confident on the range in a relaxed, welcoming group. The most popular way to start.' },
+      { name: 'Open Range',                 price: 400, needsCoach: false, multiDay: true,  offerDiscounts: true,  groupDiscount: true, minAge: null, maxAge: null, addons: [], badge: 'All levels', duration: '90 min', icon: 'target', image: 'assets/range-targets-o.jpg', showOnHome: true, homeDesc: 'Drop-in lane time for archers who know the ropes and just want to shoot.', blurb: 'Drop-in practice for archers who know the ropes and want unhurried lane time and coaching on request.' },
+      { name: 'Private Coaching',           price: 1200, needsCoach: true, multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: null, maxAge: null, addons: [], badge: 'All ages', duration: '60 min', icon: 'coach', image: '', showOnHome: false, homeDesc: '', blurb: 'One-on-one attention to break through plateaus, fix form, and chase a personal best.' },
+      { name: 'Group & Corporate',          price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: null, maxAge: null, addons: [], badge: 'Teams', duration: '120 min', icon: 'group', image: '', showOnHome: false, homeDesc: '', blurb: 'Team-building on the range — perfect for offices, birthdays, and barkadas. We handle everything.' }
     ];
   }
   normalizeAddons(list) {
@@ -4006,15 +3905,67 @@ class Component extends DCLogic {
   }
   normalizePrograms(progs) {
     var list = (progs && progs.length) ? progs : this.defaultPrograms();
-    return list.map(p => ({
-      name: p.name || 'Program', price: Number(p.price) || 0,
-      needsCoach: !!p.needsCoach, multiDay: !!p.multiDay, offerDiscounts: !!p.offerDiscounts,
-      groupDiscount: (p.groupDiscount === undefined ? true : !!p.groupDiscount),
-      minAge: (p.minAge == null || p.minAge === '') ? null : (parseInt(p.minAge, 10) || null),
-      maxAge: (p.maxAge == null || p.maxAge === '') ? null : (parseInt(p.maxAge, 10) || null),
-      blurb: p.blurb || '', addons: this.normalizeAddons(p.addons),
-      ...this.normalizeFees_(p, p.price)
-    }));
+    // Per-name defaults for the marketing-card fields (like normalizePackages): when a card field is
+    // missing on the stored program, fall back to the seeded default for that name — so the live site
+    // renders identically to the hard-coded cards until the owner edits something.
+    var defs = this.defaultPrograms(); var byName = {}; defs.forEach(d => { byName[d.name] = d; });
+    var iconKeys = this.programIconKeys();
+    return list.map(p => {
+      var d = byName[p.name] || {};
+      var pick = (k, fb) => (p[k] != null && p[k] !== '') ? p[k] : (d[k] != null && d[k] !== '' ? d[k] : fb);
+      var ic = pick('icon', 'target'); if (iconKeys.indexOf(ic) === -1) ic = 'target';
+      return {
+        name: p.name || 'Program', price: Number(p.price) || 0,
+        needsCoach: !!p.needsCoach, multiDay: !!p.multiDay, offerDiscounts: !!p.offerDiscounts,
+        groupDiscount: (p.groupDiscount === undefined ? true : !!p.groupDiscount),
+        minAge: (p.minAge == null || p.minAge === '') ? null : (parseInt(p.minAge, 10) || null),
+        maxAge: (p.maxAge == null || p.maxAge === '') ? null : (parseInt(p.maxAge, 10) || null),
+        blurb: pick('blurb', ''), addons: this.normalizeAddons(p.addons),
+        duration: pick('duration', ''), icon: ic, image: pick('image', ''),
+        homeDesc: pick('homeDesc', ''), badge: pick('badge', ''),
+        showOnHome: (p.showOnHome != null ? !!p.showOnHome : (d.showOnHome != null ? !!d.showOnHome : false)),
+        ...this.normalizeFees_(p, p.price)
+      };
+    });
+  }
+  // Preset card icons — keys map to the existing hand-drawn SVGs (rendered via sc-if in the card).
+  programIconKeys() { return ['arrow', 'youth', 'bow', 'target', 'coach', 'group']; }
+  programIconLabel_(k) { return ({ arrow: 'Arrow', youth: 'Youth', bow: 'Bow', target: 'Target', coach: 'Coach', group: 'Group' })[k] || 'Target'; }
+  // Card title = program name with a trailing "(6–10)"-style age suffix stripped (the age shows as a badge).
+  programCardTitle_(name) { return String(name || '').replace(/\s*\([^)]*\)\s*$/, '').trim() || String(name || ''); }
+  // Badge pill text: the editable `badge`, else derived from min/max age.
+  programBadge_(p) {
+    if (p && p.badge) return String(p.badge);
+    var lo = p && p.minAge, hi = p && p.maxAge;
+    if (lo != null && hi != null) return 'Ages ' + lo + '–' + hi;
+    if (lo != null) return 'Ages ' + lo + '+';
+    return 'All levels';
+  }
+  bookProgram(name) { this.go('book', name); }
+  // Icon-selection flags for a card (the template escapes text, so each preset SVG sits behind an sc-if).
+  programIconFlags_(icon) {
+    return { iconArrow: icon === 'arrow', iconYouth: icon === 'youth', iconBow: icon === 'bow', iconTarget: icon === 'target', iconCoach: icon === 'coach', iconGroup: icon === 'group' };
+  }
+  programCardRows() {
+    var self = this;
+    return this.programList().map(function (p) {
+      return Object.assign({
+        name: p.name, title: self.programCardTitle_(p.name), badge: self.programBadge_(p),
+        duration: p.duration || '', hasDuration: !!(p.duration && String(p.duration).trim()),
+        blurb: p.blurb || '',
+        book: (function (nm) { return function () { self.bookProgram(nm); }; })(p.name)
+      }, self.programIconFlags_(p.icon || 'target'));
+    });
+  }
+  homeProgramRows() {
+    var self = this;
+    return this.programList().filter(function (p) { return !!p.showOnHome; }).map(function (p) {
+      return {
+        title: self.programCardTitle_(p.name), badge: self.programBadge_(p),
+        homeDesc: p.homeDesc || p.blurb || '',
+        image: p.image || '', hasImage: !!(p.image && String(p.image).trim())
+      };
+    });
   }
   programList() { var c = this.state.content || {}; return this.normalizePrograms(c.programs); }
   programByName(name) {
@@ -5278,6 +5229,7 @@ class Component extends DCLogic {
     const setProgField = (i, key) => (e) => { const v = e.target.value; const ps = (cm.programs || this.defaultPrograms()).map((p, idx) => idx === i ? { ...p, [key]: v } : p); saveCM({ programs: ps }); };
     const setProgNum   = (i, key) => (e) => { const v = (e.target.value === '' ? null : (Number(e.target.value) || 0)); const ps = (cm.programs || this.defaultPrograms()).map((p, idx) => idx === i ? { ...p, [key]: v } : p); saveCM({ programs: ps }); };
     const toggleProg   = (i, key) => () => { const ps = (cm.programs || this.defaultPrograms()).map((p, idx) => idx === i ? { ...p, [key]: !p[key] } : p); saveCM({ programs: ps }); };
+    const toggleProgIcon = (i) => () => { const keys = this.programIconKeys(); const src = (cm.programs || this.defaultPrograms()); const cur = this.programByName((src[i] || {}).name).icon; const next = keys[(keys.indexOf(cur) + 1) % keys.length]; saveCM({ programs: src.map((p, idx) => idx === i ? { ...p, icon: next } : p) }); };
     const removeProgram = (i) => () => saveCM({ programs: (cm.programs || this.defaultPrograms()).filter((_, idx) => idx !== i) });
     const addProgram = () => saveCM({ programs: (cm.programs || this.defaultPrograms()).concat([{ name: 'New program', price: 600, needsCoach: true, multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: null, maxAge: null, blurb: '' }]) });
     const progAddons = (pi) => ((cm.programs || this.defaultPrograms())[pi].addons || []);
@@ -5296,8 +5248,9 @@ class Component extends DCLogic {
     const programEdits = (cm.programs || this.defaultPrograms()).map((p, i) => {
       const pf = this.normalizeFees_(p, p.price);
       const pMargin = this.parsePeso_(p.price) - (pf.coachFee + pf.rangeFee + pf.equipFee);
+      const np = this.programByName(p.name); // normalized: shows seeded card defaults when fields are blank
       return {
-      name: p.name, price: p.price, blurb: p.blurb || '',
+      name: p.name, price: p.price, blurb: np.blurb,
       minAge: (p.minAge == null ? '' : p.minAge), maxAge: (p.maxAge == null ? '' : p.maxAge),
       needsCoach: !!p.needsCoach, multiDay: !!p.multiDay, offerDiscounts: !!p.offerDiscounts,
       coachBg: p.needsCoach ? '#244232' : '#fffdf6', coachFg: p.needsCoach ? '#f4efe4' : '#244232',
@@ -5306,6 +5259,10 @@ class Component extends DCLogic {
       coachFee: pf.coachFee, rangeFee: pf.rangeFee, equipFee: pf.equipFee,
       setCoachFee: setProgNum(i, 'coachFee'), setRangeFee: setProgNum(i, 'rangeFee'), setEquipFee: setProgNum(i, 'equipFee'),
       marginLabel: 'Margin: ₱' + pMargin.toLocaleString('en-PH'), marginColor: pMargin < 0 ? '#b4512f' : '#8a9579',
+      badge: np.badge, duration: np.duration, image: np.image, homeDesc: np.homeDesc,
+      setBadge: setProgField(i, 'badge'), setDuration: setProgField(i, 'duration'), setImage: setProgField(i, 'image'), setHomeDesc: setProgField(i, 'homeDesc'),
+      iconLabel: 'Icon: ' + this.programIconLabel_(np.icon), toggleIcon: toggleProgIcon(i),
+      showOnHome: !!np.showOnHome, homeBg: np.showOnHome ? '#244232' : '#fffdf6', homeFg: np.showOnHome ? '#f4efe4' : '#244232', toggleHome: toggleProg(i, 'showOnHome'),
       setName: setProgField(i, 'name'), setPrice: setProgNum(i, 'price'),
       setMinAge: setProgNum(i, 'minAge'), setMaxAge: setProgNum(i, 'maxAge'), setBlurb: setProgField(i, 'blurb'),
       toggleCoach: toggleProg(i, 'needsCoach'), toggleDisc: toggleProg(i, 'offerDiscounts'), toggleGroup: toggleProg(i, 'groupDiscount'),
@@ -6084,6 +6041,7 @@ class Component extends DCLogic {
       bookOpen: () => this.go('book', 'Open Range'),
       bookPrivate: () => this.go('book', 'Private Coaching'),
       bookGroup: () => this.go('book', 'Group & Corporate'),
+      programCards: this.programCardRows(), homeProgramCards: this.homeProgramRows(),
       isMobile, isDesktop: !isMobile, navOpen, showMobileBar: isMobile && page !== 'admin' && page !== 'coach',
       toggleNav: () => this.setState(s => ({ navOpen: !s.navOpen })),
       packages, testimonials, reviewsRating, reviewsCount, reviewsUrl, hasReviewsCount, hasReviewsUrl, values, faqs,

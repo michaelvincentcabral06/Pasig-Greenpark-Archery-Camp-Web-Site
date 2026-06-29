@@ -49,8 +49,16 @@ the Home photos. The default render must look **identical** to today until the o
 - `icon` (preset key string; default `'target'`),
 - `image` (string path/URL for the Home photo; `''` → omit/placeholder),
 - `homeDesc` (string short description for the Home card),
+- `badge` (string age/tag pill text shown on BOTH cards),
 - `showOnHome` (bool; default `false`).
 `blurb` stays the Programs-card description.
+
+**Why `badge` is an editable field, not derived:** the current pills are *not* purely a function of
+`minAge`/`maxAge` — age-bounded programs show "Ages 6–10" / "Ages 11–17" / "Ages 18+", but the others
+show custom text ("All levels" for Open Range, "All ages" for Private Coaching, "Teams" for Group &
+Corporate). So `badge` is editable text seeded to today's exact pill; when blank it falls back to a
+derived label (`minAge&maxAge → 'Ages X–Y'`; `minAge only → 'Ages X+'`; neither → `'All levels'`).
+`minAge`/`maxAge` still drive booking age-gating independently.
 
 **No-regression per-name defaults:** mirror `normalizePackages` — when a card field is missing, fall
 back to a default keyed by program **name** from `defaultPrograms`. `defaultPrograms` is seeded to the
@@ -84,13 +92,13 @@ Alongside the existing name/price/age/fees/blurb fields. Match the existing edit
 ### 4. Data-driven cards
 
 Build two arrays in `renderVals` from `programList()`:
-- `programCards` — every program: `{ name, title (name with a trailing "(…)" stripped), ageLabel,
+- `programCards` — every program: `{ name, title (name with a trailing "(…)" stripped), badge,
   duration, hasDuration, blurb, icon flags (iconArrow/…), book: () => bookProgram(name) }`.
-- `homeProgramCards` — programs with `showOnHome`: `{ title, ageLabel, homeDesc, image, hasImage }`.
+- `homeProgramCards` — programs with `showOnHome`: `{ title, badge, homeDesc, image, hasImage }`.
 
-`ageLabel`: `minAge&maxAge → 'Ages X–Y'`; `minAge only → 'Ages X+'`; neither → `'All levels'`
-(matches Open Range today). `bookProgram(name)` = `this.go('book', name)` (generalizes the existing
-`bookLittle`/etc.).
+`badge` = the program's `badge` field, else the derived label (`minAge&maxAge → 'Ages X–Y'`;
+`minAge only → 'Ages X+'`; neither → `'All levels'`). `bookProgram(name)` = `this.go('book', name)`
+(generalizes the existing `bookLittle`/etc.). Editor also gets a **Badge** text input.
 
 Replace the hard-coded Home 3-card block with `<sc-for list="{{ homeProgramCards }}">` and the
 hard-coded Programs-page block with `<sc-for list="{{ programCards }}">`, reusing the **existing card
