@@ -5226,14 +5226,18 @@ class Component extends DCLogic {
     const removeFeature = (i, fi) => () => { const ps = cm.packages.map((p, idx) => idx === i ? { ...p, features: (p.features || []).filter((_, k) => k !== fi) } : p); saveCM({ packages: ps }); };
     const removePass = (i) => () => { saveCM({ packages: cm.packages.filter((_, idx) => idx !== i) }); };
     const addPass = () => { const np = { name: 'New pass', price: '₱0', unit: '', desc: '', features: ['1 session'], sessions: 1, validDays: 30, popular: false, bg: '#fffdf6', fg: '#1b2a1f', border: 'rgba(36,66,50,0.12)', tick: '#3c6b48', btnBg: '#244232', btnFg: '#f4efe4' }; saveCM({ packages: cm.packages.concat([np]) }); };
-    const setProgField = (i, key) => (e) => { const v = e.target.value; const ps = (cm.programs || this.defaultPrograms()).map((p, idx) => idx === i ? { ...p, [key]: v } : p); saveCM({ programs: ps }); };
-    const setProgNum   = (i, key) => (e) => { const v = (e.target.value === '' ? null : (Number(e.target.value) || 0)); const ps = (cm.programs || this.defaultPrograms()).map((p, idx) => idx === i ? { ...p, [key]: v } : p); saveCM({ programs: ps }); };
-    const toggleProg   = (i, key) => () => { const ps = (cm.programs || this.defaultPrograms()).map((p, idx) => idx === i ? { ...p, [key]: !p[key] } : p); saveCM({ programs: ps }); };
-    const toggleProgIcon = (i) => () => { const keys = this.programIconKeys(); const src = (cm.programs || this.defaultPrograms()); const cur = this.programByName((src[i] || {}).name).icon; const next = keys[(keys.indexOf(cur) + 1) % keys.length]; saveCM({ programs: src.map((p, idx) => idx === i ? { ...p, icon: next } : p) }); };
+    // Bake the EFFECTIVE (normalized) program before applying an edit, so the marketing-card fields
+    // (image/duration/badge/icon/showOnHome/blurb/homeDesc) become explicit on the saved record and
+    // survive a rename — previously they lived only as per-name defaults and a name edit wiped them.
+    const editProgram = (i, mut) => { const src = (cm.programs || this.defaultPrograms()); const ps = src.map((p, idx) => idx === i ? { ...this.programByName(p.name), ...p, ...mut } : p); saveCM({ programs: ps }); };
+    const setProgField = (i, key) => (e) => editProgram(i, { [key]: e.target.value });
+    const setProgNum   = (i, key) => (e) => editProgram(i, { [key]: (e.target.value === '' ? null : (Number(e.target.value) || 0)) });
+    const toggleProg   = (i, key) => () => { const src = (cm.programs || this.defaultPrograms()); editProgram(i, { [key]: !this.programByName((src[i] || {}).name)[key] }); };
+    const toggleProgIcon = (i) => () => { const keys = this.programIconKeys(); const src = (cm.programs || this.defaultPrograms()); const cur = this.programByName((src[i] || {}).name).icon; editProgram(i, { icon: keys[(keys.indexOf(cur) + 1) % keys.length] }); };
     const removeProgram = (i) => () => saveCM({ programs: (cm.programs || this.defaultPrograms()).filter((_, idx) => idx !== i) });
     const addProgram = () => saveCM({ programs: (cm.programs || this.defaultPrograms()).concat([{ name: 'New program', price: 600, needsCoach: true, multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: null, maxAge: null, blurb: '' }]) });
     const progAddons = (pi) => ((cm.programs || this.defaultPrograms())[pi].addons || []);
-    const writeAddons = (pi, addons) => { const ps = (cm.programs || this.defaultPrograms()).map((p, idx) => idx === pi ? { ...p, addons: addons } : p); saveCM({ programs: ps }); };
+    const writeAddons = (pi, addons) => editProgram(pi, { addons: addons });
     const setAddonField = (pi, ai, key) => (e) => { const v = e.target.value; writeAddons(pi, progAddons(pi).map((a, j) => j === ai ? { ...a, [key]: v } : a)); };
     const setAddonNum   = (pi, ai) => (e) => { const v = (e.target.value === '' ? 0 : (Number(e.target.value) || 0)); writeAddons(pi, progAddons(pi).map((a, j) => j === ai ? { ...a, price: v } : a)); };
     const toggleAddonScope = (pi, ai) => () => { writeAddons(pi, progAddons(pi).map((a, j) => j === ai ? { ...a, scope: (a.scope === 'perBooking' ? 'perArcher' : 'perBooking') } : a)); };
