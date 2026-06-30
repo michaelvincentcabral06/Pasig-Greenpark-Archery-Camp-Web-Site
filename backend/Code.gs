@@ -200,6 +200,48 @@ function setContent_(body) {
   return json_({ ok: true });
 }
 
+// db-v37: per-slot uploaded site images (hero, About portrait, program cards), stored one per
+// Script Property under the img: namespace. Public read so the live site can fetch them.
+function getImages_() {
+  var all = PropertiesService.getScriptProperties().getProperties();
+  var out = { hero: '', about: '', programs: {} };
+  for (var k in all) {
+    if (k.indexOf('img:') !== 0) continue;
+    var slot = k.slice(4);
+    if (slot === 'hero') out.hero = all[k];
+    else if (slot === 'about') out.about = all[k];
+    else if (slot.indexOf('prog:') === 0) out.programs[slot.slice(5)] = all[k];
+  }
+  return json_(out);
+}
+
+// Budget guard: keep the img: namespace under 250KB so the ~500KB Properties store can't overflow
+// (coach photos + CONTENT + runtime keys share it). replaceKey is excluded (it's being overwritten).
+function imgBudgetOk_(incomingLen, replaceKey) {
+  var all = PropertiesService.getScriptProperties().getProperties();
+  var total = incomingLen || 0;
+  for (var k in all) {
+    if (k.indexOf('img:') !== 0) continue;
+    if (k === replaceKey) continue;
+    total += String(all[k]).length;
+  }
+  return total <= 250000;
+}
+
+// Admin: store or clear one image slot. Empty/absent data clears the slot (reverts to default).
+function setImage_(body) {
+  var slot = String((body && body.slot) || '').trim();
+  if (!/^(hero|about|prog:.+)$/.test(slot)) return json_({ ok: false, reason: 'bad-slot' });
+  var key = 'img:' + slot;
+  var data = (body && body.data != null) ? String(body.data) : '';
+  var props = PropertiesService.getScriptProperties();
+  if (!data) { props.deleteProperty(key); return json_({ ok: true, cleared: true }); }
+  if (data.indexOf('data:image/') !== 0) return json_({ ok: false, reason: 'bad-data' });
+  if (!imgBudgetOk_(data.length, key)) return json_({ ok: false, reason: 'storage-full' });
+  props.setProperty(key, data);
+  return json_({ ok: true });
+}
+
 // ---------- EMAIL GROUPS (db-v14) ----------
 function aliasKey_(email){ return 'aliases:' + (email || '').trim().toLowerCase(); }
 function groupFor_(email){
@@ -884,6 +926,7 @@ function doGet(e) {
       return listCoaches_();
     }
     if (action === 'content') return getContent_();
+    if (action === 'images') return getImages_();
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
       var lastExpiryRun = null, lastExpirySent = null;
@@ -891,7 +934,7 @@ function doGet(e) {
         var _ler = PropertiesService.getScriptProperties().getProperty('lastExpiryRun');
         if (_ler) { var _o = JSON.parse(_ler); lastExpiryRun = _o.at || null; lastExpirySent = (_o.sent != null ? _o.sent : null); }
       } catch (e) {}
-      return json_({ version: 'db-v36', auth: true, triggerStatus: true, expiryTrigger: expiryTriggerActive_(), lastExpiryRun: lastExpiryRun, lastExpirySent: lastExpirySent, expiryInstaller: true, expiryRunnable: true, clientPaid: true, addonRateTypes: true, passExpiryEmail: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true, multiCoach: true, acctBreakdown: true, perArcherEdit: true });
+      return json_({ version: 'db-v37', auth: true, triggerStatus: true, siteImages: true, expiryTrigger: expiryTriggerActive_(), lastExpiryRun: lastExpiryRun, lastExpirySent: lastExpirySent, expiryInstaller: true, expiryRunnable: true, clientPaid: true, addonRateTypes: true, passExpiryEmail: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true, multiCoach: true, acctBreakdown: true, perArcherEdit: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
@@ -1032,6 +1075,7 @@ function doPost(e) {
     if (body.action === 'coachavail')    return (assertAdmin_(body) || coachPassOk_(body.coach, body.pass)) ? listCoachAvail_(body.coach) : unauthorized_();
     // --- Admin writes (all gated) ---
     if (body.action === 'setContent')        return assertAdmin_(body) ? setContent_(body)        : unauthorized_();
+    if (body.action === 'setImage')          return assertAdmin_(body) ? setImage_(body)          : unauthorized_();
     if (body.action === 'clearAll')          return assertAdmin_(body) ? clearAll_(body)          : unauthorized_();
     if (body.action === 'savePlan')          return assertAdmin_(body) ? savePlan_(body)          : unauthorized_();
     if (body.action === 'removePlan')        return assertAdmin_(body) ? removePlan_(body)        : unauthorized_();

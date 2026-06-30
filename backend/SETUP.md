@@ -549,3 +549,19 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 
 - [ ] `…/exec?action=version` → `"version":"db-v36"`, `"triggerStatus":true`, and **`"expiryTrigger":true`** (the daily trigger is installed; `false` = missing → re-run `installExpiryTrigger`; `null` = lookup failed).
 - [ ] `lastExpiryRun` is `null` until the trigger fires (or you manually Run `notifyExpiredPasses` once), then it shows the last-run timestamp and `lastExpirySent` count. Running it now is the quickest way to confirm the heartbeat wiring end-to-end.
+
+---
+
+## db-v37 deploy & verify
+
+**What changed:** admin-uploadable site images. New `getImages_` (public `?action=images`),
+`setImage_` (admin POST), `imgBudgetOk_` guard. Images live under the `img:` Script-Property
+namespace, capped at 250KB total. No new OAuth scope.
+
+### Deploy steps
+1. Apps Script editor → paste `backend/Code.gs` → **Save**.
+2. **Deploy → Manage deployments → ✏️ edit → New version → Deploy.**
+
+### Verify
+- [ ] `…/exec?action=version` → `"version":"db-v37"`, `"siteImages":true`.
+- [ ] `…/exec?action=images` → `{"hero":"","about":"","programs":{}}` before any upload.
