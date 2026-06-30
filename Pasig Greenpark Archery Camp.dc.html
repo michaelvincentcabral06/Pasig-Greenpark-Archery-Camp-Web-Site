@@ -153,20 +153,31 @@
         </div>
         <button onClick="{{ goPrograms }}" style="background:none;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;color:#244232;text-decoration:underline;text-underline-offset:4px;">See all programs →</button>
       </div>
+      <style>
+        .prog-card { transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), box-shadow 0.35s, border-color 0.35s; }
+        .prog-card:hover { transform: translateY(-4px); box-shadow: 0 22px 48px rgba(27,42,31,0.14); border-color: rgba(36,66,50,0.26); }
+        .prog-card .prog-img { transition: transform 0.65s cubic-bezier(0.16,1,0.3,1); }
+        .prog-card:hover .prog-img { transform: scale(1.06); }
+        .prog-card .prog-arrow { transition: transform 0.3s, background 0.3s; }
+        .prog-card:hover .prog-arrow { transform: translateX(3px); background: #8fc44b; }
+        @media (prefers-reduced-motion: reduce) { .prog-card, .prog-card .prog-img, .prog-card .prog-arrow { transition: none; } .prog-card:hover { transform: none; } .prog-card:hover .prog-img { transform: none; } }
+      </style>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;">
         <sc-for list="{{ homeProgramCards }}" as="hp" hint-placeholder-count="3">
-        <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;" style-hover="border-color:rgba(36,66,50,0.28);transform:translateY(-3px);">
-          <sc-if value="{{ hp.hasImage }}" hint-placeholder-val="{{ true }}">
-          <div style="aspect-ratio:16/10;overflow:hidden;"><img src="{{ hp.image }}" alt="{{ hp.title }}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;" /></div>
-          </sc-if>
-          <div style="padding:22px;display:flex;flex-direction:column;gap:10px;flex:1;">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
-              <h3 style="font-size:20px;font-weight:800;margin:0;color:#1b2a1f;">{{ hp.title }}</h3>
-              <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:#3c6b48;background:#e7ecda;padding:4px 9px;border-radius:999px;white-space:nowrap;">{{ hp.badge }}</span>
+        <button onClick="{{ hp.book }}" class="prog-card" style="position:relative;display:flex;flex-direction:column;width:100%;text-align:left;padding:0;cursor:pointer;background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:14px;overflow:hidden;font-family:'Hanken Grotesk',sans-serif;">
+          <div style="position:relative;aspect-ratio:4/3;overflow:hidden;background:#e7ecda;">
+            <sc-if value="{{ hp.hasImage }}" hint-placeholder-val="{{ true }}">
+            <img src="{{ hp.image }}" alt="{{ hp.title }}" loading="lazy" decoding="async" class="prog-img" style="width:100%;height:100%;object-fit:cover;display:block;" />
+            </sc-if>
+            <div style="position:absolute;inset:0;background:linear-gradient(0deg, rgba(20,40,30,0.86) 0%, rgba(20,40,30,0.28) 42%, transparent 72%);"></div>
+            <span style="position:absolute;top:14px;right:14px;font-family:'Spline Sans Mono',monospace;font-size:11px;color:#1b2a1f;background:#bfe39a;padding:5px 11px;border-radius:999px;font-weight:700;white-space:nowrap;">{{ hp.badge }}</span>
+            <div style="position:absolute;left:18px;right:18px;bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+              <h3 style="font-size:clamp(20px,2.2vw,24px);font-weight:800;margin:0;color:#f4efe4;text-shadow:0 1px 18px rgba(0,0,0,0.32);">{{ hp.title }}</h3>
+              <span class="prog-arrow" style="flex:none;width:34px;height:34px;border-radius:50%;background:#7fb43f;color:#1b2a1f;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;">→</span>
             </div>
-            <p style="font-size:14.5px;line-height:1.5;color:#56664f;margin:0;flex:1;">{{ hp.homeDesc }}</p>
           </div>
-        </div>
+          <p style="font-size:14.5px;line-height:1.5;color:#56664f;margin:0;padding:18px 20px 22px;flex:1;">{{ hp.homeDesc }}</p>
+        </button>
         </sc-for>
       </div>
     </section>
@@ -3983,7 +3994,8 @@ class Component extends DCLogic {
       return {
         title: self.programCardTitle_(p.name), badge: self.programBadge_(p),
         homeDesc: p.homeDesc || p.blurb || '',
-        image: p.image || '', hasImage: !!(p.image && String(p.image).trim())
+        image: p.image || '', hasImage: !!(p.image && String(p.image).trim()),
+        book: (function (nm) { return function () { self.bookProgram(nm); }; })(p.name)
       };
     });
   }
