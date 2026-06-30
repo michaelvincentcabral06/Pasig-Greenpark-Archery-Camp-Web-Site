@@ -813,8 +813,22 @@ function notifyExpiredPasses_() {
     entry.keys.forEach(function (k) { props.setProperty(k, js); });
     sent++;
   }
+  // db-v36 heartbeat: stamp every run (even 0-send) so ?action=version can report last-fired.
+  try { props.setProperty('lastExpiryRun', JSON.stringify({ at: nowStr_(), sent: sent })); } catch (e) {}
   Logger.log('notifyExpiredPasses_: sent ' + sent + ' expiry email(s).');
   return sent;
+}
+
+// db-v36: true if a daily trigger pointing at notifyExpiredPasses is installed; null if the lookup
+// fails (scope/transient). Used by ?action=version so trigger health is checkable without the editor.
+function expiryTriggerActive_() {
+  try {
+    var ts = ScriptApp.getProjectTriggers();
+    for (var i = 0; i < ts.length; i++) {
+      if (ts[i].getHandlerFunction() === 'notifyExpiredPasses') return true;
+    }
+    return false;
+  } catch (e) { return null; }
 }
 // PUBLIC wrapper (no trailing underscore) so this is selectable in the editor's Run dropdown AND the
 // Triggers function picker — Apps Script hides `_`-suffixed functions from both. Point the daily
@@ -870,7 +884,12 @@ function doGet(e) {
     if (action === 'content') return getContent_();
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v35', auth: true, expiryInstaller: true, expiryRunnable: true, clientPaid: true, addonRateTypes: true, passExpiryEmail: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true, multiCoach: true, acctBreakdown: true, perArcherEdit: true });
+      var lastExpiryRun = null, lastExpirySent = null;
+      try {
+        var _ler = PropertiesService.getScriptProperties().getProperty('lastExpiryRun');
+        if (_ler) { var _o = JSON.parse(_ler); lastExpiryRun = _o.at || null; lastExpirySent = (_o.sent != null ? _o.sent : null); }
+      } catch (e) {}
+      return json_({ version: 'db-v36', auth: true, triggerStatus: true, expiryTrigger: expiryTriggerActive_(), lastExpiryRun: lastExpiryRun, lastExpirySent: lastExpirySent, expiryInstaller: true, expiryRunnable: true, clientPaid: true, addonRateTypes: true, passExpiryEmail: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true, multiCoach: true, acctBreakdown: true, perArcherEdit: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {

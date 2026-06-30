@@ -533,3 +533,19 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 
 - [ ] `…/exec?action=version` → `"version":"db-v35"`, `"expiryInstaller":true`.
 - [ ] A `notifyExpiredPasses` daily trigger appears under Triggers after running `installExpiryTrigger`.
+
+---
+
+## db-v36 deploy & verify
+
+**What changed:** the daily `notifyExpiredPasses` run now stamps a `lastExpiryRun` Script Property every time it fires (even a 0-email run), and `?action=version` now reports trigger health remotely — no editor trip needed to confirm the trigger is alive. New `expiryTriggerActive_()` helper enumerates project triggers. No customer-facing behavior change; no new auth scope (the "manage triggers" scope was already granted when you ran `installExpiryTrigger` in db-v35).
+
+### Deploy steps
+
+1. Apps Script editor → paste `backend/Code.gs` → **Save**.
+2. **Deploy → Manage deployments → ✏️ edit → New version → Deploy.**
+
+### Verify
+
+- [ ] `…/exec?action=version` → `"version":"db-v36"`, `"triggerStatus":true`, and **`"expiryTrigger":true`** (the daily trigger is installed; `false` = missing → re-run `installExpiryTrigger`; `null` = lookup failed).
+- [ ] `lastExpiryRun` is `null` until the trigger fires (or you manually Run `notifyExpiredPasses` once), then it shows the last-run timestamp and `lastExpirySent` count. Running it now is the quickest way to confirm the heartbeat wiring end-to-end.
