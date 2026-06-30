@@ -369,16 +369,24 @@
           <a href="{{ reviewsUrl }}" target="_blank" rel="noopener" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.2);color:#244232;text-decoration:none;font-size:14px;font-weight:700;padding:11px 20px;border-radius:999px;white-space:nowrap;" style-hover="background:#fff;">Read all reviews on Google →</a>
         </sc-if>
       </div>
+      <style>
+        .quote-card { transition: transform .35s cubic-bezier(.16,1,.3,1), box-shadow .35s, border-color .35s; }
+        .quote-card:hover { transform: translateY(-4px); box-shadow: 0 20px 44px rgba(36,66,50,.12); border-color: rgba(36,66,50,.24); }
+        @media (prefers-reduced-motion: reduce){ .quote-card{transition:none;} .quote-card:hover{transform:none;} }
+      </style>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;">
         <sc-for list="{{ testimonials }}" as="t" hint-placeholder-count="3">
-          <figure style="margin:0;background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:8px;padding:28px;display:flex;flex-direction:column;gap:14px;">
-            <div style="display:flex;align-items:center;gap:12px;">
+          <figure class="quote-card reveal-up" style="margin:0;background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:16px;padding:30px 28px;display:flex;flex-direction:column;gap:16px;">
+            <span aria-hidden="true" style="font-family:'Hanken Grotesk',sans-serif;font-size:56px;font-weight:800;line-height:0.6;color:#7fb43f;height:24px;">&ldquo;</span>
+            <blockquote style="margin:0;font-size:clamp(15.5px,1.6vw,18px);line-height:1.55;color:#2c3a26;font-weight:600;flex:1;">{{ t.quote }}</blockquote>
+            <div style="display:flex;align-items:center;gap:12px;padding-top:18px;border-top:1px solid rgba(36,66,50,0.1);">
               <span style="width:42px;height:42px;flex:none;border-radius:50%;background:#244232;color:#f4efe4;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;">{{ t.initial }}</span>
-              <span style="font-weight:700;color:#1b2a1f;font-size:15px;flex:1;">{{ t.name }}</span>
-              <span style="width:22px;height:22px;flex:none;border-radius:50%;border:1px solid rgba(36,66,50,0.15);display:flex;align-items:center;justify-content:center;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:13px;color:#4285F4;">G</span>
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:700;color:#1b2a1f;font-size:14.5px;">{{ t.name }}</div>
+                <div style="font-size:13px;letter-spacing:1px;margin-top:2px;"><span style="color:#7fb43f;">{{ t.starsFull }}</span><span style="color:rgba(36,66,50,0.22);">{{ t.starsEmpty }}</span><sc-if value="{{ t.hasDate }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;letter-spacing:0;color:#8a9579;margin-left:7px;">· {{ t.date }}</span></sc-if></div>
+              </div>
+              <span style="width:24px;height:24px;flex:none;border-radius:50%;border:1px solid rgba(36,66,50,0.15);display:flex;align-items:center;justify-content:center;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:13px;color:#4285F4;">G</span>
             </div>
-            <div style="font-size:15px;letter-spacing:1px;"><span style="color:#7fb43f;">{{ t.starsFull }}</span><span style="color:rgba(36,66,50,0.22);">{{ t.starsEmpty }}</span><sc-if value="{{ t.hasDate }}" hint-placeholder-val="{{ false }}"><span style="font-size:12.5px;letter-spacing:0;color:#8a9579;margin-left:8px;">· {{ t.date }}</span></sc-if></div>
-            <blockquote style="margin:0;font-size:16px;line-height:1.5;color:#2c3a26;font-weight:500;">"{{ t.quote }}"</blockquote>
           </figure>
         </sc-for>
       </div>
@@ -398,12 +406,17 @@
 
     <!-- CTA BAND -->
     <section style="padding:0 clamp(20px,5vw,64px) clamp(56px,7vw,96px);max-width:1320px;margin:0 auto;width:100%;">
-      <div style="background:#244232;border-radius:14px;padding:clamp(40px,6vw,72px);text-align:center;position:relative;overflow:hidden;">
-        <div style="position:absolute;top:-60px;right:-60px;width:220px;height:220px;border-radius:50%;border:2px solid rgba(127,180,63,0.3);"></div>
-        <div style="position:absolute;top:-30px;right:-30px;width:160px;height:160px;border-radius:50%;border:2px solid rgba(127,180,63,0.2);"></div>
-        <h2 style="font-size:clamp(28px,4.5vw,50px);font-weight:800;letter-spacing:-0.02em;color:#f4efe4;margin:0 0 16px;position:relative;">Your first three are on the bullseye.</h2>
-        <p style="font-size:18px;color:#cdd6c5;margin:0 auto 30px;max-width:34em;position:relative;">Book a beginner session this week. We'll have a bow in your hands within minutes of arriving.</p>
-        <button onClick="{{ goBook }}" style="background:#7fb43f;color:#1b2a1f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:700;padding:15px 32px;border-radius:999px;position:relative;" style-hover="background:#93c75c;">Book a session →</button>
+      <div style="position:relative;background:#1f3a2b;border-radius:22px;padding:clamp(48px,7vw,90px) clamp(28px,6vw,72px);text-align:center;overflow:hidden;">
+        <img src="assets/arrows-target-o.jpg" alt="" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.16;z-index:0;" />
+        <div style="position:absolute;inset:0;z-index:1;background:radial-gradient(135% 130% at 72% 18%, rgba(36,66,50,0.62) 0%, rgba(18,36,27,0.95) 62%);"></div>
+        <div style="position:absolute;top:-90px;right:-90px;width:280px;height:280px;border-radius:50%;border:2px solid rgba(127,180,63,0.28);z-index:1;"></div>
+        <div style="position:absolute;top:-48px;right:-48px;width:196px;height:196px;border-radius:50%;border:2px solid rgba(127,180,63,0.2);z-index:1;"></div>
+        <div style="position:absolute;top:-6px;right:-6px;width:112px;height:112px;border-radius:50%;border:2px solid rgba(127,180,63,0.14);z-index:1;"></div>
+        <div style="position:relative;z-index:2;">
+          <h2 style="font-size:clamp(30px,5vw,54px);font-weight:800;letter-spacing:-0.025em;line-height:1.02;color:#f4efe4;margin:0 0 18px;text-shadow:0 2px 26px rgba(0,0,0,0.22);">Your first three are on the bullseye.</h2>
+          <p style="font-size:clamp(16px,1.8vw,19px);line-height:1.5;color:rgba(244,239,228,0.82);margin:0 auto 32px;max-width:34em;">Book a beginner session this week. We'll have a bow in your hands within minutes of arriving.</p>
+          <button onClick="{{ goBook }}" style="background:#7fb43f;color:#1b2a1f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:800;padding:16px 34px;border-radius:999px;box-shadow:0 12px 34px rgba(127,180,63,0.4);" style-hover="background:#8fc44b;transform:translateY(-1px);">Book a session →</button>
+        </div>
       </div>
     </section>
   </div>
