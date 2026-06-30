@@ -517,3 +517,19 @@ Capacity is counted in **archers (seats)**, not bookings — so a group is count
 - [ ] `…/exec?action=version` → `"version":"db-v34"`, `"expiryRunnable":true`, prior flags intact.
 - [ ] Editor function dropdown now lists **`notifyExpiredPasses`** (no underscore) → selectable.
 - [ ] If you previously added a daily trigger and couldn't pick the function, add it now on **`notifyExpiredPasses`**.
+
+## db-v35 deploy & verify
+
+**What changed:** added `installExpiryTrigger()` — a one-time helper you Run from the editor to install the DAILY `notifyExpiredPasses` trigger idempotently (removes any existing one first, then creates a ~7am daily timer). No web-app behavior change.
+
+### Deploy + install steps
+
+1. Apps Script editor → paste `backend/Code.gs` → **Save**.
+2. **Deploy → Manage deployments → ✏️ edit → New version → Deploy.**
+3. Function dropdown → **`installExpiryTrigger`** → **▷ Run**. Authorize if prompted (it needs the "manage triggers" scope). The execution log shows *"Installed daily trigger for notifyExpiredPasses (~07:00)."*
+4. (Optional) Open **Triggers** (⏰) → confirm a `notifyExpiredPasses · Time-driven · Day timer` row is listed.
+
+### Verify
+
+- [ ] `…/exec?action=version` → `"version":"db-v35"`, `"expiryInstaller":true`.
+- [ ] A `notifyExpiredPasses` daily trigger appears under Triggers after running `installExpiryTrigger`.

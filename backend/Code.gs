@@ -821,6 +821,17 @@ function notifyExpiredPasses_() {
 // time-driven trigger at THIS name, and use it for a manual Run.
 function notifyExpiredPasses() { return notifyExpiredPasses_(); }
 
+// Run ONCE from the editor (select installExpiryTrigger → Run) to install the DAILY trigger for the
+// expiry email. Idempotent: removes any existing notifyExpiredPasses trigger first, so re-running
+// never creates duplicates. Fires ~7am daily.
+function installExpiryTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'notifyExpiredPasses') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('notifyExpiredPasses').timeBased().everyDays(1).atHour(7).create();
+  Logger.log('Installed daily trigger for notifyExpiredPasses (~07:00).');
+}
+
 // ---------- STAFF LOGIN ----------
 function staffLogin_(body) {
   var s = adminSecret_();
@@ -859,7 +870,7 @@ function doGet(e) {
     if (action === 'content') return getContent_();
     if (action === 'version') {
       // Lets the website (and support) confirm which backend is actually deployed.
-      return json_({ version: 'db-v34', auth: true, expiryRunnable: true, clientPaid: true, addonRateTypes: true, passExpiryEmail: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true, multiCoach: true, acctBreakdown: true, perArcherEdit: true });
+      return json_({ version: 'db-v35', auth: true, expiryInstaller: true, expiryRunnable: true, clientPaid: true, addonRateTypes: true, passExpiryEmail: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true, multiCoach: true, acctBreakdown: true, perArcherEdit: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
