@@ -557,15 +557,19 @@
   <!-- ============ ABOUT ============ -->
   <sc-if value="{{ isAbout }}" hint-placeholder-val="{{ false }}">
   <div>
-    <section style="display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,5vw,64px);align-items:center;padding:clamp(48px,6vw,80px) clamp(20px,5vw,64px);max-width:1320px;margin:0 auto;width:100%;">
-      <div>
-        <div style="font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#3c6b48;margin-bottom:14px;">Our story</div>
-        <h1 style="font-size:clamp(32px,4.5vw,56px);font-weight:800;letter-spacing:-0.025em;margin:0 0 22px;color:#1b2a1f;">A quiet sport in a green corner of Pasig</h1>
-        <p style="font-size:17px;line-height:1.65;color:#46563f;margin:0 0 16px;">Greenpark Archery Camp grew out of a few neighbors, a borrowed target, and a clubhouse field that begged to be used. What started as weekend shooting for the village became a proper range with certified coaches and programs for every age.</p>
-        <p style="font-size:17px;line-height:1.65;color:#46563f;margin:0;">We believe archery is the rare sport that slows you down. It rewards breath, posture, and patience over raw strength. Everyone leaves a little calmer than they came.</p>
-      </div>
-      <div style="aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:1px solid rgba(36,66,50,0.12);">
-        <img src="assets/coaching-o.jpg" alt="A coach setting up a young archer on the line at Greenpark" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;" />
+    <section style="position:relative;overflow:hidden;background:#244232;">
+      <img src="assets/range-targets-o.jpg" alt="" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.14;z-index:0;" />
+      <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(100deg, rgba(36,66,50,0.96) 0%, rgba(36,66,50,0.82) 50%, rgba(36,66,50,0.62) 100%);"></div>
+      <div style="position:relative;z-index:2;display:grid;grid-template-columns:1.1fr 0.9fr;gap:clamp(28px,5vw,64px);align-items:center;padding:clamp(56px,8vw,104px) clamp(20px,5vw,64px);max-width:1320px;margin:0 auto;width:100%;">
+        <div>
+          <div style="display:inline-flex;align-items:center;gap:11px;font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#9ed35f;margin-bottom:18px;"><span style="width:24px;height:2px;background:#7fb43f;display:inline-block;"></span>Our story</div>
+          <h1 style="font-size:clamp(32px,5vw,58px);font-weight:800;letter-spacing:-0.025em;line-height:1.02;margin:0 0 22px;color:#f4efe4;text-shadow:0 2px 26px rgba(0,0,0,0.22);">A quiet sport in a green corner of Pasig</h1>
+          <p style="font-size:clamp(16px,1.7vw,18px);line-height:1.65;color:rgba(244,239,228,0.86);margin:0 0 16px;">Greenpark Archery Camp grew out of a few neighbors, a borrowed target, and a clubhouse field that begged to be used. What started as weekend shooting for the village became a proper range with certified coaches and programs for every age.</p>
+          <p style="font-size:clamp(16px,1.7vw,18px);line-height:1.65;color:rgba(244,239,228,0.86);margin:0;">We believe archery is the rare sport that slows you down. It rewards breath, posture, and patience over raw strength. Everyone leaves a little calmer than they came.</p>
+        </div>
+        <div style="aspect-ratio:1/1;border-radius:16px;overflow:hidden;border:1px solid rgba(158,211,95,0.35);box-shadow:0 24px 60px rgba(0,0,0,0.32);">
+          <img src="assets/coaching-o.jpg" alt="A coach setting up a young archer on the line at Greenpark" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;" />
+        </div>
       </div>
     </section>
 
@@ -573,8 +577,8 @@
     <section style="background:#ece7d8;padding:clamp(48px,6vw,72px) clamp(20px,5vw,64px);">
       <div style="max-width:1320px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:28px;">
         <sc-for list="{{ values }}" as="v" hint-placeholder-count="3">
-          <div>
-            <div style="width:48px;height:48px;border-radius:10px;background:#244232;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px;">{{ v.icon }}</div>
+          <div class="prog-card2 reveal-up" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:16px;padding:26px 24px;">
+            <div style="width:52px;height:52px;border-radius:13px;background:linear-gradient(135deg,#244232,#2f5a3d);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px;box-shadow:0 8px 20px rgba(36,66,50,0.18);">{{ v.icon }}</div>
             <h3 style="font-size:20px;font-weight:800;margin:0 0 10px;color:#1b2a1f;">{{ v.title }}</h3>
             <p style="font-size:15px;line-height:1.55;color:#56664f;margin:0;">{{ v.body }}</p>
           </div>
@@ -588,7 +592,7 @@
       <h2 style="font-size:clamp(26px,3.5vw,40px);font-weight:800;letter-spacing:-0.02em;margin:0 0 40px;color:#1b2a1f;">Coaches who'll know your name</h2>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;">
         <sc-for list="{{ aboutCoaches }}" as="co" hint-placeholder-count="3">
-          <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:10px;overflow:hidden;">
+          <div class="prog-card2" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:16px;overflow:hidden;">
             <div style="aspect-ratio:4/5;overflow:hidden;">
               <sc-if value="{{ co.hasPhoto }}" hint-placeholder-val="{{ false }}"><img src="{{ co.photo }}" alt="{{ co.name }}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;" /></sc-if>
               <sc-if value="{{ co.noPhoto }}" hint-placeholder-val="{{ true }}"><span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#244232;color:#f4efe4;font-weight:800;font-size:56px;font-family:'Hanken Grotesk',sans-serif;">{{ co.initials }}</span></sc-if>
@@ -731,23 +735,27 @@
   <!-- ============ CONTACT ============ -->
   <sc-if value="{{ isContact }}" hint-placeholder-val="{{ false }}">
   <div>
-    <section style="padding:clamp(48px,6vw,72px) clamp(20px,5vw,64px) clamp(20px,3vw,28px);max-width:1320px;margin:0 auto;width:100%;">
-      <div style="font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#3c6b48;margin-bottom:14px;">Visit us</div>
-      <h1 style="font-size:clamp(34px,5vw,60px);font-weight:800;letter-spacing:-0.025em;margin:0 0 14px;color:#1b2a1f;">Come shoot with us</h1>
-      <p style="font-size:18px;line-height:1.55;color:#46563f;max-width:38em;margin:0;">Find us at Greenpark Village, call ahead, or message us on Facebook. We'd love to have you on the range.</p>
+    <section style="position:relative;overflow:hidden;background:#244232;">
+      <img src="assets/range-targets-o.jpg" alt="" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.16;z-index:0;" />
+      <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(100deg, rgba(36,66,50,0.96) 0%, rgba(36,66,50,0.8) 55%, rgba(36,66,50,0.6) 100%);"></div>
+      <div style="position:relative;z-index:2;max-width:1320px;margin:0 auto;width:100%;padding:clamp(56px,8vw,104px) clamp(20px,5vw,64px) clamp(40px,5vw,64px);">
+        <div style="display:inline-flex;align-items:center;gap:11px;font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#9ed35f;margin-bottom:18px;"><span style="width:24px;height:2px;background:#7fb43f;display:inline-block;"></span>Visit us</div>
+        <h1 style="font-size:clamp(36px,5.4vw,64px);font-weight:800;letter-spacing:-0.025em;line-height:1.0;margin:0 0 16px;color:#f4efe4;text-shadow:0 2px 26px rgba(0,0,0,0.22);">Come shoot with us</h1>
+        <p style="font-size:clamp(16px,1.9vw,19px);line-height:1.55;color:rgba(244,239,228,0.84);max-width:38em;margin:0;">Find us at Greenpark Village, call ahead, or message us on Facebook. We'd love to have you on the range.</p>
+      </div>
     </section>
 
     <section style="padding:clamp(20px,3vw,28px) clamp(20px,5vw,64px) clamp(56px,6vw,88px);max-width:760px;margin:0 auto;width:100%;">
       <!-- INFO + MAP -->
       <div style="display:flex;flex-direction:column;gap:22px;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-          <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:10px;padding:22px;">
+          <div class="prog-card2" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:16px;padding:22px;">
             <div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#3c6b48;margin-bottom:8px;">Location</div>
             <div style="font-size:15.5px;line-height:1.5;font-weight:600;color:#1b2a1f;">Pasig Greenpark Village Clubhouse</div>
             <div style="font-size:14.5px;line-height:1.5;color:#56664f;margin-top:4px;">Pasig, Metro Manila</div>
             <a href="https://www.google.com/maps/search/?api=1&query=Pasig+Greenpark+Archery+Camp" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;margin-top:12px;font-size:13.5px;font-weight:700;color:#244232;text-decoration:underline;text-underline-offset:3px;">Get directions →</a>
           </div>
-          <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:10px;padding:22px;">
+          <div class="prog-card2" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:16px;padding:22px;">
             <div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#3c6b48;margin-bottom:8px;">Call us</div>
             <a href="tel:09171276677" style="font-size:18px;font-weight:800;color:#244232;text-decoration:none;">0917 127 6677</a>
             <div style="display:flex;align-items:center;gap:6px;margin-top:12px;">
@@ -759,7 +767,7 @@
             </a>
           </div>
         </div>
-        <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:10px;padding:22px;">
+        <div class="prog-card2" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:16px;padding:22px;">
           <div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#3c6b48;margin-bottom:14px;">Range hours</div>
           <div style="display:flex;flex-direction:column;gap:9px;">
             <sc-for list="{{ hours }}" as="h" hint-placeholder-count="5">
@@ -770,7 +778,7 @@
             </sc-for>
           </div>
         </div>
-        <div style="border-radius:10px;overflow:hidden;border:1px solid rgba(36,66,50,0.12);position:relative;">
+        <div style="border-radius:16px;overflow:hidden;border:1px solid rgba(36,66,50,0.12);position:relative;box-shadow:0 14px 34px rgba(36,66,50,0.1);">
           <iframe title="Map to Pasig Greenpark Archery Camp" src="https://www.openstreetmap.org/export/embed.html?bbox=121.0959%2C14.6075%2C121.1059%2C14.6135&layer=mapnik&marker=14.6104671%2C121.1008888" style="width:100%;height:300px;border:0;display:block;background:#dfe3d0;" loading="lazy"></iframe>
           <a href="https://www.google.com/maps/search/?api=1&query=Pasig+Greenpark+Archery+Camp" target="_blank" rel="noopener" style="position:absolute;top:12px;right:12px;background:#244232;color:#f4efe4;font-size:12px;font-weight:700;padding:8px 14px;border-radius:999px;text-decoration:none;box-shadow:0 4px 12px rgba(27,42,31,0.25);" style-hover="background:#1b3325;">Open in Maps →</a>
         </div>
@@ -782,13 +790,17 @@
   <!-- ============ BOOK A SESSION ============ -->
   <sc-if value="{{ isBook }}" hint-placeholder-val="{{ false }}">
   <div>
-    <section style="padding:clamp(48px,6vw,72px) clamp(20px,5vw,64px) clamp(20px,3vw,28px);max-width:1320px;margin:0 auto;width:100%;">
-      <div style="font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#3c6b48;margin-bottom:14px;">Book a session</div>
-      <h1 style="font-size:clamp(34px,5vw,60px);font-weight:800;letter-spacing:-0.025em;margin:0 0 14px;color:#1b2a1f;">Reserve your spot</h1>
-      <p style="font-size:18px;line-height:1.55;color:#46563f;max-width:38em;margin:0;">Reserve a single session below, or grab a <button onClick="{{ goPlans }}" style="background:none;border:none;padding:0;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:18px;font-weight:700;color:#244232;text-decoration:underline;text-underline-offset:3px;">pass or membership</button> to save on regular visits. Have a pass already? Book here and draw from it in My Bookings.</p>
+    <section style="position:relative;overflow:hidden;background:#244232;">
+      <img src="assets/arrows-target-o.jpg" alt="" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.16;z-index:0;" />
+      <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(100deg, rgba(36,66,50,0.96) 0%, rgba(36,66,50,0.8) 55%, rgba(36,66,50,0.6) 100%);"></div>
+      <div style="position:relative;z-index:2;max-width:1320px;margin:0 auto;width:100%;padding:clamp(56px,8vw,104px) clamp(20px,5vw,64px) clamp(40px,5vw,64px);">
+        <div style="display:inline-flex;align-items:center;gap:11px;font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#9ed35f;margin-bottom:18px;"><span style="width:24px;height:2px;background:#7fb43f;display:inline-block;"></span>Book a session</div>
+        <h1 style="font-size:clamp(36px,5.4vw,64px);font-weight:800;letter-spacing:-0.025em;line-height:1.0;margin:0 0 16px;color:#f4efe4;text-shadow:0 2px 26px rgba(0,0,0,0.22);">Reserve your spot</h1>
+        <p style="font-size:clamp(16px,1.9vw,19px);line-height:1.55;color:rgba(244,239,228,0.84);max-width:40em;margin:0;">Reserve a single session below, or grab a <button onClick="{{ goPlans }}" style="background:none;border:none;padding:0;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:clamp(16px,1.9vw,19px);font-weight:700;color:#9ed35f;text-decoration:underline;text-underline-offset:3px;">pass or membership</button> to save on regular visits. Have a pass already? Book here and draw from it in <span style="font-weight:700;color:#f4efe4;">My Bookings</span>.</p>
+      </div>
     </section>
     <section style="padding:clamp(20px,3vw,28px) clamp(20px,5vw,64px) clamp(56px,6vw,88px);max-width:680px;margin:0 auto;width:100%;">
-      <div id="booking-form" style="background:#244232;border-radius:14px;padding:clamp(28px,3vw,40px);position:sticky;top:90px;">
+      <div id="booking-form" style="background:#244232;border-radius:16px;padding:clamp(28px,3vw,40px);position:sticky;top:90px;">
 
         <!-- CONFIRMED -->
         <sc-if value="{{ statusConfirmed }}" hint-placeholder-val="{{ false }}">
