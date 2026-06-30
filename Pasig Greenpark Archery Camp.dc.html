@@ -190,24 +190,35 @@
           <h2 style="font-size:clamp(28px,4vw,44px);font-weight:800;letter-spacing:-0.02em;margin:0;color:#1b2a1f;">Pick a pass, pay at the range</h2>
           <p style="font-size:15.5px;line-height:1.55;color:#56664f;margin:14px auto 0;max-width:40em;">A pass is how you pay. Reserve one and book your sessions against it, or skip it and just book a single session.</p>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;align-items:stretch;">
+        <style>
+          .pass-card { transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), box-shadow 0.35s; }
+          .pass-card:hover { transform: translateY(-4px); box-shadow: 0 20px 44px rgba(36,66,50,0.13); }
+          .pass-pop { transform: translateY(-8px); box-shadow: 0 0 0 2px #7fb43f, 0 26px 54px rgba(36,66,50,0.22); }
+          .pass-pop:hover { transform: translateY(-12px); box-shadow: 0 0 0 2px #7fb43f, 0 30px 60px rgba(36,66,50,0.26); }
+          .pass-card .pass-btn { transition: transform 0.25s, filter 0.25s; }
+          .pass-card:hover .pass-btn { transform: translateY(-1px); filter: brightness(1.05); }
+          @media (max-width:760px){ .pass-pop, .pass-pop:hover { transform: none; } }
+          @media (prefers-reduced-motion: reduce){ .pass-card,.pass-pop,.pass-card .pass-btn { transition:none; } .pass-card:hover,.pass-pop,.pass-pop:hover{ transform:none; } }
+        </style>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:22px;align-items:stretch;">
           <sc-for list="{{ packages }}" as="pk" hint-placeholder-count="4">
-            <div style="background:{{ pk.bg }};color:{{ pk.fg }};border:1px solid {{ pk.border }};border-radius:10px;padding:28px 24px;display:flex;flex-direction:column;position:relative;">
-              <sc-if value="{{ pk.popular }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-11px;left:24px;background:#7fb43f;color:#1b2a1f;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;font-weight:500;padding:5px 11px;border-radius:999px;">Most popular</span></sc-if>
-              <div style="font-size:16px;font-weight:700;margin-bottom:4px;">{{ pk.name }}</div>
-              <div style="display:flex;align-items:baseline;gap:4px;margin:8px 0 6px;">
-                <span style="font-size:34px;font-weight:800;letter-spacing:-0.02em;">{{ pk.price }}</span>
-                <span style="font-size:13px;opacity:0.7;">{{ pk.unit }}</span>
+            <div class="pass-card {{ pk.popClass }}" style="background:{{ pk.bg }};color:{{ pk.fg }};border:1px solid {{ pk.border }};border-radius:16px;padding:30px 26px;display:flex;flex-direction:column;position:relative;">
+              <sc-if value="{{ pk.popular }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-11px;left:26px;background:#7fb43f;color:#1b2a1f;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;font-weight:700;padding:5px 12px;border-radius:999px;box-shadow:0 4px 14px rgba(127,180,63,0.4);">Most popular</span></sc-if>
+              <div style="font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;opacity:0.7;font-family:'Spline Sans Mono',monospace;margin-bottom:14px;">{{ pk.name }}</div>
+              <div style="display:flex;align-items:baseline;gap:5px;margin:0 0 8px;">
+                <span style="font-size:clamp(34px,4vw,42px);font-weight:800;letter-spacing:-0.03em;line-height:1;">{{ pk.price }}</span>
+                <span style="font-size:13px;opacity:0.65;">{{ pk.unit }}</span>
               </div>
-              <p style="font-size:13.5px;line-height:1.45;opacity:0.85;margin:0 0 18px;min-height:38px;">{{ pk.desc }}</p>
-              <div style="display:flex;flex-direction:column;gap:9px;flex:1;">
+              <p style="font-size:13.5px;line-height:1.5;opacity:0.82;margin:0 0 20px;min-height:40px;">{{ pk.desc }}</p>
+              <div style="height:1px;background:currentColor;opacity:0.12;margin:0 0 18px;"></div>
+              <div style="display:flex;flex-direction:column;gap:11px;flex:1;">
                 <sc-for list="{{ pk.features }}" as="f" hint-placeholder-count="3">
-                  <div style="display:flex;align-items:flex-start;gap:8px;font-size:13.5px;line-height:1.35;">
-                    <span style="color:{{ pk.tick }};flex:none;margin-top:1px;">✓</span><span>{{ f }}</span>
+                  <div style="display:flex;align-items:flex-start;gap:10px;font-size:13.5px;line-height:1.4;">
+                    <span style="color:{{ pk.tick }};flex:none;margin-top:1px;font-weight:800;">✓</span><span>{{ f }}</span>
                   </div>
                 </sc-for>
               </div>
-              <button onClick="{{ pk.choose }}" style="margin-top:22px;background:{{ pk.btnBg }};color:{{ pk.btnFg }};border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;padding:12px;border-radius:999px;width:100%;">Get this pass</button>
+              <button onClick="{{ pk.choose }}" class="pass-btn" style="margin-top:24px;background:{{ pk.btnBg }};color:{{ pk.btnFg }};border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14.5px;font-weight:800;padding:14px;border-radius:999px;width:100%;">Get this pass</button>
             </div>
           </sc-for>
         </div>
@@ -4916,7 +4927,7 @@ class Component extends DCLogic {
         { quote: 'Cleanest, friendliest range in the metro. The Greenpark setting is unbeatable.', name: 'Coach Pia', role: 'visiting club', rating: 5, date: '' },
       ] });
     cm.packages = this.normalizePackages(cm.packages);
-    const packages = cm.packages.map(pk => ({ ...pk, choose: () => this.selectPlanToBuy(pk.name) }));
+    const packages = cm.packages.map(pk => ({ ...pk, choose: () => this.selectPlanToBuy(pk.name), popClass: pk.popular ? 'pass-pop' : '' }));
 
     const planPick = this.state.planPick || '';
     const planBuyChoices = cm.packages.map(pk => ({
