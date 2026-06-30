@@ -10,7 +10,13 @@
       "Bash(echo \"name: $\\(git config user.name 2>&1\\)\")",
       "Bash(echo \"email: $\\(git config user.email 2>&1\\)\")",
       "Bash(curl -s -L -m 20 -o /dev/null -w \"%{http_code}\" \"https://michaelvincentcabral06.github.io/greenpark-archery/\")",
-      "Bash(git ls-remote *)"
+      "Bash(git ls-remote *)",
+      "Bash(sed -i \"s#text=/ slots chosen/#text=/ slots\\\\\\\\? chosen/#g\" _e2e_book.mjs)",
+      "Bash(sed -i \"s#/1 \\\\\\\\\\\\\\\\/ 1 slot/#/1 \\\\\\\\\\\\\\\\/ 1 slot/#g\" _e2e_book.mjs)",
+      "Bash(sed -i \"s#const concOR = await page.evaluate\\(\\(\\)=>Array.from\\(document.querySelectorAll\\('\\\\\\\\*'\\)\\).some\\(el=>el.children.length===0 \\\\&\\\\& /Open Range concessions/.test\\(el.textContent\\)\\)\\);#const concOR = \\(await page.getByRole\\('checkbox',{name:/Pasig City resident/}\\).count\\(\\)\\) > 0;#\" _e2e_book.mjs)",
+      "Bash(sed -i \"s#const concYS = await page.evaluate\\(\\(\\)=>Array.from\\(document.querySelectorAll\\('\\\\\\\\*'\\)\\).some\\(el=>el.children.length===0 \\\\&\\\\& /Open Range concessions/.test\\(el.textContent\\)\\)\\);#const concYS = \\(await page.getByRole\\('checkbox',{name:/Pasig City resident/}\\).count\\(\\)\\) > 0;#\" _e2e_book.mjs)",
+      "Bash(grep -nE \"concOR|concYS|slots\\\\\\\\\\\\\\\\? chosen\" _e2e_book.mjs)",
+      "Bash(node _e2e_book.mjs)"
     ]
   }
 }
