@@ -425,17 +425,29 @@
   <!-- ============ PROGRAMS ============ -->
   <sc-if value="{{ isPrograms }}" hint-placeholder-val="{{ false }}">
   <div>
-    <section style="padding:clamp(48px,6vw,80px) clamp(20px,5vw,64px) clamp(20px,3vw,32px);max-width:1320px;margin:0 auto;width:100%;">
-      <div style="font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#3c6b48;margin-bottom:14px;">Programs</div>
-      <h1 style="font-size:clamp(34px,5vw,60px);font-weight:800;letter-spacing:-0.025em;margin:0 0 16px;color:#1b2a1f;">Pick your lane on the range</h1>
-      <p style="font-size:18px;line-height:1.55;color:#46563f;max-width:40em;margin:0;">Every program starts with a safety briefing and ends with you a little better than you arrived. All equipment provided.</p>
+    <section style="position:relative;overflow:hidden;background:#244232;">
+      <img src="assets/range-targets-o.jpg" alt="" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.16;z-index:0;" />
+      <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(100deg, rgba(36,66,50,0.96) 0%, rgba(36,66,50,0.8) 55%, rgba(36,66,50,0.6) 100%);"></div>
+      <div style="position:relative;z-index:2;max-width:1320px;margin:0 auto;width:100%;padding:clamp(56px,8vw,104px) clamp(20px,5vw,64px) clamp(48px,6vw,80px);">
+        <div style="display:inline-flex;align-items:center;gap:11px;font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#9ed35f;margin-bottom:18px;"><span style="width:24px;height:2px;background:#7fb43f;display:inline-block;"></span>Programs</div>
+        <h1 style="font-size:clamp(36px,5.4vw,64px);font-weight:800;letter-spacing:-0.025em;line-height:1.0;margin:0 0 18px;color:#f4efe4;text-shadow:0 2px 26px rgba(0,0,0,0.22);">Pick your lane on the range</h1>
+        <p style="font-size:clamp(16px,1.9vw,19px);line-height:1.55;color:rgba(244,239,228,0.84);max-width:42em;margin:0;">Every program starts with a safety briefing and ends with you a little better than you arrived. All equipment provided.</p>
+      </div>
     </section>
 
     <section style="padding:clamp(20px,3vw,32px) clamp(20px,5vw,64px) clamp(48px,6vw,72px);max-width:1320px;margin:0 auto;width:100%;">
+      <style>
+        .prog-card2 { transition: transform .35s cubic-bezier(.16,1,.3,1), box-shadow .35s, border-color .35s; }
+        .prog-card2:hover { transform: translateY(-4px); box-shadow: 0 20px 44px rgba(36,66,50,.12); border-color: rgba(36,66,50,.24); }
+        .prog-card2 .pc2-icon { transition: transform .35s; }
+        .prog-card2:hover .pc2-icon { transform: scale(1.06); }
+        .prog-card2 .pc2-book { transition: gap .25s; }
+        @media (prefers-reduced-motion: reduce){ .prog-card2, .prog-card2 .pc2-icon { transition:none; } .prog-card2:hover{transform:none;} .prog-card2:hover .pc2-icon{transform:none;} }
+      </style>
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:22px;">
         <sc-for list="{{ programCards }}" as="pc" hint-placeholder-count="6">
-        <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.1);border-radius:10px;padding:28px;display:flex;gap:22px;align-items:flex-start;" style-hover="border-color:rgba(36,66,50,0.26);">
-          <div style="width:64px;height:64px;flex:none;border-radius:10px;background:#e7ecda;display:flex;align-items:center;justify-content:center;">
+        <div class="prog-card2" style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:16px;padding:28px;display:flex;gap:22px;align-items:flex-start;">
+          <div class="pc2-icon" style="width:64px;height:64px;flex:none;border-radius:14px;background:linear-gradient(135deg,#eaf0dc,#dbe7c6);border:1px solid rgba(36,66,50,0.08);display:flex;align-items:center;justify-content:center;">
             <sc-if value="{{ pc.iconArrow }}" hint-placeholder-val="{{ true }}"><svg width="30" height="30" viewBox="0 0 28 28" fill="none" stroke="#244232" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="22" x2="21" y2="7"></line><polyline points="15 7 21 7 21 13"></polyline><circle cx="6" cy="22" r="1.8" fill="#7fb43f" stroke="none"></circle></svg></sc-if>
             <sc-if value="{{ pc.iconYouth }}" hint-placeholder-val="{{ false }}"><svg width="30" height="30" viewBox="0 0 28 28" fill="none" stroke="#244232" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="10" r="2.6"></circle><circle cx="19" cy="10" r="2.6"></circle><circle cx="14" cy="18" r="2.6" fill="#7fb43f" stroke="none"></circle></svg></sc-if>
             <sc-if value="{{ pc.iconBow }}" hint-placeholder-val="{{ false }}"><svg width="30" height="30" viewBox="0 0 28 28" fill="none" stroke="#244232" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 4 Q9 14 19 24"></path><line x1="19" y1="4" x2="19" y2="24"></line><line x1="9" y1="14" x2="24" y2="14"></line><polyline points="21 11 24 14 21 17"></polyline></svg></sc-if>
@@ -596,10 +608,14 @@
   <!-- ============ PASSES & MEMBERSHIPS ============ -->
   <sc-if value="{{ isPlans }}" hint-placeholder-val="{{ false }}">
   <div data-screen-label="Passes">
-    <section style="padding:clamp(48px,6vw,80px) clamp(20px,5vw,64px) clamp(16px,3vw,28px);max-width:1320px;margin:0 auto;width:100%;">
-      <div style="font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#3c6b48;margin-bottom:14px;">Passes &amp; Memberships</div>
-      <h1 style="font-size:clamp(34px,5vw,60px);font-weight:800;letter-spacing:-0.025em;margin:0 0 16px;color:#1b2a1f;">Buy a pass once. Book sessions against it.</h1>
-      <p style="font-size:18px;line-height:1.55;color:#46563f;max-width:44em;margin:0;">A pass is how you pay: a single day pass, a multi-session pack, or a monthly membership. Reserve one here in under a minute (pay at the range), then schedule your sessions whenever you like from <span style="font-weight:700;color:#244232;">My Bookings</span>. No pass needed to try us. You can also just <button onClick="{{ goBook }}" style="background:none;border:none;padding:0;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:18px;font-weight:700;color:#244232;text-decoration:underline;text-underline-offset:3px;">book a single session</button>.</p>
+    <section style="position:relative;overflow:hidden;background:#244232;">
+      <img src="assets/coaching-o.jpg" alt="" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.16;z-index:0;" />
+      <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(100deg, rgba(36,66,50,0.96) 0%, rgba(36,66,50,0.8) 55%, rgba(36,66,50,0.6) 100%);"></div>
+      <div style="position:relative;z-index:2;max-width:1320px;margin:0 auto;width:100%;padding:clamp(56px,8vw,104px) clamp(20px,5vw,64px) clamp(40px,5vw,64px);">
+        <div style="display:inline-flex;align-items:center;gap:11px;font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#9ed35f;margin-bottom:18px;"><span style="width:24px;height:2px;background:#7fb43f;display:inline-block;"></span>Passes &amp; Memberships</div>
+        <h1 style="font-size:clamp(36px,5.4vw,64px);font-weight:800;letter-spacing:-0.025em;line-height:1.0;margin:0 0 18px;color:#f4efe4;text-shadow:0 2px 26px rgba(0,0,0,0.22);">Buy a pass once. Book sessions against it.</h1>
+        <p style="font-size:clamp(16px,1.9vw,19px);line-height:1.55;color:rgba(244,239,228,0.84);max-width:44em;margin:0;">A pass is how you pay: a single day pass, a multi-session pack, or a monthly membership. Reserve one here in under a minute (pay at the range), then schedule your sessions whenever you like from <span style="font-weight:700;color:#f4efe4;">My Bookings</span>. No pass needed to try us. You can also just <button onClick="{{ goBook }}" style="background:none;border:none;padding:0;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:clamp(16px,1.9vw,19px);font-weight:700;color:#9ed35f;text-decoration:underline;text-underline-offset:3px;">book a single session</button>.</p>
+      </div>
     </section>
 
     <!-- HOW IT WORKS -->
@@ -625,9 +641,14 @@
       <!-- PASS CHOICES -->
       <div>
         <h2 style="font-size:clamp(20px,2.4vw,26px);font-weight:800;letter-spacing:-0.02em;color:#1b2a1f;margin:0 0 18px;">Choose your pass</h2>
+        <style>
+          .pass-pick { transition: transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s, border-color .3s; }
+          .pass-pick:hover { transform: translateY(-3px); box-shadow: 0 16px 36px rgba(36,66,50,.14) !important; }
+          @media (prefers-reduced-motion: reduce){ .pass-pick{transition:none;} .pass-pick:hover{transform:none;} }
+        </style>
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;">
           <sc-for list="{{ planBuyChoices }}" as="pk" hint-placeholder-count="4">
-            <button onClick="{{ pk.pick }}" style="text-align:left;cursor:pointer;background:{{ pk.cardBg }};border:1.5px solid {{ pk.cardBorder }};box-shadow:{{ pk.cardShadow }};border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:7px;font-family:'Hanken Grotesk',sans-serif;position:relative;" style-hover="border-color:#244232;">
+            <button onClick="{{ pk.pick }}" class="pass-pick" style="text-align:left;cursor:pointer;background:{{ pk.cardBg }};border:1.5px solid {{ pk.cardBorder }};box-shadow:{{ pk.cardShadow }};border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:7px;font-family:'Hanken Grotesk',sans-serif;position:relative;" style-hover="border-color:#244232;">
               <sc-if value="{{ pk.popular }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-10px;right:16px;background:#7fb43f;color:#1b2a1f;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;font-weight:500;padding:4px 10px;border-radius:999px;">Most popular</span></sc-if>
               <div style="font-size:17px;font-weight:800;color:#1b2a1f;">{{ pk.name }}</div>
               <div style="display:flex;align-items:baseline;gap:4px;"><span style="font-size:28px;font-weight:800;color:#244232;letter-spacing:-0.02em;">{{ pk.price }}</span><span style="font-size:13px;color:#8a9579;">{{ pk.unit }}</span></div>
