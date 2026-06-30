@@ -3069,6 +3069,17 @@ class Component extends DCLogic {
     try { localStorage.setItem('pgac_coaches', JSON.stringify(list)); } catch (e) {}
     this.setState({ coachList: list });
   }
+  loadSiteImages() {
+    const ep = this.endpoint(); if (!ep) return;
+    fetch(ep + '?action=images').then(r => r.json()).then(res => {
+      if (res && typeof res === 'object') this.applySiteImages(res);
+    }).catch(() => {});
+  }
+  applySiteImages(res) {
+    const imgs = { hero: res.hero || '', about: res.about || '', programs: res.programs || {} };
+    try { localStorage.setItem('pgac_images', JSON.stringify(imgs)); } catch (e) {}
+    this.setState({ images: imgs });
+  }
   // Admin: add a coach (backend-stored, with a portal passcode). Logged to Activity.
   addCoach() {
     const name = (this.state.newCoachName || '').trim();
@@ -3177,12 +3188,14 @@ class Component extends DCLogic {
     this._onResize();
     window.addEventListener('resize', this._onResize);
     // Load admin-managed content + bookings from this browser
-    let content = null, bookings = [], coachList = null;
+    let content = null, bookings = [], coachList = null, images = { hero:'', about:'', programs:{} };
     try { const c = localStorage.getItem('pgac_content'); if (c) content = JSON.parse(c); } catch (e) {}
     try { const b = localStorage.getItem('pgac_bookings'); if (b) bookings = JSON.parse(b); } catch (e) {}
     try { const cl = localStorage.getItem('pgac_coaches'); if (cl) { const a = JSON.parse(cl); if (a && a.length) coachList = a; } } catch (e) {}
-    this.setState({ content, bookings, coachList, coachAvail: this.loadAllCoachAvail() });
+    try { const im = localStorage.getItem('pgac_images'); if (im) { const p = JSON.parse(im); if (p && typeof p === 'object') images = p; } } catch (e) {}
+    this.setState({ content, bookings, coachList, images, coachAvail: this.loadAllCoachAvail() });
     this.loadCoaches(); // refresh the roster from the backend (cross-device)
+    this.loadSiteImages();
     this.loadContentRemote();
   }
 
