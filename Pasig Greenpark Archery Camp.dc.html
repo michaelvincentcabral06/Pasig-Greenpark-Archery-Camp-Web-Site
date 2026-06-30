@@ -3021,13 +3021,14 @@ class Component extends DCLogic {
     c = c || {};
     return { hasPhoto: !!c.photo, photo: c.photo || '', initials: this.coachInitials(c.name) };
   }
-  resizeImageFile(file, cb) {
+  resizeImageFile(file, cb, opts) {
     if (!file || !/^image\//.test(file.type || '')) return;
+    opts = opts || {};
+    const W = opts.w || 400, H = opts.h || 500, maxLen = opts.maxLen || 46000, ar = W / H;
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const W = 400, H = 500, ar = W / H;   // 4:5 portrait — matches the About card frame, sharper than a small square
         let sw, sh;
         if (img.width / img.height > ar) { sh = img.height; sw = Math.round(sh * ar); }
         else { sw = img.width; sh = Math.round(sw / ar); }
@@ -3036,8 +3037,8 @@ class Component extends DCLogic {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
         let q = 0.82, url = canvas.toDataURL('image/jpeg', q);
-        while (url.length > 46000 && q > 0.4) { q -= 0.08; url = canvas.toDataURL('image/jpeg', q); }
-        cb(url);
+        while (url.length > maxLen && q > 0.3) { q -= 0.08; url = canvas.toDataURL('image/jpeg', q); }
+        cb(url, url.length <= maxLen);
       };
       img.src = e.target.result;
     };
