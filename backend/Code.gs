@@ -819,8 +819,10 @@ function notifyExpiredPasses_() {
   return sent;
 }
 
-// db-v36: true if a daily trigger pointing at notifyExpiredPasses is installed; null if the lookup
-// fails (scope/transient). Used by ?action=version so trigger health is checkable without the editor.
+// db-v36: true if a daily trigger pointing at notifyExpiredPasses is installed, false if not.
+// On failure returns the error string (not null) so ?action=version surfaces WHY the lookup failed
+// — e.g. a missing manage-triggers scope on the running web-app deployment. Used so trigger health
+// is checkable over HTTP without opening the editor.
 function expiryTriggerActive_() {
   try {
     var ts = ScriptApp.getProjectTriggers();
@@ -828,7 +830,7 @@ function expiryTriggerActive_() {
       if (ts[i].getHandlerFunction() === 'notifyExpiredPasses') return true;
     }
     return false;
-  } catch (e) { return null; }
+  } catch (e) { return 'err: ' + String(e).slice(0, 140); }
 }
 // PUBLIC wrapper (no trailing underscore) so this is selectable in the editor's Run dropdown AND the
 // Triggers function picker — Apps Script hides `_`-suffixed functions from both. Point the daily
