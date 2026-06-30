@@ -88,7 +88,7 @@
       @media (prefers-reduced-motion: reduce) { .hero-rise,.hero-rise2,.hero-rise3 { animation: none; } }
     </style>
     <section style="position:relative;width:100%;min-height:clamp(540px,82vh,760px);display:flex;align-items:flex-end;overflow:hidden;">
-      <img src="assets/arrows-target-o.jpg" alt="Arrows grouped in the gold on the Greenpark range" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0;" />
+      <img src="{{ heroImg }}" alt="Arrows grouped in the gold on the Greenpark range" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0;" />
       <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(108deg, rgba(18,36,27,0.93) 0%, rgba(18,36,27,0.78) 34%, rgba(18,36,27,0.4) 64%, rgba(18,36,27,0.18) 100%);"></div>
       <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(0deg, rgba(13,26,19,0.6) 0%, rgba(13,26,19,0.12) 42%, transparent 70%);"></div>
       <div style="position:relative;z-index:2;width:100%;max-width:1320px;margin:0 auto;padding:clamp(72px,9vw,120px) clamp(20px,5vw,64px) clamp(40px,5vw,68px);">
@@ -568,7 +568,7 @@
           <p style="font-size:clamp(16px,1.7vw,18px);line-height:1.65;color:rgba(244,239,228,0.86);margin:0;">We believe archery is the rare sport that slows you down. It rewards breath, posture, and patience over raw strength. Everyone leaves a little calmer than they came.</p>
         </div>
         <div style="aspect-ratio:1/1;border-radius:16px;overflow:hidden;border:1px solid rgba(158,211,95,0.35);box-shadow:0 24px 60px rgba(0,0,0,0.32);">
-          <img src="assets/coaching-o.jpg" alt="A coach setting up a young archer on the line at Greenpark" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;" />
+          <img src="{{ aboutImg }}" alt="A coach setting up a young archer on the line at Greenpark" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;" />
         </div>
       </div>
     </section>
@@ -4065,7 +4065,8 @@ class Component extends DCLogic {
       return {
         title: self.programCardTitle_(p.name), badge: self.programBadge_(p),
         homeDesc: p.homeDesc || p.blurb || '',
-        image: p.image || '', hasImage: !!(p.image && String(p.image).trim()),
+        image: (function () { var up = (self.state.images && self.state.images.programs && self.state.images.programs[p.name]) || ''; return up || p.image || ''; })(),
+        hasImage: !!(((self.state.images && self.state.images.programs && self.state.images.programs[p.name]) || p.image || '').toString().trim()),
         book: (function (nm) { return function () { self.bookProgram(nm); }; })(p.name)
       };
     });
@@ -6140,6 +6141,8 @@ class Component extends DCLogic {
 
     return {
       isHome: page === 'home', isPrograms: page === 'programs', isAbout: page === 'about', isContact: page === 'contact', isBook: page === 'book',
+      heroImg: (this.state.images && this.state.images.hero) || 'assets/arrows-target-o.jpg',
+      aboutImg: (this.state.images && this.state.images.about) || 'assets/coaching-o.jpg',
       goHome: () => this.go('home'), goPrograms: () => this.go('programs'), goAbout: () => this.go('about'), goContact: () => this.go('contact'), goBook: () => this.go('book'),
       bookProgram: (label) => this.go('book', label),
       bookLittle: () => this.go('book', 'Little Archers (6–10)'),
