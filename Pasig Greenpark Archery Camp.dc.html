@@ -1641,7 +1641,7 @@
         <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:16px;padding:clamp(22px,3vw,32px);margin-top:8px;">
           <div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#3c6b48;margin-bottom:8px;">Passes</div>
           <h2 style="font-size:clamp(20px,2.4vw,26px);font-weight:800;letter-spacing:-0.02em;color:#1b2a1f;margin:0 0 6px;">Your passes &amp; memberships</h2>
-          <p style="font-size:14px;line-height:1.6;color:#56664f;margin:0 0 20px;">Add a pass and we'll have it ready when you arrive — pay at the range. Sessions you book draw from it.</p>
+          <p style="font-size:14px;line-height:1.6;color:#56664f;margin:0 0 20px;">Add a pass and we'll have it ready when you arrive. Pay at the range. Sessions you book draw from it.</p>
 
           <sc-if value="{{ hasAcctPlans }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:22px;">
@@ -1739,9 +1739,9 @@
           </span>
           <h2 style="font-size:22px;font-weight:800;color:#1b2a1f;margin:0;">Staff sign-in</h2>
         </div>
-        <p style="font-size:14px;line-height:1.55;color:#56664f;margin:0 0 20px;">Enter your access code. <strong>Admins</strong> open the management console; <strong>coaches</strong> open their schedule portal — same sign-in.</p>
+        <p style="font-size:14px;line-height:1.55;color:#56664f;margin:0 0 20px;">Enter your access code. <strong>Admins</strong> open the management console; <strong>coaches</strong> open their schedule portal. Same sign-in.</p>
         <input value="{{ adminPass }}" onInput="{{ setAdminPass }}" onKeyDown="{{ onPassKey }}" type="password" placeholder="Access code" style="width:100%;background:#f4efe4;border:1px solid rgba(36,66,50,0.18);border-radius:8px;padding:13px 14px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:#1b2a1f;outline:none;" />
-        <sc-if value="{{ adminError }}" hint-placeholder-val="{{ false }}"><div style="font-size:13.5px;color:#b4512f;margin-top:10px;">Incorrect code — try again.</div></sc-if>
+        <sc-if value="{{ adminError }}" hint-placeholder-val="{{ false }}"><div style="font-size:13.5px;color:#b4512f;margin-top:10px;">Incorrect code. Try again.</div></sc-if>
         <button onClick="{{ tryLogin }}" style="width:100%;margin-top:16px;background:#244232;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;padding:14px;border-radius:999px;" style-hover="background:#1b3325;">Sign in</button>
         <button onClick="{{ goHome }}" style="width:100%;margin-top:8px;background:none;border:none;cursor:pointer;color:#8a9579;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;font-weight:600;padding:8px;">← Back to site</button>
       </div>
@@ -1905,7 +1905,7 @@
         <sc-if value="{{ tabBookings }}" hint-placeholder-val="{{ true }}">
         <div>
           <h3 style="font-size:16px;font-weight:800;color:#1b2a1f;margin:0 0 4px;">Activity log</h3>
-          <p style="font-size:13px;color:#56664f;margin:0 0 14px;">Every action on a plan or session — approved, cancelled, coach changed, scheduled — with its reference and time. All managing is done in the Bookings tab.</p>
+          <p style="font-size:13px;color:#56664f;margin:0 0 14px;">Every action on a plan or session (approved, cancelled, coach changed, scheduled) with its reference and time. All managing is done in the Bookings tab.</p>
           <!-- FILTERS -->
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
             <input type="text" value="{{ actSearch }}" onInput="{{ setActSearch }}" placeholder="Search reference, name, action…" style="flex:1;min-width:200px;padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;">
@@ -1957,7 +1957,7 @@
           <sc-if value="{{ bkViewSessions }}" hint-placeholder-val="{{ true }}">
           <div>
             <h3 style="font-size:16px;font-weight:800;color:#1b2a1f;margin:0 0 4px;">All booked sessions</h3>
-            <p style="font-size:13px;color:#56664f;margin:0 0 14px;">Every session booked across the business — single bookings and pass sessions. Assign a coach or cancel right here.</p>
+            <p style="font-size:13px;color:#56664f;margin:0 0 14px;">Every session booked across the business: single bookings and pass sessions. Assign a coach or cancel right here.</p>
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
               <input type="text" value="{{ sessSearch }}" onInput="{{ setSessSearch }}" placeholder="Search name, program, reference…" style="flex:1;min-width:200px;padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;">
               <select value="{{ sessStatus }}" onChange="{{ setSessStatus }}" style="padding:10px 14px;border:1px solid rgba(36,66,50,0.2);border-radius:10px;font-size:14px;font-family:'Hanken Grotesk',sans-serif;background:#fffdf6;"><sc-for list="{{ sessStatusOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o.id }}">{{ o.name }}</option></sc-for></select>
@@ -2080,7 +2080,7 @@
                   <sc-if value="{{ pr.editClosed }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#b4512f;margin-top:10px;">No open hours that day for this coach. Pick another date, or open hours in the Coach portal.</div></sc-if>
                   <sc-if value="{{ pr.hasEditTimes }}" hint-placeholder-val="{{ false }}">
                   <div style="margin-top:12px;">
-                    <label style="display:block;font-size:12.5px;font-weight:700;color:#244232;margin-bottom:7px;">Open times — tap to add</label>
+                    <label style="display:block;font-size:12.5px;font-weight:700;color:#244232;margin-bottom:7px;">Open times (tap to add)</label>
                     <div style="display:flex;flex-wrap:wrap;gap:8px;">
                       <sc-for list="{{ pr.editTimes }}" as="et" hint-placeholder-count="4">
                         <button onClick="{{ et.add }}" style="background:#fffdf6;border:1.5px solid rgba(36,66,50,0.18);border-radius:9px;padding:9px 14px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;font-weight:700;color:#244232;" style-hover="border-color:#7fb43f;background:#e7ecda;">+ {{ et.time }}</button>
@@ -2143,7 +2143,7 @@
         <!-- COACHES TAB -->
         <sc-if value="{{ tabCoaches }}" hint-placeholder-val="{{ false }}">
         <div>
-          <p style="font-size:14px;line-height:1.55;color:#56664f;margin:0 0 6px;">Your coaching team. <strong>Add, edit, or remove coaches</strong> below — each gets a portal passcode to set their own hours. Pick a coach to <strong>view and edit which hours they're available</strong>. Set each coach's payment split on the <strong>Dashboard</strong>.</p>
+          <p style="font-size:14px;line-height:1.55;color:#56664f;margin:0 0 6px;">Your coaching team. <strong>Add, edit, or remove coaches</strong> below. Each gets a portal passcode to set their own hours. Pick a coach to <strong>view and edit which hours they're available</strong>. Set each coach's payment split on the <strong>Dashboard</strong>.</p>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:18px 0 18px;">
             <sc-for list="{{ adminCoachCards }}" as="cc" hint-placeholder-count="3">
               <div style="background:{{ cc.bg }};border:1px solid rgba(36,66,50,0.12);border-radius:14px;padding:18px 20px;">
@@ -2196,7 +2196,7 @@
 
           <sc-if value="{{ adminCoachPicked }}" hint-placeholder-val="{{ true }}">
           <div>
-            <h3 style="font-size:17px;font-weight:800;color:#1b2a1f;margin:0 0 4px;">{{ adminCoachName }} — schedule</h3>
+            <h3 style="font-size:17px;font-weight:800;color:#1b2a1f;margin:0 0 4px;">{{ adminCoachName }}'s schedule</h3>
             <p style="font-size:13px;color:#56664f;margin:0 0 16px;">Tap a day, then tap the hours this coach can take. Changes save instantly and update what customers can book.</p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
               <!-- CALENDAR -->
@@ -2240,7 +2240,7 @@
                 <h2 style="font-size:19px;font-weight:800;color:#f4efe4;margin:0 0 3px;letter-spacing:-0.01em;">{{ coachEditPretty }}</h2>
                 <div style="font-size:13px;color:#9aa890;font-family:'Spline Sans Mono',monospace;margin-bottom:16px;">{{ coachEditSummary }}</div>
                 <sc-if value="{{ coachEditDayOff }}" hint-placeholder-val="{{ false }}">
-                  <div style="font-size:13px;line-height:1.5;color:#f0b48a;background:rgba(240,180,138,0.08);border:1px solid rgba(240,180,138,0.2);border-radius:10px;padding:11px 13px;margin-bottom:16px;">Marked off this day — tap any hour to open it.</div>
+                  <div style="font-size:13px;line-height:1.5;color:#f0b48a;background:rgba(240,180,138,0.08);border:1px solid rgba(240,180,138,0.2);border-radius:10px;padding:11px 13px;margin-bottom:16px;">Marked off this day. Tap any hour to open it.</div>
                 </sc-if>
                 <label style="display:block;font-size:12.5px;font-weight:600;color:#cdd6c5;margin-bottom:9px;">Hours this coach can take</label>
                 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
@@ -2265,7 +2265,7 @@
 
           <!-- DANGER ZONE: reset everything for fresh testing -->
           <div style="background:#fcefec;border:1px solid rgba(180,81,47,0.3);border-radius:14px;padding:18px 20px;margin-top:30px;">
-            <div style="font-size:14px;font-weight:800;color:#b4512f;margin-bottom:4px;">Danger zone — reset all bookings</div>
+            <div style="font-size:14px;font-weight:800;color:#b4512f;margin-bottom:4px;">Danger zone: reset all bookings</div>
             <p style="font-size:13px;line-height:1.5;color:#8a5a48;margin:0 0 12px;">Deletes every website booking and plan: removes the calendar events the site created, clears the Bookings, Cancellations, and Activity history, and removes all customer plans. <strong>Coaches and payment splits are kept.</strong> Use this to start testing from a clean slate. This cannot be undone.</p>
             <button onClick="{{ resetAllBookings }}" style="background:#b4512f;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;font-weight:700;padding:11px 20px;border-radius:999px;opacity:{{ resetOpacity }};">{{ resetLabel }}</button>
           </div>
@@ -2457,7 +2457,7 @@
             <label style="display:block;font-size:13px;font-weight:700;color:#1b2a1f;margin-bottom:8px;">Schedule note (shown above the tabs)</label>
             <textarea value="{{ scheduleNoteEdit }}" onInput="{{ setScheduleNote }}" rows="2" style="width:100%;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#56664f;outline:none;resize:vertical;"></textarea>
           </div>
-          <p style="font-size:13px;color:#8a9579;margin:0 0 16px;">Tip: the live Google Calendar is the official source for events — these rows are the "typical week" shown on Programs.</p>
+          <p style="font-size:13px;color:#8a9579;margin:0 0 16px;">Tip: the live Google Calendar is the official source for events. These rows are the "typical week" shown on Programs.</p>
           <div style="display:flex;flex-direction:column;gap:14px;">
             <sc-for list="{{ scheduleEdit }}" as="d" hint-placeholder-count="6">
               <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:18px 20px;">
@@ -2497,10 +2497,10 @@
       <div style="max-width:440px;margin:24px auto;background:#244232;border-radius:16px;padding:clamp(28px,4vw,40px);box-shadow:0 18px 50px rgba(27,42,31,0.18);">
         <div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#7fb43f;margin-bottom:10px;">Coach portal</div>
         <h1 style="font-size:clamp(23px,3vw,29px);font-weight:800;letter-spacing:-0.02em;color:#f4efe4;margin:0 0 8px;">Set your hours</h1>
-        <p style="font-size:14px;line-height:1.6;color:#cdd6c5;margin:0 0 22px;">Sign in with your personal coach code to choose which hours you're available — date by date. Customers only ever see times you've opened.</p>
+        <p style="font-size:14px;line-height:1.6;color:#cdd6c5;margin:0 0 22px;">Sign in with your personal coach code to choose which hours you're available, date by date. Customers only ever see times you've opened.</p>
         <label style="display:block;font-size:13px;font-weight:600;color:#cdd6c5;margin-bottom:7px;">Coach access code</label>
         <input value="{{ coachPass }}" onInput="{{ setCoachPass }}" onKeyDown="{{ onCoachPassKey }}" type="password" placeholder="Your code" style="width:100%;background:#1b3325;border:1px solid rgba(244,239,228,0.18);border-radius:8px;padding:13px 14px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:#f4efe4;outline:none;" />
-        <sc-if value="{{ coachLoginError }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:#f0b48a;margin-top:10px;">That code didn't match any coach — try again.</div></sc-if>
+        <sc-if value="{{ coachLoginError }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:#f0b48a;margin-top:10px;">That code didn't match any coach. Try again.</div></sc-if>
         <button onClick="{{ coachLogin }}" style="width:100%;margin-top:16px;background:#7fb43f;color:#1b2a1f;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;padding:14px;border-radius:999px;" style-hover="background:#93c75c;">Sign in</button>
         <button onClick="{{ goHome }}" style="width:100%;margin-top:8px;background:none;border:none;cursor:pointer;color:#9aa890;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:600;padding:6px;">← Back to site</button>
       </div>
@@ -2573,7 +2573,7 @@
             <div style="font-size:13px;color:#9aa890;font-family:'Spline Sans Mono',monospace;margin-bottom:16px;">{{ coachEditSummary }}</div>
 
             <sc-if value="{{ coachEditDayOff }}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:13px;line-height:1.5;color:#f0b48a;background:rgba(240,180,138,0.08);border:1px solid rgba(240,180,138,0.2);border-radius:10px;padding:11px 13px;margin-bottom:16px;">You're marked off this day — tap any hour to open it.</div>
+              <div style="font-size:13px;line-height:1.5;color:#f0b48a;background:rgba(240,180,138,0.08);border:1px solid rgba(240,180,138,0.2);border-radius:10px;padding:11px 13px;margin-bottom:16px;">You're marked off this day. Tap any hour to open it.</div>
             </sc-if>
 
             <label style="display:block;font-size:12.5px;font-weight:600;color:#cdd6c5;margin-bottom:9px;">Hours you can coach</label>
