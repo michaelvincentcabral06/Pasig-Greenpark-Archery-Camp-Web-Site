@@ -157,7 +157,7 @@
         <div style="text-align:center;margin-bottom:48px;">
           <div style="font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#3c6b48;margin-bottom:12px;">Passes &amp; memberships</div>
           <h2 style="font-size:clamp(28px,4vw,44px);font-weight:800;letter-spacing:-0.02em;margin:0;color:#1b2a1f;">Pick a pass, pay at the range</h2>
-          <p style="font-size:15.5px;line-height:1.55;color:#56664f;margin:14px auto 0;max-width:40em;">A pass is how you pay. Reserve one and book your sessions against it &mdash; or skip it and just book a single session.</p>
+          <p style="font-size:15.5px;line-height:1.55;color:#56664f;margin:14px auto 0;max-width:40em;">A pass is how you pay. Reserve one and book your sessions against it, or skip it and just book a single session.</p>
         </div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;align-items:stretch;">
           <sc-for list="{{ packages }}" as="pk" hint-placeholder-count="4">
@@ -3885,12 +3885,12 @@ class Component extends DCLogic {
   }
   defaultPrograms() {
     return [
-      { name: 'Little Archers (6–10)', price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: 6,  maxAge: 10,  addons: [], badge: 'Ages 6–10', duration: '45 min', icon: 'arrow', image: 'assets/arrows-target-o.jpg', showOnHome: true, homeDesc: 'Playful first steps with the bow: safety, stance, and the joy of hitting the target.', blurb: 'Playful first steps with the bow — safety, stance, and the thrill of a target struck. Built for short attention spans and big smiles.' },
+      { name: 'Little Archers (6–10)', price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: 6,  maxAge: 10,  addons: [], badge: 'Ages 6–10', duration: '45 min', icon: 'arrow', image: 'assets/arrows-target-o.jpg', showOnHome: true, homeDesc: 'Playful first steps with the bow: safety, stance, and the joy of hitting the target.', blurb: 'Playful first steps with the bow: safety, stance, and the thrill of a target struck. Built for short attention spans and big smiles.' },
       { name: 'Youth Squad (11–17)',   price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: 11, maxAge: 17,  addons: [], badge: 'Ages 11–17', duration: '60 min', icon: 'youth', image: '', showOnHome: false, homeDesc: '', blurb: 'Technique, focus, and a clear path toward competition for young archers ready to take it seriously.' },
       { name: 'Adult Beginners (18+)',      price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: 18, maxAge: null, addons: [], badge: 'Ages 18+', duration: '60 min', icon: 'bow', image: 'assets/coaching-o.jpg', showOnHome: true, homeDesc: 'From never-held-a-bow to confident on the range, in a relaxed, welcoming group.', blurb: 'From zero to confident on the range in a relaxed, welcoming group. The most popular way to start.' },
       { name: 'Open Range',                 price: 400, needsCoach: false, multiDay: true,  offerDiscounts: true,  groupDiscount: true, minAge: null, maxAge: null, addons: [], badge: 'All levels', duration: '90 min', icon: 'target', image: 'assets/range-targets-o.jpg', showOnHome: true, homeDesc: 'Drop-in lane time for archers who know the ropes and just want to shoot.', blurb: 'Drop-in practice for archers who know the ropes and want unhurried lane time and coaching on request.' },
       { name: 'Private Coaching',           price: 1200, needsCoach: true, multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: null, maxAge: null, addons: [], badge: 'All ages', duration: '60 min', icon: 'coach', image: '', showOnHome: false, homeDesc: '', blurb: 'One-on-one attention to break through plateaus, fix form, and chase a personal best.' },
-      { name: 'Group & Corporate',          price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: null, maxAge: null, addons: [], badge: 'Teams', duration: '120 min', icon: 'group', image: '', showOnHome: false, homeDesc: '', blurb: 'Team-building on the range — perfect for offices, birthdays, and barkadas. We handle everything.' }
+      { name: 'Group & Corporate',          price: 600, needsCoach: true,  multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: null, maxAge: null, addons: [], badge: 'Teams', duration: '120 min', icon: 'group', image: '', showOnHome: false, homeDesc: '', blurb: 'Team-building on the range, perfect for offices, birthdays, and barkadas. We handle everything.' }
     ];
   }
   normalizeAddons(list) {
@@ -4915,11 +4915,11 @@ class Component extends DCLogic {
     const values = [
       { icon: '🍃', title: 'Calm over force', body: 'Archery rewards breath and posture, not muscle. We teach the quiet discipline that makes the rest fall into place.' },
       { icon: '🛡️', title: 'Safety first, always', body: 'Every session opens with a briefing and certified supervision. Beginners are never left guessing.' },
-      { icon: '🌳', title: 'A welcoming range', body: 'Families, solo adults, kids, clubs — everyone shares the line. No egos, just better aim than last week.' },
+      { icon: '🌳', title: 'A welcoming range', body: 'Families, solo adults, kids, clubs. Everyone shares the line. No egos, just better aim than last week.' },
     ];
 
     const faqData = [
-      { q: 'Do I need my own equipment?', a: 'No. All bows, arrows, and safety gear are included in every session — just show up.' },
+      { q: 'Do I need my own equipment?', a: 'No. All bows, arrows, and safety gear are included in every session. Just show up.' },
       { q: 'What ages do you teach?', a: 'From 6 years old to adults. Little Archers starts at 6; adult classes are 18+, with youth programs in between.' },
       { q: 'Is it safe for first-timers?', a: 'Yes. Every session begins with a safety briefing and you are supervised by certified coaches the whole time.' },
       { q: 'What should I wear?', a: 'Closed shoes and fitted clothing. Avoid loose sleeves and hoodies with drawstrings that can catch the string.' },
