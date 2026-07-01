@@ -2417,7 +2417,7 @@
                 </div>
                 <div>
                   <div style="font-size:13px;font-weight:700;color:#1b2a1f;margin-bottom:8px;">About portrait photo</div>
-                  <img src="{{ aboutImgPreview }}" alt="About portrait preview" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;border:1px solid rgba(36,66,50,0.14);display:block;margin-bottom:10px;" />
+                  <img src="{{ aboutImgPreview }}" alt="About portrait preview" style="width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:8px;border:1px solid rgba(36,66,50,0.14);display:block;margin-bottom:10px;" />
                   <div style="display:flex;gap:8px;align-items:center;">
                     <label style="cursor:pointer;background:#244232;color:#f4efe4;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;">Upload<input type="file" accept="image/*" onChange="{{ onAboutFile }}" style="display:none;" /></label>
                     <button onClick="{{ resetAbout }}" style="background:none;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12.5px;font-weight:700;color:#244232;padding:8px 14px;border-radius:999px;">Reset</button>
@@ -3136,6 +3136,22 @@ class Component extends DCLogic {
     try { localStorage.setItem('pgac_images', JSON.stringify(imgs)); } catch (e) {}
     this.setState({ images: imgs });
   }
+  // Remove img:prog:<name> keys whose program no longer exists (renamed or deleted) so an orphaned
+  // upload stops counting against the storage budget and can't become unreachable dead weight.
+  // Admin-only (the reset writes need auth, and only admins create orphans); runs from the admin
+  // login flow. Guarded to only run once REAL content is loaded (not the seeded defaults), so a
+  // custom-named program's image is never mistaken for an orphan before content arrives.
+  pruneOrphanProgramImages() {
+    if (!this.state.authSecret) return;
+    const c = this.state.content;
+    if (!(c && c.programs)) return;
+    const imgsProg = (this.state.images && this.state.images.programs) || {};
+    const keys = Object.keys(imgsProg);
+    if (!keys.length) return;
+    const names = this.programList().map(function (p) { return p.name; });
+    const self = this;
+    keys.forEach(function (k) { if (names.indexOf(k) === -1) self.resetSiteImage('prog:' + k); });
+  }
   // Admin: add a coach (backend-stored, with a portal passcode). Logged to Activity.
   addCoach() {
     const name = (this.state.newCoachName || '').trim();
@@ -3334,6 +3350,7 @@ class Component extends DCLogic {
         if (res && res.ok && res.role === 'admin') {
           this.setState({ authed: true, authSecret: code, adminError: false, adminPass: '' });
           this.loadRemotePlans(); this.loadCancellations(); this.loadAllBookings(); this.loadActivity(); this.loadSettings(); this.loadCoaches();
+          this.pruneOrphanProgramImages();
         } else if (res && res.ok && res.role === 'coach') {
           this.setState({ adminPass: '', adminError: false, coachAuthed: true, coachId: res.id, authSecret: code,
             coachEditDate: this.todayStr(), coachCalMonth: this.todayStr().slice(0, 7), coachAvail: this.loadAllCoachAvail() });
@@ -4118,11 +4135,13 @@ class Component extends DCLogic {
   homeProgramRows() {
     var self = this;
     return this.programList().filter(function (p) { return !!p.showOnHome; }).map(function (p) {
+      var up = (self.state.images && self.state.images.programs && self.state.images.programs[p.name]) || '';
+      var img = up || p.image || '';
       return {
         title: self.programCardTitle_(p.name), badge: self.programBadge_(p),
         homeDesc: p.homeDesc || p.blurb || '',
-        image: (function () { var up = (self.state.images && self.state.images.programs && self.state.images.programs[p.name]) || ''; return up || p.image || ''; })(),
-        hasImage: !!(((self.state.images && self.state.images.programs && self.state.images.programs[p.name]) || p.image || '').toString().trim()),
+        image: img,
+        hasImage: !!(img && String(img).trim()),
         book: (function (nm) { return function () { self.bookProgram(nm); }; })(p.name)
       };
     });
@@ -5394,7 +5413,7 @@ class Component extends DCLogic {
     const setProgNum   = (i, key) => (e) => editProgram(i, { [key]: (e.target.value === '' ? null : (Number(e.target.value) || 0)) });
     const toggleProg   = (i, key) => () => { const src = (cm.programs || this.defaultPrograms()); editProgram(i, { [key]: !this.programByName((src[i] || {}).name)[key] }); };
     const toggleProgIcon = (i) => () => { const keys = this.programIconKeys(); const src = (cm.programs || this.defaultPrograms()); const cur = this.programByName((src[i] || {}).name).icon; editProgram(i, { icon: keys[(keys.indexOf(cur) + 1) % keys.length] }); };
-    const removeProgram = (i) => () => saveCM({ programs: (cm.programs || this.defaultPrograms()).filter((_, idx) => idx !== i) });
+    const removeProgram = (i) => () => { const src = (cm.programs || this.defaultPrograms()); const gone = src[i]; if (gone && gone.name) this.resetSiteImage('prog:' + gone.name); saveCM({ programs: src.filter((_, idx) => idx !== i) }); };
     const addProgram = () => saveCM({ programs: (cm.programs || this.defaultPrograms()).concat([{ name: 'New program', price: 600, needsCoach: true, multiDay: false, offerDiscounts: false, groupDiscount: true, minAge: null, maxAge: null, blurb: '' }]) });
     const progAddons = (pi) => ((cm.programs || this.defaultPrograms())[pi].addons || []);
     const writeAddons = (pi, addons) => editProgram(pi, { addons: addons });

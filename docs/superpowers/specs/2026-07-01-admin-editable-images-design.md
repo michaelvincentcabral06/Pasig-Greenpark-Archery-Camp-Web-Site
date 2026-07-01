@@ -65,7 +65,7 @@ browser**, send to the backend, store it. Decisions:
   `deleteProperty`). Runs the budget guard; on pass, `setProperty('img:'+slot, data)`; returns
   `{ ok:true }` or `{ ok:false, reason }`. Wired into `doPost`.
 - **Budget guard helper** `imgBudgetOk_(incomingLen, replacingKey)` — sums existing `img:*` value
-  lengths (excluding the key being replaced) + `incomingLen`; returns whether ≤ 430KB.
+  lengths (excluding the key being replaced) + `incomingLen`; returns whether ≤ 250KB (250000 bytes).
 - **Version bump** to `db-v37`, add `siteImages: true` to the `?action=version` flags.
 
 ## Frontend changes (`index.html`)

@@ -215,7 +215,7 @@ function getImages_() {
   return json_(out);
 }
 
-// Budget guard: keep the img: namespace under 250KB so the ~500KB Properties store can't overflow
+// Budget guard: keep the img: namespace under 250000 bytes (~244KB) so the ~500KB Properties store can't overflow
 // (coach photos + CONTENT + runtime keys share it). replaceKey is excluded (it's being overwritten).
 function imgBudgetOk_(incomingLen, replaceKey) {
   var all = PropertiesService.getScriptProperties().getProperties();
