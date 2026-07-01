@@ -565,3 +565,27 @@ namespace, capped at 250KB total. No new OAuth scope.
 ### Verify
 - [ ] `…/exec?action=version` → `"version":"db-v37"`, `"siteImages":true`.
 - [ ] `…/exec?action=images` → `{"hero":"","about":"","programs":{}}` before any upload.
+
+---
+
+## db-v38 deploy & verify
+
+**What changed:** site images moved from the ~500KB Script-Properties store to **Google Drive** so
+hero/About/program photos can be full quality. `setImage_` now writes the upload as a file in an
+auto-created "Greenpark Site Images" Drive folder (shared anyone-with-link), trashes the previous
+file for that slot, and records slot->fileId in the `SITE_IMAGES` property. `getImages_` returns
+Google serving URLs (`drive.google.com/thumbnail?id=...&sz=w1920` etc.). The 250KB budget guard is
+gone. Frontend caps raised to full quality.
+
+### Deploy steps
+1. Apps Script editor → paste `backend/Code.gs` → **Save**.
+2. **Deploy → Manage deployments → ✏️ edit → New version → Deploy.**
+3. Google **may prompt to re-authorize** (this version touches Drive to create the folder/files) —
+   approve it. It asks for Drive access on the same account. If it does NOT prompt, the first upload
+   still triggers the grant.
+
+### Verify
+- [ ] `…/exec?action=version` → `"version":"db-v38"`, `"driveImages":true`.
+- [ ] `…/exec?action=images` → `{"hero":"","about":"","programs":{}}` before any upload.
+- [ ] Upload a hero photo from the admin Photos panel → it appears on the home page, and a
+      "Greenpark Site Images" folder now exists in the owner's Drive. Reset reverts to the default.

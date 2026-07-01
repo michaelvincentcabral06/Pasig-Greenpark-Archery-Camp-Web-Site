@@ -200,46 +200,77 @@ function setContent_(body) {
   return json_({ ok: true });
 }
 
-// db-v37: per-slot uploaded site images (hero, About portrait, program cards), stored one per
-// Script Property under the img: namespace. Public read so the live site can fetch them.
+// db-v38: uploaded site images (hero, About portrait, program cards) are stored as files in a
+// dedicated Drive folder (full quality, no Properties size limit), with a small slot->fileId map in
+// the SITE_IMAGES property. Public read returns Google serving URLs so the live site can load them.
+
+// Get/create the Drive folder that holds the site images; its id is cached in a Script Property.
+function siteImgFolder_() {
+  var props = PropertiesService.getScriptProperties();
+  var id = props.getProperty('IMG_FOLDER_ID');
+  var folder = null;
+  if (id) { try { folder = DriveApp.getFolderById(id); } catch (e) { folder = null; } }
+  if (!folder) { folder = DriveApp.createFolder('Greenpark Site Images'); props.setProperty('IMG_FOLDER_ID', folder.getId()); }
+  return folder;
+}
+function siteImgMap_() {
+  var raw = PropertiesService.getScriptProperties().getProperty('SITE_IMAGES');
+  if (!raw) return {};
+  try { return JSON.parse(raw) || {}; } catch (e) { return {}; }
+}
+function setSiteImgMap_(m) {
+  PropertiesService.getScriptProperties().setProperty('SITE_IMAGES', JSON.stringify(m || {}));
+}
+// Public Google serving URL for a Drive image, sized to the slot (hero widest).
+function imgServeUrl_(fileId, slot) {
+  var sz = slot === 'hero' ? 'w1920' : (slot === 'about' ? 'w1000' : 'w900');
+  return 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=' + sz;
+}
+function trashImgFile_(fileId) {
+  try { DriveApp.getFileById(fileId).setTrashed(true); } catch (e) {}
+}
+
+// Public: current site images as serving URLs, shaped { hero, about, programs: { name: url } }.
 function getImages_() {
-  var all = PropertiesService.getScriptProperties().getProperties();
+  var map = siteImgMap_();
   var out = { hero: '', about: '', programs: {} };
-  for (var k in all) {
-    if (k.indexOf('img:') !== 0) continue;
-    var slot = k.slice(4);
-    if (slot === 'hero') out.hero = all[k];
-    else if (slot === 'about') out.about = all[k];
-    else if (slot.indexOf('prog:') === 0) out.programs[slot.slice(5)] = all[k];
+  for (var slot in map) {
+    var url = imgServeUrl_(map[slot], slot);
+    if (slot === 'hero') out.hero = url;
+    else if (slot === 'about') out.about = url;
+    else if (slot.indexOf('prog:') === 0) out.programs[slot.slice(5)] = url;
   }
   return json_(out);
 }
 
-// Budget guard: keep the img: namespace under 250000 bytes (~244KB) so the ~500KB Properties store can't overflow
-// (coach photos + CONTENT + runtime keys share it). replaceKey is excluded (it's being overwritten).
-function imgBudgetOk_(incomingLen, replaceKey) {
-  var all = PropertiesService.getScriptProperties().getProperties();
-  var total = incomingLen || 0;
-  for (var k in all) {
-    if (k.indexOf('img:') !== 0) continue;
-    if (k === replaceKey) continue;
-    total += String(all[k]).length;
-  }
-  return total <= 250000;
-}
-
-// Admin: store or clear one image slot. Empty/absent data clears the slot (reverts to default).
+// Admin: store or clear one image slot. Empty/absent data clears (trashes the file, reverts to
+// default). Otherwise the base64 upload is written to Drive, shared anyone-with-link, and the prior
+// file for that slot is trashed. Returns the serving URL on success.
 function setImage_(body) {
   var slot = String((body && body.slot) || '').trim();
   if (!/^(hero|about|prog:.+)$/.test(slot)) return json_({ ok: false, reason: 'bad-slot' });
-  var key = 'img:' + slot;
   var data = (body && body.data != null) ? String(body.data) : '';
-  var props = PropertiesService.getScriptProperties();
-  if (!data) { props.deleteProperty(key); return json_({ ok: true, cleared: true }); }
-  if (data.indexOf('data:image/') !== 0) return json_({ ok: false, reason: 'bad-data' });
-  if (!imgBudgetOk_(data.length, key)) return json_({ ok: false, reason: 'storage-full' });
-  props.setProperty(key, data);
-  return json_({ ok: true });
+  var map = siteImgMap_();
+  if (!data) {
+    if (map[slot]) { trashImgFile_(map[slot]); delete map[slot]; setSiteImgMap_(map); }
+    return json_({ ok: true, cleared: true });
+  }
+  var m = data.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+  if (!m) return json_({ ok: false, reason: 'bad-data' });
+  var mime = m[1], bytes;
+  try { bytes = Utilities.base64Decode(m[2]); } catch (e) { return json_({ ok: false, reason: 'bad-data' }); }
+  if (bytes.length > 6000000) return json_({ ok: false, reason: 'too-big' }); // ~6MB safety ceiling
+  var ext = mime.indexOf('png') >= 0 ? 'png' : (mime.indexOf('webp') >= 0 ? 'webp' : 'jpg');
+  var name = 'img_' + slot.replace(/[^a-zA-Z0-9]+/g, '_') + '_' + (new Date()).getTime() + '.' + ext;
+  var file;
+  try {
+    file = siteImgFolder_().createFile(Utilities.newBlob(bytes, mime, name));
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (e) { return json_({ ok: false, reason: 'drive-error', detail: String(e).slice(0, 120) }); }
+  if (map[slot]) trashImgFile_(map[slot]);
+  map[slot] = file.getId();
+  setSiteImgMap_(map);
+  return json_({ ok: true, url: imgServeUrl_(file.getId(), slot) });
 }
 
 // ---------- EMAIL GROUPS (db-v14) ----------
@@ -934,7 +965,7 @@ function doGet(e) {
         var _ler = PropertiesService.getScriptProperties().getProperty('lastExpiryRun');
         if (_ler) { var _o = JSON.parse(_ler); lastExpiryRun = _o.at || null; lastExpirySent = (_o.sent != null ? _o.sent : null); }
       } catch (e) {}
-      return json_({ version: 'db-v37', auth: true, triggerStatus: true, siteImages: true, expiryTrigger: expiryTriggerActive_(), lastExpiryRun: lastExpiryRun, lastExpirySent: lastExpirySent, expiryInstaller: true, expiryRunnable: true, clientPaid: true, addonRateTypes: true, passExpiryEmail: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true, multiCoach: true, acctBreakdown: true, perArcherEdit: true });
+      return json_({ version: 'db-v38', auth: true, driveImages: true, triggerStatus: true, siteImages: true, expiryTrigger: expiryTriggerActive_(), lastExpiryRun: lastExpiryRun, lastExpirySent: lastExpirySent, expiryInstaller: true, expiryRunnable: true, clientPaid: true, addonRateTypes: true, passExpiryEmail: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true, multiCoach: true, acctBreakdown: true, perArcherEdit: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {

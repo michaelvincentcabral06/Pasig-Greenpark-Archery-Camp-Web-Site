@@ -3086,14 +3086,15 @@ class Component extends DCLogic {
     this.adminPost({ action: 'setImage', slot: slot, data: data })
       .then(res => {
         if (res && res.ok) {
+          const url = res.url || data;
           const imgs = JSON.parse(JSON.stringify(this.state.images || { hero: '', about: '', programs: {} }));
-          if (slot === 'hero') imgs.hero = data;
-          else if (slot === 'about') imgs.about = data;
-          else if (slot.indexOf('prog:') === 0) { imgs.programs = imgs.programs || {}; imgs.programs[slot.slice(5)] = data; }
+          if (slot === 'hero') imgs.hero = url;
+          else if (slot === 'about') imgs.about = url;
+          else if (slot.indexOf('prog:') === 0) { imgs.programs = imgs.programs || {}; imgs.programs[slot.slice(5)] = url; }
           this.applySiteImages(imgs);
           this.setState({ imgBusy: false });
         } else {
-          this.setState({ imgBusy: false, imgMsg: (res && res.reason === 'storage-full') ? 'Storage almost full. Remove a photo or use a smaller one.' : 'Could not save the image.' });
+          this.setState({ imgBusy: false, imgMsg: (res && res.reason === 'too-big') ? 'That photo is too large. Try a smaller one.' : 'Could not save the image. Please try again.' });
         }
       })
       .catch(() => this.setState({ imgBusy: false, imgMsg: 'Could not save. Check the connection.' }));
@@ -5453,7 +5454,7 @@ class Component extends DCLogic {
       setMinAge: setProgNum(i, 'minAge'), setMaxAge: setProgNum(i, 'maxAge'), setBlurb: setProgField(i, 'blurb'),
       toggleCoach: toggleProg(i, 'needsCoach'), toggleDisc: toggleProg(i, 'offerDiscounts'), toggleGroup: toggleProg(i, 'groupDiscount'),
       remove: removeProgram(i),
-      onProgImageFile: (e) => { const f = e.target.files && e.target.files[0]; if (f) this.resizeImageFile(f, (url, ok) => { if (!ok) { this.setState({ imgMsg: "Could not compress that photo small enough. Try a simpler image." }); return; } this.saveSiteImage('prog:' + p.name, url); }, { w: 560, h: 420, maxLen: 24000 }); },
+      onProgImageFile: (e) => { const f = e.target.files && e.target.files[0]; if (f) this.resizeImageFile(f, (url, ok) => { if (!ok) { this.setState({ imgMsg: "Could not process that photo. Try a different image." }); return; } this.saveSiteImage('prog:' + p.name, url); }, { w: 900, h: 675, maxLen: 350000 }); },
       resetProgImage: () => this.resetSiteImage('prog:' + p.name),
       addAddon: addAddon(i),
       addonRows: this.normalizeAddons(p.addons).map((a, ai) => ({
@@ -6532,8 +6533,8 @@ class Component extends DCLogic {
       imgBusy: this.state.imgBusy, imgMsg: this.state.imgMsg || '',
       heroImgPreview: (this.state.images && this.state.images.hero) || 'assets/arrows-target-o.jpg',
       aboutImgPreview: (this.state.images && this.state.images.about) || 'assets/coaching-o.jpg',
-      onHeroFile: (e) => { const f = e.target.files && e.target.files[0]; if (f) this.resizeImageFile(f, (url, ok) => { if (!ok) { this.setState({ imgMsg: "Could not compress that photo small enough. Try a simpler image." }); return; } this.saveSiteImage('hero', url); }, { w: 1100, h: 620, maxLen: 48000 }); },
-      onAboutFile: (e) => { const f = e.target.files && e.target.files[0]; if (f) this.resizeImageFile(f, (url, ok) => { if (!ok) { this.setState({ imgMsg: "Could not compress that photo small enough. Try a simpler image." }); return; } this.saveSiteImage('about', url); }, { w: 560, h: 700, maxLen: 48000 }); },
+      onHeroFile: (e) => { const f = e.target.files && e.target.files[0]; if (f) this.resizeImageFile(f, (url, ok) => { if (!ok) { this.setState({ imgMsg: "Could not process that photo. Try a different image." }); return; } this.saveSiteImage('hero', url); }, { w: 1920, h: 1080, maxLen: 900000 }); },
+      onAboutFile: (e) => { const f = e.target.files && e.target.files[0]; if (f) this.resizeImageFile(f, (url, ok) => { if (!ok) { this.setState({ imgMsg: "Could not process that photo. Try a different image." }); return; } this.saveSiteImage('about', url); }, { w: 1000, h: 1250, maxLen: 500000 }); },
       resetHero: () => this.resetSiteImage('hero'),
       resetAbout: () => this.resetSiteImage('about'),
       funShootEdit: cm.funShoot,
