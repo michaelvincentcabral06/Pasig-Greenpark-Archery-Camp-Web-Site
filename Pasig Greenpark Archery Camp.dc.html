@@ -1830,7 +1830,7 @@
         <p style="font-size:14px;line-height:1.55;color:#56664f;margin:0 0 20px;">Enter your access code. <strong>Admins</strong> open the management console; <strong>coaches</strong> open their schedule portal. Same sign-in.</p>
         <input value="{{ adminPass }}" onInput="{{ setAdminPass }}" onKeyDown="{{ onPassKey }}" type="password" placeholder="Access code" style="width:100%;background:#f4efe4;border:1px solid rgba(36,66,50,0.18);border-radius:8px;padding:13px 14px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:#1b2a1f;outline:none;" />
         <sc-if value="{{ adminError }}" hint-placeholder-val="{{ false }}"><div style="font-size:13.5px;color:#b4512f;margin-top:10px;">Incorrect code. Try again.</div></sc-if>
-        <button onClick="{{ tryLogin }}" style="width:100%;margin-top:16px;background:#244232;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;padding:14px;border-radius:999px;" style-hover="background:#1b3325;">Sign in</button>
+        <button onClick="{{ tryLogin }}" style="width:100%;margin-top:16px;background:#244232;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;padding:14px;border-radius:999px;opacity:{{ adminSignInOpacity }};" style-hover="background:#1b3325;"><sc-if value="{{ adminLoading }}" hint-placeholder-val="{{ false }}">Signing in…</sc-if><sc-if value="{{ adminNotLoading }}" hint-placeholder-val="{{ true }}">Sign in</sc-if></button>
         <button onClick="{{ goHome }}" style="width:100%;margin-top:8px;background:none;border:none;cursor:pointer;color:#8a9579;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;font-weight:600;padding:8px;">← Back to site</button>
       </div>
       </sc-if>
@@ -2846,6 +2846,7 @@ class Component extends DCLogic {
     calSel: '', calViewMonth: '', calDayAvail: [], calAvailLoading: false,
     sessSearch: '', sessStatus: 'all', sessCoach: 'all', sessRange: 'all', sessPage: 0,
     acctReschedIdx: null,
+    adminLoading: false,
     acctLoading: false,
     acctError: '',
     acctName: '',
@@ -3341,25 +3342,27 @@ class Component extends DCLogic {
   // One staff sign-in: the admin code opens the admin console; a coach's personal
   // code opens that coach's portal. (Coaches can also sign in from the Coach portal link.)
   tryLogin() {
+    if (this.state.adminLoading) return;
     var code = (this.state.adminPass || '').trim();
     var ep = this.endpoint();
     if (!ep || !code) { this.setState({ adminError: true }); return; }
+    this.setState({ adminLoading: true, adminError: false });
     fetch(ep, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'staffLogin', code: code }) })
       .then(function (r) { return r.json(); })
       .then(function (res) {
         if (res && res.ok && res.role === 'admin') {
-          this.setState({ authed: true, authSecret: code, adminError: false, adminPass: '' });
+          this.setState({ authed: true, authSecret: code, adminError: false, adminPass: '', adminLoading: false });
           this.loadRemotePlans(); this.loadCancellations(); this.loadAllBookings(); this.loadActivity(); this.loadSettings(); this.loadCoaches();
           this.pruneOrphanProgramImages();
         } else if (res && res.ok && res.role === 'coach') {
-          this.setState({ adminPass: '', adminError: false, coachAuthed: true, coachId: res.id, authSecret: code,
+          this.setState({ adminPass: '', adminError: false, adminLoading: false, coachAuthed: true, coachId: res.id, authSecret: code,
             coachEditDate: this.todayStr(), coachCalMonth: this.todayStr().slice(0, 7), coachAvail: this.loadAllCoachAvail() });
           this.loadCoachAvailRemote(res.id);
           this.go('coach');
         } else {
-          this.setState({ adminError: true });
+          this.setState({ adminError: true, adminLoading: false });
         }
-      }.bind(this)).catch(function () { this.setState({ adminError: true }); }.bind(this));
+      }.bind(this)).catch(function () { this.setState({ adminError: true, adminLoading: false }); }.bind(this));
   }
 
   // ---------- COACH SELECTION (booking form) ----------
@@ -6358,6 +6361,7 @@ class Component extends DCLogic {
       setMergeEmail: (e) => this.setState({ mergeEmail: e.target.value, mergeMsg: '' }),
       setMergeRef: (e) => this.setState({ mergeRef: e.target.value, mergeMsg: '' }),
       addEmailAlias: () => this.addAcctEmail(),
+      adminLoading: this.state.adminLoading, adminNotLoading: !this.state.adminLoading, adminSignInOpacity: this.state.adminLoading ? '0.65' : '1',
       acctIn: this.state.acctIn, acctNotIn: !this.state.acctIn, acctLoading: this.state.acctLoading, acctNotLoading: !this.state.acctLoading,
       acctError: this.state.acctError, hasAcctError: !!this.state.acctError,
       acctName: this.state.acctName, acctFirst: (this.state.acctName || '').trim().split(' ')[0],
