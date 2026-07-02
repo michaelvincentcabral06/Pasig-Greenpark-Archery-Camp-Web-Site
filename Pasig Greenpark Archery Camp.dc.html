@@ -3236,8 +3236,7 @@ class Component extends DCLogic {
     const all = this.state.coachAvail || {};
     const cm = all[coachId] || {};
     if (Object.prototype.hasOwnProperty.call(cm, dateStr)) return (cm[dateStr] || []).slice();
-    const dow = new Date(dateStr + 'T00:00:00').getDay();
-    return this.startHours(dow);
+    return this.startHoursForDate(dateStr);
   }
   coachHasOverride(coachId, dateStr) {
     const cm = (this.state.coachAvail || {})[coachId] || {};
@@ -3323,6 +3322,7 @@ class Component extends DCLogic {
       reviewsCount: c.reviewsCount != null ? c.reviewsCount : defaults.reviewsCount,
       reviewsUrl: c.reviewsUrl != null ? c.reviewsUrl : defaults.reviewsUrl,
       testimonials: c.testimonials || defaults.testimonials,
+      dayOverrides: c.dayOverrides || {},
     };
   }
   componentWillUnmount() { if (this._onResize) window.removeEventListener('resize', this._onResize); }
@@ -3430,7 +3430,7 @@ class Component extends DCLogic {
   }
   coachSetStandard(ds) {
     const dow = new Date(ds + 'T00:00:00').getDay();
-    this.setCoachOverride(ds, this.startHours(dow));
+    this.setCoachOverride(ds, this.startHoursForDate(ds));
   }
   coachSetDayOff(ds) { this.setCoachOverride(ds, []); }
   // Best-effort live sync to the backend (no-op without an endpoint).
@@ -3510,6 +3510,13 @@ class Component extends DCLogic {
     if (dow === 6) return [9,10,11,12,13,14,15,16,17]; // Sat 9–6
     return [16,17,18,19];                     // Tue–Fri 4–8pm
   }
+  dayOverrides() { const c = this.state.content || {}; return c.dayOverrides || {}; }
+  // Date-aware opening hours: the admin's per-date override if set, else the weekday template.
+  startHoursForDate(dateStr) {
+    const ov = this.dayOverrides();
+    if (ov && Object.prototype.hasOwnProperty.call(ov, dateStr)) return (ov[dateStr] || []).slice();
+    return this.startHours(new Date(dateStr + 'T00:00:00').getDay());
+  }
   fmtHour(h) {
     const ap = h >= 12 ? 'PM' : 'AM';
     let hh = h % 12; if (hh === 0) hh = 12;
@@ -3573,7 +3580,7 @@ class Component extends DCLogic {
     const dow = d.getDay();
     const cap = this.capacity();
     const localBooked = (this.state.bookings || []).filter(b => b.date === dateStr && b.time);
-    return this.startHours(dow).map(h => {
+    return this.startHoursForDate(dateStr).map(h => {
       const label = this.fmtHour(h);
       let booked = this.sampleBooked(dateStr, h);
       booked += localBooked.filter(b => b.time === label).reduce((sum, b) => sum + (b.party || 1), 0); // reflect this-device bookings (seats)
@@ -5211,7 +5218,7 @@ class Component extends DCLogic {
       };
     });
     const someSlotsBlocked = party > 1 && (st.slots || []).some(s => s.full || s.left < party) && (st.slots || []).some(s => !s.full && s.left >= party);
-    const slotDayHasHours = !!st.slotDate && this.startHours(new Date(st.slotDate + 'T00:00:00').getDay()).length > 0;
+    const slotDayHasHours = !!st.slotDate && this.startHoursForDate(st.slotDate).length > 0;
     const dayClosedForBooking = !!st.slotDate && !st.slotsLoading && (st.slots || []).length === 0 && !slotDayHasHours;
     const noMoreToday = !!st.slotDate && !st.slotsLoading && (st.slots || []).length === 0 && slotDayHasHours;
 
@@ -5310,8 +5317,7 @@ class Component extends DCLogic {
     for (let i = 0; i < firstDow; i++) calCells.push({ blank: true, notBlank: false, key: 'b' + i });
     for (let d = 1; d <= daysInMonth; d++) {
       const ds = calYear + '-' + String(calMon + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-      const dow = new Date(calYear, calMon, d).getDay();
-      const closed = this.startHours(dow).length === 0;
+      const closed = this.startHoursForDate(ds).length === 0;
       const disabled = ds < todayStr || closed;
       const selected = selDates.indexOf(ds) !== -1;
       calCells.push({
@@ -5334,8 +5340,7 @@ class Component extends DCLogic {
       const slots = (st.multiSlots || {})[d] || [];
       const loading = !!(st.multiLoading || {})[d];
       const times = multiTimesState[d] || [];
-      const dow = new Date(d + 'T00:00:00').getDay();
-      const closed = this.startHours(dow).length === 0;
+      const closed = this.startHoursForDate(d).length === 0;
       const sv = slots.map(s => {
         const selected = times.indexOf(s.time) !== -1;
         const fits = !s.full && s.left >= party;
@@ -5687,7 +5692,7 @@ class Component extends DCLogic {
       .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
       .map(b => { const c = b.coach ? this.coachById(b.coach) : null; const si = sessStatusInfo(b.status); return { time: b.time || '', name: b.name || 'Guest', program: b.program || '', coachName: c ? c.name : 'Any coach', statusLabel: si.label, statusBg: si.bg, statusFg: si.fg }; });
     // ----- Public calendar cells + day detail -----
-    const calPubCells = calGrid.map(c => { if (c.blank) return c; const dow = new Date(c.date + 'T00:00:00').getDay(); const isOpen = this.startHours(dow).length > 0; const past = c.date < calTodayStr; return { ...c, open: isOpen && !past, closed: !isOpen, past: past, pick: () => this.pickCalDayPublic(c.date), cellBg: c.selected ? '#e6efd6' : '#fffdf6', cellBorder: c.isToday ? '#7fb43f' : 'rgba(36,66,50,0.12)', cellOpacity: past ? '0.45' : '1', cellCursor: past ? 'default' : 'pointer' }; });
+    const calPubCells = calGrid.map(c => { if (c.blank) return c; const isOpen = this.startHoursForDate(c.date).length > 0; const past = c.date < calTodayStr; return { ...c, open: isOpen && !past, closed: !isOpen, past: past, pick: () => this.pickCalDayPublic(c.date), cellBg: c.selected ? '#e6efd6' : '#fffdf6', cellBorder: c.isToday ? '#7fb43f' : 'rgba(36,66,50,0.12)', cellOpacity: past ? '0.45' : '1', cellCursor: past ? 'default' : 'pointer' }; });
     const calPubDay = ((this.state.calDayAvail) || []).map(s => {
       const left = (s.left != null) ? s.left : (s.full ? 0 : this.capacity());
       const st = (s.full || left <= 0) ? { label: 'Full', bg: '#f3e2e0', fg: '#b4512f' }
@@ -5714,7 +5719,7 @@ class Component extends DCLogic {
       let editClosed = false;
       if (isEditing && planEditDate && !atLimit) {
         const dow = new Date(planEditDate + 'T00:00:00').getDay();
-        const baseHours = p.coach ? this.coachHoursFor(p.coach, planEditDate) : this.startHours(dow);
+        const baseHours = p.coach ? this.coachHoursFor(p.coach, planEditDate) : this.startHoursForDate(planEditDate);
         const taken = (p.sessions || []).filter(s => s.date === planEditDate).map(s => s.time);
         editTimes = baseHours.map(h => this.fmtHour(h)).filter(t => taken.indexOf(t) === -1)
           .map(t => ({ time: t, add: () => this.addPlanSession(p.email, p.ts, planEditDate, t, cap) }));
