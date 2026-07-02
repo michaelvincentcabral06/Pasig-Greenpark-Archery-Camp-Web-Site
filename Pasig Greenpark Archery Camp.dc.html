@@ -2571,6 +2571,26 @@
             <label style="display:block;font-size:13px;font-weight:700;color:#1b2a1f;margin-bottom:8px;">Schedule note (shown above the tabs)</label>
             <textarea value="{{ scheduleNoteEdit }}" onInput="{{ setScheduleNote }}" rows="2" style="width:100%;background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:10px 12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#56664f;outline:none;resize:vertical;"></textarea>
           </div>
+          <div style="background:#fffdf6;border:1px solid rgba(36,66,50,0.12);border-radius:12px;padding:20px;margin-bottom:16px;">
+            <label style="display:block;font-size:13px;font-weight:700;color:#1b2a1f;margin-bottom:4px;">Special dates (open or close a specific date)</label>
+            <p style="font-size:13px;line-height:1.5;color:#56664f;margin:0 0 14px;">Open a normally-closed date (like a Monday), or close a normally-open one (a holiday). Pick a date, tap the hours it's open, then Save open date. To shut a date, pick it and tap Mark closed. These override the typical week only for that date.</p>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;">
+              <input type="date" value="{{ dayOvDate }}" onInput="{{ setDayOvDate }}" style="background:#f4efe4;border:1px solid rgba(36,66,50,0.16);border-radius:8px;padding:9px 11px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:#1b2a1f;outline:none;" />
+              <button onClick="{{ saveDayOpen }}" style="background:#244232;color:#f4efe4;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;">Save open date</button>
+              <button onClick="{{ markDayClosed }}" style="background:none;border:1px solid rgba(36,66,50,0.2);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12.5px;font-weight:700;color:#244232;padding:8px 14px;border-radius:999px;">Mark closed</button>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:6px;">
+              <sc-for list="{{ dayOvChips }}" as="ch" hint-placeholder-count="11">
+                <button onClick="{{ ch.toggle }}" style="cursor:pointer;border:1px solid rgba(36,66,50,0.18);border-radius:999px;padding:6px 12px;font-family:'Spline Sans Mono',monospace;font-size:12px;background:{{ ch.chipBg }};color:{{ ch.chipFg }};">{{ ch.label }}</button>
+              </sc-for>
+            </div>
+            <sc-for list="{{ dayOverrideRows }}" as="r" hint-placeholder-count="0">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px dashed rgba(36,66,50,0.14);padding:9px 0;">
+                <div style="font-size:13.5px;color:#1b2a1f;"><span style="font-family:'Spline Sans Mono',monospace;">{{ r.date }}</span> &nbsp; <span style="color:#56664f;">{{ r.summary }}</span></div>
+                <button onClick="{{ r.remove }}" style="background:none;border:1px solid rgba(180,81,47,0.3);cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;color:#b4512f;padding:6px 12px;border-radius:999px;">Remove</button>
+              </div>
+            </sc-for>
+          </div>
           <p style="font-size:13px;color:#8a9579;margin:0 0 16px;">Tip: the live Google Calendar is the official source for events. These rows are the "typical week" shown on Programs.</p>
           <div style="display:flex;flex-direction:column;gap:14px;">
             <sc-for list="{{ scheduleEdit }}" as="d" hint-placeholder-count="6">
@@ -2808,6 +2828,8 @@ class Component extends DCLogic {
     perBookingAddonQty: {},
     slots: [],
     slotsLoading: false,
+    dayOvDate: '',
+    dayOvHours: [],
     bookingStatus: '',
     bookingAlts: [],
     bookingResult: null,
@@ -5409,6 +5431,8 @@ class Component extends DCLogic {
 
     // ---------- ADMIN ----------
     const saveCM = (patch) => this.persistContent({ ...cm, ...patch });
+    const setDayOverride = (date, hours) => saveCM({ dayOverrides: { ...(cm.dayOverrides || {}), [date]: hours } });
+    const removeDayOverride = (date) => { const o = { ...(cm.dayOverrides || {}) }; delete o[date]; saveCM({ dayOverrides: o }); };
     const updatePackage = (i, key) => (e) => { const v = e.target.value; const ps = cm.packages.map((p, idx) => idx === i ? { ...p, [key]: v } : p); saveCM({ packages: ps }); };
     const setPkgNum = (i, key) => (e) => { const v = Math.max(1, parseInt(e.target.value, 10) || 1); const ps = cm.packages.map((p, idx) => idx === i ? { ...p, [key]: v } : p); saveCM({ packages: ps }); };
     const setPkgFeeNum = (i, key) => (e) => { const v = (e.target.value === '' ? 0 : (Number(e.target.value) || 0)); const ps = cm.packages.map((p, idx) => idx === i ? { ...p, [key]: v } : p); saveCM({ packages: ps }); };
@@ -6557,6 +6581,20 @@ class Component extends DCLogic {
       setCapacity: (e) => saveCM({ capacity: Number(e.target.value) || 6 }),
       scheduleNoteEdit: cm.scheduleNote,
       setScheduleNote: (e) => saveCM({ scheduleNote: e.target.value }),
+      dayOvDate: this.state.dayOvDate || '',
+      setDayOvDate: (e) => this.setState({ dayOvDate: e.target.value }),
+      dayOvChips: [9,10,11,12,13,14,15,16,17,18,19].map(h => {
+        const on = (this.state.dayOvHours || []).indexOf(h) !== -1;
+        return { label: this.fmtHour(h), on: on, chipBg: on ? '#244232' : '#f4efe4', chipFg: on ? '#f4efe4' : '#244232',
+          toggle: () => this.setState(s => { const cur = (s.dayOvHours || []).slice(); const i = cur.indexOf(h); if (i === -1) cur.push(h); else cur.splice(i, 1); cur.sort((a, b) => a - b); return { dayOvHours: cur }; }) };
+      }),
+      saveDayOpen: () => { const d = (this.state.dayOvDate || '').trim(); const hrs = (this.state.dayOvHours || []).slice(); if (d && hrs.length) { setDayOverride(d, hrs); this.setState({ dayOvDate: '', dayOvHours: [] }); } },
+      markDayClosed: () => { const d = (this.state.dayOvDate || '').trim(); if (d) { setDayOverride(d, []); this.setState({ dayOvDate: '', dayOvHours: [] }); } },
+      dayOverrideRows: Object.keys(cm.dayOverrides || {}).sort().map(date => {
+        const hrs = (cm.dayOverrides[date] || []).slice().sort((a, b) => a - b);
+        const summary = hrs.length ? (this.fmtHour(hrs[0]) + ' – ' + this.fmtHour(hrs[hrs.length - 1] + 1)) : 'Closed';
+        return { date: date, summary: summary, remove: () => removeDayOverride(date) };
+      }),
       resetContent: () => { if (typeof confirm === 'undefined' || confirm('Reset all content edits to defaults?')) { try { localStorage.removeItem('pgac_content'); } catch (e) {} this.setState({ content: null }); } },
     };
   }
