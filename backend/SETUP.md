@@ -580,9 +580,12 @@ gone. Frontend caps raised to full quality.
 ### Deploy steps
 1. Apps Script editor → paste `backend/Code.gs` → **Save**.
 2. **Deploy → Manage deployments → ✏️ edit → New version → Deploy.**
-3. Google **may prompt to re-authorize** (this version touches Drive to create the folder/files) —
-   approve it. It asks for Drive access on the same account. If it does NOT prompt, the first upload
-   still triggers the grant.
+3. **Grant Drive access (required):** editing an existing deployment with "New version" does NOT
+   re-prompt for the new Drive scope, so the web app can't write to Drive yet. In the editor, open
+   the function dropdown → **`authorizeDrive`** → **▷ Run**, and **approve** the Drive permission
+   prompt. The execution log prints the new "Greenpark Site Images" folder URL. (Same pattern as
+   `installExpiryTrigger`/`authorizeAndTestEmail`.) The grant is account-wide, so the already-live
+   db-v38 web app can write uploads immediately after — no extra redeploy needed.
 
 ### Verify
 - [ ] `…/exec?action=version` → `"version":"db-v38"`, `"driveImages":true`.

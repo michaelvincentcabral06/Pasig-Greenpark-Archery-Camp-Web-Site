@@ -273,6 +273,17 @@ function setImage_(body) {
   return json_({ ok: true, url: imgServeUrl_(file.getId(), slot) });
 }
 
+// Run ONCE from the editor (select authorizeDrive -> Run) to grant the Drive permission this version
+// needs. Editing an existing web-app deployment with "New version" does NOT re-prompt for a newly
+// added scope, so the deployment can't call DriveApp until a manual editor run triggers the consent.
+// This creates the "Greenpark Site Images" folder and, once you approve the prompt, the deployed web
+// app (execute as you) can write uploads to Drive. Safe to re-run; it reuses the existing folder.
+function authorizeDrive() {
+  var f = siteImgFolder_();
+  Logger.log('Drive authorized. Site images folder: ' + f.getUrl());
+  return f.getUrl();
+}
+
 // ---------- EMAIL GROUPS (db-v14) ----------
 function aliasKey_(email){ return 'aliases:' + (email || '').trim().toLowerCase(); }
 function groupFor_(email){
