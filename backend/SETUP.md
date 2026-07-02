@@ -592,3 +592,19 @@ gone. Frontend caps raised to full quality.
 - [ ] `…/exec?action=images` → `{"hero":"","about":"","programs":{}}` before any upload.
 - [ ] Upload a hero photo from the admin Photos panel → it appears on the home page, and a
       "Greenpark Site Images" folder now exists in the owner's Drive. Reset reverts to the default.
+
+---
+
+## db-v39 deploy & verify
+
+**What changed:** per-date opening-hour overrides (special dates). New `dayOverrides_()` +
+`effectiveTemplate_()` read `content.dayOverrides` and feed the range + coach-fallback hour paths,
+so `buildSlots_` serves an opened/closed date. No new endpoint or scope (reads the CONTENT property).
+
+### Deploy steps
+1. Apps Script editor → paste `backend/Code.gs` → **Save**.
+2. **Deploy → Manage deployments → ✏️ edit → New version → Deploy.**
+
+### Verify
+- [ ] `…/exec?action=version` → `"version":"db-v39"`, `"dayOverrides":true`.
+- [ ] After the admin adds an open override for a future Monday, `…/exec?action=availability&date=<thatMonday>` returns the set hours (empty before).

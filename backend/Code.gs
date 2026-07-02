@@ -440,10 +440,32 @@ function coachById_(id) {
   for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
   return null;
 }
+// db-v39: per-date opening-hour overrides. content.dayOverrides = { "YYYY-MM-DD": [startHours] };
+// [] = closed that date, key absent = the weekday template. Lets the admin open a normally-closed
+// date or close/adjust an open one. Read from the CONTENT property (synced with the website).
+function dayOverrides_() {
+  try {
+    var raw = PropertiesService.getScriptProperties().getProperty('CONTENT');
+    if (raw) { var c = JSON.parse(raw); return (c && c.dayOverrides) || {}; }
+  } catch (e) {}
+  return {};
+}
+function effectiveTemplate_(dateStr, dow) {
+  var ov = dayOverrides_();
+  if (ov && Object.prototype.hasOwnProperty.call(ov, dateStr)) {
+    var arr = ov[dateStr] || [], out = [];
+    for (var i = 0; i < arr.length; i++) {
+      var h = parseInt(arr[i], 10);
+      if (!isNaN(h) && h >= 0 && h < 24 && out.indexOf(h) < 0) out.push(h);
+    }
+    return out.sort(function (a, b) { return a - b; });
+  }
+  return OPEN_HOURS[dow] || [];
+}
 function coachHoursFor_(coachId, dateStr, dow) {
   var raw = PropertiesService.getScriptProperties().getProperty(coachKey_(coachId, dateStr));
   if (raw != null) { try { return JSON.parse(raw) || []; } catch (e) { return []; } }
-  return OPEN_HOURS[dow] || [];
+  return effectiveTemplate_(dateStr, dow);
 }
 // Hours to show for an availability request:
 //   • a known coach id → that coach's hours for the date
@@ -458,7 +480,7 @@ function hoursForRequest_(dateStr, dow, coachId) {
     });
     return Object.keys(set).map(function (h) { return parseInt(h, 10); }).sort(function (a, b) { return a - b; });
   }
-  return OPEN_HOURS[dow] || [];
+  return effectiveTemplate_(dateStr, dow);
 }
 
 function buildSlots_(dateStr, coachId) {
@@ -978,7 +1000,7 @@ function doGet(e) {
         var _ler = PropertiesService.getScriptProperties().getProperty('lastExpiryRun');
         if (_ler) { var _o = JSON.parse(_ler); lastExpiryRun = _o.at || null; lastExpirySent = (_o.sent != null ? _o.sent : null); }
       } catch (e) {}
-      return json_({ version: 'db-v38', auth: true, driveImages: true, triggerStatus: true, siteImages: true, expiryTrigger: expiryTriggerActive_(), lastExpiryRun: lastExpiryRun, lastExpirySent: lastExpirySent, expiryInstaller: true, expiryRunnable: true, clientPaid: true, addonRateTypes: true, passExpiryEmail: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true, multiCoach: true, acctBreakdown: true, perArcherEdit: true });
+      return json_({ version: 'db-v39', auth: true, dayOverrides: true, driveImages: true, triggerStatus: true, siteImages: true, expiryTrigger: expiryTriggerActive_(), lastExpiryRun: lastExpiryRun, lastExpirySent: lastExpirySent, expiryInstaller: true, expiryRunnable: true, clientPaid: true, addonRateTypes: true, passExpiryEmail: true, noDoubleBook: true, rescheduleNotify: true, database: true, cancelLog: true, planEmails: true, singleCancelEmail: true, dashboard: true, coachAvail: true, clearHistory: true, approveUpsert: true, bookingsFromCalendar: true, assignCoach: true, activityLog: true, coachCrud: true, clearAll: true, rescheduleEmail: true, coachEmail: true, fullScheduleEmail: true, refLookup: true, emailMerge: true, contentStore: true, reschedule: true, activityActor: true, coachProfiles: true, brandedEmail: true, editableDiscounts: true, timeCellFix: true, perArcherEvents: true, multiDayNoEmail: true, perArcherExtras: true, multiCoach: true, acctBreakdown: true, perArcherEdit: true });
     }
     return json_({ error: 'Unknown action' });
   } catch (err) {
