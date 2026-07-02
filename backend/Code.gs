@@ -221,10 +221,12 @@ function siteImgMap_() {
 function setSiteImgMap_(m) {
   PropertiesService.getScriptProperties().setProperty('SITE_IMAGES', JSON.stringify(m || {}));
 }
-// Public Google serving URL for a Drive image, sized to the slot (hero widest).
+// Public Google serving URL for a Drive image, sized to the slot (hero widest). Uses the lh3
+// googleusercontent CDN, which serves public Drive images directly (no on-demand thumbnail
+// generation lag, unlike drive.google.com/thumbnail).
 function imgServeUrl_(fileId, slot) {
   var sz = slot === 'hero' ? 'w1920' : (slot === 'about' ? 'w1000' : 'w900');
-  return 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=' + sz;
+  return 'https://lh3.googleusercontent.com/d/' + fileId + '=' + sz;
 }
 function trashImgFile_(fileId) {
   try { DriveApp.getFileById(fileId).setTrashed(true); } catch (e) {}
