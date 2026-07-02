@@ -221,12 +221,12 @@ function siteImgMap_() {
 function setSiteImgMap_(m) {
   PropertiesService.getScriptProperties().setProperty('SITE_IMAGES', JSON.stringify(m || {}));
 }
-// Public Google serving URL for a Drive image, sized to the slot (hero widest). Uses the lh3
-// googleusercontent CDN, which serves public Drive images directly (no on-demand thumbnail
-// generation lag, unlike drive.google.com/thumbnail).
+// Public Google serving URL for a Drive image, sized to the slot (hero widest). The admin sees the
+// just-uploaded image instantly (frontend renders the local base64), so the thumbnail endpoint's
+// first-generation lag only ever affects a later visitor once, after which Google caches it.
 function imgServeUrl_(fileId, slot) {
   var sz = slot === 'hero' ? 'w1920' : (slot === 'about' ? 'w1000' : 'w900');
-  return 'https://lh3.googleusercontent.com/d/' + fileId + '=' + sz;
+  return 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=' + sz;
 }
 function trashImgFile_(fileId) {
   try { DriveApp.getFileById(fileId).setTrashed(true); } catch (e) {}

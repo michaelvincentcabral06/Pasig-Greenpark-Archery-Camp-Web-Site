@@ -3086,11 +3086,14 @@ class Component extends DCLogic {
     this.adminPost({ action: 'setImage', slot: slot, data: data })
       .then(res => {
         if (res && res.ok) {
-          const url = res.url || data;
+          // Render the just-uploaded image instantly from its local base64, so the admin sees it
+          // immediately. Drive's serving URL (res.url) takes over on the next page load, by which
+          // time Google has generated/cached the thumbnail.
+          const shown = data || res.url;
           const imgs = JSON.parse(JSON.stringify(this.state.images || { hero: '', about: '', programs: {} }));
-          if (slot === 'hero') imgs.hero = url;
-          else if (slot === 'about') imgs.about = url;
-          else if (slot.indexOf('prog:') === 0) { imgs.programs = imgs.programs || {}; imgs.programs[slot.slice(5)] = url; }
+          if (slot === 'hero') imgs.hero = shown;
+          else if (slot === 'about') imgs.about = shown;
+          else if (slot.indexOf('prog:') === 0) { imgs.programs = imgs.programs || {}; imgs.programs[slot.slice(5)] = shown; }
           this.applySiteImages(imgs);
           this.setState({ imgBusy: false });
         } else {
